@@ -9,8 +9,7 @@
     "build": "next build",
     "start": "next start",
     "open": "start http://localhost:3000",
-    "open:web": "start http://localhost:3001",
-    "open:login": "start http://localhost:3000/login",
+    "open:web": "start http://localhost:3000/login",
     "open:pay": "start http://localhost:3000/pay",
     "open:pricing": "start http://localhost:3000/pricing",
     "open:admin": "start http://localhost:3000/admin",
@@ -22,21 +21,21 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.56.0",
+    "autoprefixer": "10.4.19",
     "dotenv": "^17.2.1",
     "jsonwebtoken": "^9.0.2",
     "next": "14.2.5",
+    "postcss": "8.4.39",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "stripe": "14.25.0",
+    "tailwindcss": "3.4.10",
     "tencentcloud-sdk-nodejs": "^4.1.101"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "20.14.12",
     "@types/react": "18.3.3",
-    "autoprefixer": "10.4.19",
-    "postcss": "8.4.39",
-    "tailwindcss": "3.4.10",
     "typescript": "5.5.4"
   }
 }
