@@ -1,14 +1,17 @@
 // OTP store with production fallback
-// In production, we'll use a simple approach to avoid complex dependencies
+// In production, we'll use a more reliable approach
 
 type OtpRecord = { code: string; expireAt: number };
 
-// For production, use a simple approach
+// For production, use a more reliable approach
 let store: Map<string, OtpRecord>;
 
 if (process.env.NODE_ENV === 'production') {
-  // Production: Use a new Map for each request (temporary solution)
-  store = new Map();
+  // Production: Use global store with proper initialization
+  if (!(global as any).__otpStore) {
+    (global as any).__otpStore = new Map();
+  }
+  store = (global as any).__otpStore;
 } else {
   // Development: Use global store
   store = (global as any).__otpStore || new Map();
@@ -26,10 +29,14 @@ export function setOtp(phone: string, code: string, ttlMs = 5 * 60 * 1000) {
 
 export function consumeOtp(phone: string, code: string): boolean {
   const rec = store.get(phone);
-  if (!rec) return false;
+  if (!rec) {
+    console.log(`❌ 验证码不存在: ${phone}`);
+    return false;
+  }
   
   if (Date.now() > rec.expireAt) {
     store.delete(phone);
+    console.log(`❌ 验证码已过期: ${phone}`);
     return false;
   }
   
@@ -42,6 +49,21 @@ export function consumeOtp(phone: string, code: string): boolean {
   }
   
   return ok;
+}
+
+// Clean up expired OTPs periodically
+export function cleanupExpiredOtps() {
+  const now = Date.now();
+  for (const [phone, record] of store.entries()) {
+    if (now > record.expireAt) {
+      store.delete(phone);
+    }
+  }
+}
+
+// Initialize cleanup interval
+if (typeof setInterval !== 'undefined') {
+  setInterval(cleanupExpiredOtps, 60000); // Clean up every minute
 }
 
 
