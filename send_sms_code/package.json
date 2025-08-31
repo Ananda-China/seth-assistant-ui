@@ -1,0 +1,11 @@
+{
+	"name": "send-sms-code",
+	"version": "1.0.0",
+	"description": "Minimal cloud function to send SMS code (placeholder integration)",
+	"main": "index.js",
+	"type": "commonjs",
+	"license": "MIT",
+	"dependencies": {}
+}
+
+

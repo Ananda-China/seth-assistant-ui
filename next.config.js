@@ -5,6 +5,18 @@ const nextConfig = {
     appDir: true,
   },
   trailingSlash: false,
+  async rewrites() {
+    return [
+      {
+        source: '/admin',
+        destination: '/admin/',
+      },
+      {
+        source: '/admin/:path*',
+        destination: '/admin/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {
