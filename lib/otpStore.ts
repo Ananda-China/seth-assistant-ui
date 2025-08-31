@@ -54,7 +54,8 @@ export function consumeOtp(phone: string, code: string): boolean {
 // Clean up expired OTPs periodically
 export function cleanupExpiredOtps() {
   const now = Date.now();
-  for (const [phone, record] of store.entries()) {
+  const entries = Array.from(store.entries());
+  for (const [phone, record] of entries) {
     if (now > record.expireAt) {
       store.delete(phone);
     }
