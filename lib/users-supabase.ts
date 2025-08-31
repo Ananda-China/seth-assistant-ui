@@ -1,0 +1,266 @@
+import { supabaseAdmin } from './supabase';
+
+export type User = {
+  id: string;
+  phone: string;
+  nickname?: string;
+  invite_code: string;
+  invited_by?: string;
+  created_at: string;
+  trial_start?: string;
+  trial_end?: string;
+  subscription_type: 'free' | 'monthly' | 'quarterly' | 'yearly';
+  subscription_start?: string;
+  subscription_end?: string;
+  chat_count: number;
+  last_chat_date?: string;
+  status: 'active' | 'suspended';
+  updated_at: string;
+};
+
+export type UserPermission = {
+  canChat: boolean;
+  isTrialActive: boolean;
+  isPaidUser: boolean;
+  remainingDays: number;
+  chatLimit: number;
+  usedChats: number;
+  resetTime?: string;
+};
+
+// 生成邀请码
+function generateInviteCode(): string {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+// 获取用户
+export async function getUser(phone: string): Promise<User | null> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('*')
+    .eq('phone', phone)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null; // 用户不存在
+    throw error;
+  }
+
+  return data;
+}
+
+// 创建或获取用户
+export async function getOrCreateUser(phone: string): Promise<User> {
+  let user = await getUser(phone);
+  
+  if (!user) {
+    const now = new Date().toISOString();
+    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .insert({
+        phone,
+        nickname: '',
+        invite_code: generateInviteCode(),
+        trial_start: now,
+        trial_end: trialEnd,
+        subscription_type: 'free',
+        chat_count: 0,
+        last_chat_date: new Date().toISOString().split('T')[0]
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    user = data;
+  }
+
+  return user;
+}
+
+// 更新用户昵称
+export async function updateUserNickname(phone: string, nickname: string): Promise<User | null> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({ nickname: nickname.slice(0, 50) })
+    .eq('phone', phone)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// 设置邀请人
+export async function setInvitedBy(phone: string, inviterCode: string): Promise<User | null> {
+  // 检查邀请码是否存在
+  const { data: inviter } = await supabaseAdmin
+    .from('users')
+    .select('phone')
+    .eq('invite_code', inviterCode)
+    .single();
+
+  if (!inviter) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({ invited_by: inviterCode })
+    .eq('phone', phone)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// 获取邀请的用户列表
+export async function listInvitees(inviterCode: string): Promise<User[]> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('*')
+    .eq('invited_by', inviterCode)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+// 获取用户权限
+export async function getUserPermission(phone: string): Promise<UserPermission> {
+  const user = await getUser(phone);
+  if (!user) {
+    return {
+      canChat: false,
+      isTrialActive: false,
+      isPaidUser: false,
+      remainingDays: 0,
+      chatLimit: 0,
+      usedChats: 0
+    };
+  }
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  
+  // 检查是否需要重置每日聊天次数
+  if (user.last_chat_date !== today) {
+    await supabaseAdmin
+      .from('users')
+      .update({ 
+        chat_count: 0, 
+        last_chat_date: today 
+      })
+      .eq('phone', phone);
+    
+    user.chat_count = 0;
+    user.last_chat_date = today;
+  }
+
+  // 检查试用期状态
+  const isTrialActive = user.trial_end ? new Date(user.trial_end) > now : false;
+  const trialRemainingDays = user.trial_end ? 
+    Math.max(0, Math.ceil((new Date(user.trial_end).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0;
+
+  // 检查付费订阅状态
+  const isPaidUser = user.subscription_type !== 'free' && 
+                     user.subscription_end ? new Date(user.subscription_end) > now : false;
+  
+  // 确定聊天限制
+  let chatLimit = 0;
+  if (isPaidUser) {
+    chatLimit = 1000; // 付费用户每日1000次
+  } else if (isTrialActive) {
+    chatLimit = 50; // 试用期用户每日50次
+  } else {
+    chatLimit = 0; // 试用期结束且未付费，无法聊天
+  }
+
+  const usedChats = user.chat_count || 0;
+  const canChat = usedChats < chatLimit;
+
+  return {
+    canChat,
+    isTrialActive,
+    isPaidUser,
+    remainingDays: isPaidUser ? 
+      Math.ceil((new Date(user.subscription_end!).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 
+      trialRemainingDays,
+    chatLimit,
+    usedChats,
+    resetTime: isPaidUser || isTrialActive ? '每日0点重置' : undefined
+  };
+}
+
+// 增加聊天次数
+export async function incrementChatCount(phone: string): Promise<boolean> {
+  const permission = await getUserPermission(phone);
+  if (!permission.canChat) {
+    return false;
+  }
+
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({ chat_count: permission.usedChats + 1 })
+    .eq('phone', phone);
+
+  return !error;
+}
+
+// 升级用户订阅
+export async function upgradeUserSubscription(
+  phone: string, 
+  subscriptionType: 'monthly' | 'quarterly' | 'yearly'
+): Promise<User | null> {
+  const now = new Date();
+  let subscriptionEnd: Date;
+
+  switch (subscriptionType) {
+    case 'monthly':
+      subscriptionEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      break;
+    case 'quarterly':
+      subscriptionEnd = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      break;
+    case 'yearly':
+      subscriptionEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      break;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({
+      subscription_type: subscriptionType,
+      subscription_start: now.toISOString(),
+      subscription_end: subscriptionEnd.toISOString(),
+      chat_count: 0,
+      last_chat_date: now.toISOString().split('T')[0]
+    })
+    .eq('phone', phone)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// 获取所有用户（管理员用）
+export async function getAllUsers(page = 1, limit = 10) {
+  const offset = (page - 1) * limit;
+  
+  const { data, error, count } = await supabaseAdmin
+    .from('users')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  return {
+    users: data || [],
+    total: count || 0,
+    page,
+    limit,
+    totalPages: Math.ceil((count || 0) / limit)
+  };
+}

@@ -1,0 +1,1112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 全局布局与尺寸规范 ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #23284A; /* 暮光靛蓝主背景 */
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: #EAEBF0; /* 意识白主要文本 */
+  overflow-x: hidden;
+}
+
+/* 为固定定位的header腾出空间 */
+.main-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px; /* 为固定header腾出空间 */
+}
+
+/* 主应用区域调整 */
+.app-shell {
+  flex: 1;
+  display: flex;
+  min-height: calc(100vh - 80px);
+  margin-top: 0;
+}
+
+/* ===== 左侧边栏 (固定宽度260px) - 仅应用于主聊天页面 ===== */
+/* 只在主页面应用固定侧边栏样式，不影响后台页面 */
+.sidebar:not([class*="w-64"]) {
+  width: 260px; /* 严格按照规范 */
+  background: rgba(46, 51, 91, 0.4); /* 磨砂玻璃效果 */
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(200, 182, 226, 0.1); /* 模拟光照 */
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  flex-shrink: 0;
+  position: fixed !important;
+  top: 80px !important; /* 在header下方 */
+  left: 0 !important;
+  height: calc(100vh - 80px) !important;
+  overflow-y: auto !important;
+  z-index: 999 !important;
+}
+
+/* 侧边栏头部品牌区 */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: #C8B6E2; /* 灵性丁香紫 */
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  color: #1A1D33;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.brand-title {
+  font-weight: 500;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 20px; /* 严格按照规范 */
+  letter-spacing: 0.5px;
+}
+
+.new-chat-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8A94B3; /* 耳语灰 */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.new-chat-btn:hover {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  background: rgba(200, 182, 226, 0.1);
+  transform: scale(1.05);
+}
+
+/* 聊天记录头部 */
+.chat-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.05);
+}
+
+/* 聊天记录标签 */
+.chat-history-label {
+  font-size: 16px;
+  color: #EAEBF0; /* 意识白 */
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* 对话列表 */
+.conversation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conversation-item {
+  margin-bottom: 4px;
+}
+
+/* 确保对话内容有相对定位，让操作按钮可以绝对定位 */
+.conversation-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  color: #EAEBF0; /* 意识白 */
+  position: relative;
+  min-height: 48px;
+}
+
+.conversation-content:hover {
+  background: rgba(76, 85, 138, 0.1);
+}
+
+.conversation-content.selected {
+  background: rgba(76, 85, 138, 0.3); /* 严格按照规范 */
+}
+
+.conversation-title {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 80px; /* 为操作按钮留出空间 */
+}
+
+.conversation-title:hover {
+  color: #C8B6E2; /* 灵性丁香紫 */
+}
+
+/* 操作按钮 */
+.conversation-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) translateX(8px);
+}
+
+.conversation-item:hover .conversation-actions {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.action-btn {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #8A94B3; /* 耳语灰 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.rename-btn:hover {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  background: rgba(200, 182, 226, 0.15);
+  box-shadow: 0 2px 8px rgba(200, 182, 226, 0.2);
+}
+
+.delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+/* 用户资料区域 */
+.user-profile {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.profile-separator {
+  height: 1px;
+  background: rgba(200, 182, 226, 0.1);
+  margin-bottom: 16px;
+}
+
+.profile-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.profile-link:hover {
+  background: rgba(76, 85, 138, 0.2);
+}
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  background: #C8B6E2; /* 灵性丁香紫 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1A1D33;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  color: #EAEBF0; /* 意识白 */
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-phone {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 12px; /* 比昵称小2px */
+  opacity: 0.7; /* 严格按照规范 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 登录链接样式 */
+.login-link {
+  transition: all 0.2s ease;
+}
+
+.login-link:hover {
+  transform: translateY(-1px);
+}
+
+.login-link .profile-avatar {
+  background: rgba(200, 182, 226, 0.2);
+  color: #C8B6E2;
+  border: 1px solid rgba(200, 182, 226, 0.3);
+}
+
+.login-link:hover .profile-avatar {
+  background: rgba(200, 182, 226, 0.3);
+  border-color: rgba(200, 182, 226, 0.5);
+  transform: scale(1.05);
+}
+
+/* ===== 主聊天区 (占据剩余所有空间) - 仅应用于主聊天页面 ===== */
+/* 只在主页面应用主内容区域样式，不影响后台页面 */
+.main-content:not([class*="flex-1"]) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  position: relative;
+  margin-left: 260px !important; /* 为固定侧边栏腾出空间 */
+}
+
+/* ===== 聊天容器 (max-width: 800px, 水平居中) ===== */
+.chat-messages {
+  flex: 1;
+  padding: 24px 0 120px 0; /* 调整顶部间距与左侧"赛斯助手"标题对齐 */
+  max-width: 800px; /* 严格按照规范 */
+  width: 100%;
+  margin: 0 auto; /* 水平居中 */
+  overflow-y: visible;
+}
+
+/* 聊天容器 */
+.chat-container {
+  max-width: 800px; /* 严格按照规范 */
+  margin: 0 auto; /* 水平居中 */
+  padding-top: 24px !important; /* 调整顶部间距与左侧"赛斯助手"标题对齐 */
+  padding-bottom: 120px; /* 为底部输入框留出空间 */
+  flex-grow: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+  margin-top: 0px !important; /* 移除额外的顶部边距 */
+}
+
+/* ===== 消息组件设计 ===== */
+.message {
+  margin-bottom: 32px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.user-message {
+  text-align: right;
+}
+
+.assistant-message {
+  text-align: left;
+  margin-bottom: 48px;
+}
+
+.message-bubble {
+  display: inline-block;
+  max-width: 800px;
+  padding: 16px 24px;
+  border-radius: 24px;
+  font-size: 16px; /* 严格按照规范 */
+  line-height: 1.8; /* 严格按照规范 */
+  word-wrap: break-word;
+}
+
+.user-bubble {
+  background: rgba(76, 85, 138, 0.3); /* 严格按照规范 */
+  color: #EAEBF0; /* 意识白 */
+  border-radius: 16px; /* 严格按照规范 */
+}
+
+.assistant-bubble {
+  background: transparent; /* 无背景 */
+  color: #EAEBF0; /* 意识白 */
+  line-height: 1.8;
+  position: relative;
+  padding-left: 32px; /* 为引言样式留空间 */
+}
+
+/* AI回复引言样式 */
+.assistant-bubble::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px; /* 严格按照规范 */
+  background: #C8B6E2; /* 灵性丁香紫 */
+  border-radius: 1px;
+}
+
+.assistant-bubble h1,
+.assistant-bubble h2,
+.assistant-bubble h3 {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+.assistant-bubble p {
+  margin: 16px 0;
+}
+
+.assistant-bubble ul,
+.assistant-bubble ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.assistant-bubble li {
+  margin: 8px 0;
+}
+
+.assistant-bubble blockquote {
+  position: relative;
+  margin: 16px 0;
+  padding: 12px 16px;
+  border-left: 2px solid #C8B6E2;
+  font-style: italic;
+  color: #C8B6E2;
+  opacity: 0.9;
+  background: rgba(200, 182, 226, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.assistant-bubble blockquote p {
+  margin: 4px 0;
+}
+
+/* 加载指示器 */
+.loading-indicator {
+  text-align: left;
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 14px;
+  padding: 20px 0 20px 0;
+  margin-left: 0;
+}
+
+/* ===== 底部输入框 (max-width: 800px, 水平居中) ===== */
+.input-area {
+  position: sticky;
+  bottom: 0;
+  background: transparent;
+  padding: 20px 0;
+  z-index: 100;
+  width: 100%;
+}
+
+.composer {
+  max-width: 800px; /* 严格按照规范 */
+  width: 100%;
+  margin: 0 auto; /* 水平居中 */
+  background: rgba(46, 51, 91, 0.4); /* 与Sidebar一致的磨砂玻璃效果 */
+  backdrop-filter: blur(16px);
+  border-radius: 50px;
+  padding: 8px 0; /* 调整padding让按钮更突出 */
+  border: 1px solid rgba(200, 182, 226, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 添加间距 */
+}
+
+.composer:focus-within {
+  border-color: rgba(200, 182, 226, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(200, 182, 226, 0.1);
+}
+
+.message-input {
+  flex-grow: 1; /* 占据所有可用空间 */
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 16px; /* 严格按照规范 */
+  line-height: 1.6;
+  resize: none;
+  overflow: hidden;
+  padding: 12px 0 12px 20px; /* 调整padding */
+  font-family: inherit;
+  min-height: 50px;
+  max-height: 140px;
+}
+
+.message-input::placeholder {
+  color: #8A94B3; /* 耳语灰 */
+}
+
+.send-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8A94B3; /* 耳语灰 */
+  transition: all 0.3s ease;
+  margin-right: 20px; /* 严格按照规范：右padding 20px */
+  padding: 12px;
+  border-radius: 50%;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.send-btn:hover {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  background: rgba(200, 182, 226, 0.1);
+  transform: scale(1.05);
+}
+
+.send-btn.active {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  background: rgba(200, 182, 226, 0.15);
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(200, 182, 226, 0.4));
+}
+
+.send-btn:disabled {
+  color: #8A94B3;
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-btn svg {
+  transition: all 0.3s ease;
+  width: 20px;
+  height: 20px;
+}
+
+.send-btn.active svg {
+  filter: drop-shadow(0 0 4px rgba(200, 182, 226, 0.6));
+}
+
+/* ===== 动画效果 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 强制隐藏所有滚动条 ===== */
+.chat-messages::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  display: none !important;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  display: none !important;
+}
+
+.chat-messages {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+/* 全局隐藏滚动条 */
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 260px; /* 保持固定宽度 */
+    padding: 20px;
+  }
+  
+  .chat-messages {
+    padding: 20px 16px 100px 16px; /* 移动端也调整顶部间距 */
+  }
+  
+  .composer {
+    margin: 0 16px;
+  }
+}
+
+/* ===== 后台管理页面样式重置 ===== */
+/* 为后台页面添加特定的body类来区分 */
+.admin-page {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 重置后台页面的全局样式影响 */
+.admin-page main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 重置后台页面中的侧边栏样式，避免被全局.sidebar样式影响 */
+.admin-page aside {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  height: auto !important;
+  width: auto !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border-right: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: auto !important;
+}
+
+/* 重置后台页面的主内容区域 */
+.admin-page .main-content {
+  margin-left: 0 !important;
+  position: static !important;
+}
+
+/* ===== 登录页面样式 ===== */
+.login-main {
+  min-height: 100vh;
+  background: #23284A; /* 暮光靛蓝主背景 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(46, 51, 91, 0.4); /* 磨砂玻璃效果 */
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: 1px solid rgba(200, 182, 226, 0.1);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.login-header {
+  background: rgba(76, 85, 138, 0.2);
+  padding: 32px;
+  text-align: center;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.login-logo-icon {
+  width: 48px;
+  height: 48px;
+  background: #C8B6E2; /* 灵性丁香紫 */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1A1D33;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.login-logo-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  letter-spacing: 0.5px;
+}
+
+.login-form {
+  padding: 48px 32px;
+}
+
+.login-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #8A94B3; /* 耳语灰 */
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(76, 85, 138, 0.2);
+  border: 1px solid rgba(200, 182, 226, 0.1);
+  border-radius: 16px;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(200, 182, 226, 0.3);
+  box-shadow: 0 0 0 4px rgba(200, 182, 226, 0.1);
+  background: rgba(76, 85, 138, 0.3);
+}
+
+.form-input::placeholder {
+  color: #8A94B3; /* 耳语灰 */
+  opacity: 0.7;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #C8B6E2 0%, #A78BDA 100%);
+  color: #1A1D33;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(200, 182, 226, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-outline {
+  padding: 16px 24px;
+  background: transparent;
+  color: #C8B6E2; /* 灵性丁香紫 */
+  border: 1px solid rgba(200, 182, 226, 0.3);
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-outline:hover {
+  background: rgba(200, 182, 226, 0.1);
+  border-color: rgba(200, 182, 226, 0.5);
+  transform: translateY(-1px);
+}
+
+.form-message {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(76, 85, 138, 0.2);
+  border-radius: 12px;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 14px;
+  text-align: center;
+  border-left: 4px solid #C8B6E2; /* 灵性丁香紫 */
+}
+
+/* ===== 个人信息页面样式 ===== */
+.account-main {
+  min-height: 100vh;
+  background: #23284A; /* 暮光靛蓝主背景 */
+  padding-top: 80px; /* 为顶部导航留出空间 */
+}
+
+.account-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.account-header {
+  background: rgba(46, 51, 91, 0.4); /* 磨砂玻璃效果 */
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: 1px solid rgba(200, 182, 226, 0.1);
+  padding: 32px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.account-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.account-logo-icon {
+  width: 48px;
+  height: 48px;
+  background: #C8B6E2; /* 灵性丁香紫 */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1A1D33;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.account-logo-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  letter-spacing: 0.5px;
+}
+
+.account-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.account-title {
+  font-size: 36px;
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.account-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.account-card {
+  background: rgba(46, 51, 91, 0.4); /* 磨砂玻璃效果 */
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(200, 182, 226, 0.1);
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-message {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 14px;
+}
+
+/* 订阅信息样式 */
+.subscription-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.subscription-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.subscription-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 14px;
+}
+
+.subscription-label {
+  color: #8A94B3; /* 耳语灰 */
+}
+
+.subscription-badge {
+  padding: 4px 12px;
+  background: rgba(200, 182, 226, 0.2);
+  border: 1px solid rgba(200, 182, 226, 0.3);
+  border-radius: 12px;
+  color: #C8B6E2; /* 灵性丁香紫 */
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.subscription-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.subscription-empty {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 14px;
+}
+
+.subscription-link {
+  color: #C8B6E2; /* 灵性丁香紫 */
+  text-decoration: underline;
+}
+
+/* 表格样式 */
+.orders-table {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header {
+  padding: 16px 12px;
+  text-align: left;
+  color: #8A94B3; /* 耳语灰 */
+  font-weight: 500;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.2);
+}
+
+.table-row {
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: rgba(76, 85, 138, 0.1);
+}
+
+.table-cell {
+  padding: 16px 12px;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 14px;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.empty-text {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+/* 邀请关系样式 */
+.invite-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.invite-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.invite-label {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 14px;
+}
+
+.invite-badge {
+  padding: 8px 16px;
+  background: rgba(200, 182, 226, 0.2);
+  border: 1px solid rgba(200, 182, 226, 0.3);
+  border-radius: 12px;
+  color: #C8B6E2; /* 灵性丁香紫 */
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-copy {
+  padding: 8px 16px;
+  background: transparent;
+  color: #C8B6E2; /* 灵性丁香紫 */
+  border: 1px solid rgba(200, 182, 226, 0.3);
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy:hover {
+  background: rgba(200, 182, 226, 0.1);
+  border-color: rgba(200, 182, 226, 0.5);
+}
+
+.invite-info {
+  color: #EAEBF0; /* 意识白 */
+  font-size: 14px;
+}
+
+.invite-form {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.invite-form .form-input {
+  flex: 1;
+}
+
+.invite-message {
+  color: #8A94B3; /* 耳语灰 */
+  font-size: 12px;
+}
+
+.invitees-section {
+  margin-top: 20px;
+}
+
+.invitees-title {
+  font-weight: 600;
+  color: #EAEBF0; /* 意识白 */
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.invitees-list {
+  list-style: disc;
+  margin-left: 20px;
+  color: #EAEBF0; /* 意识白 */
+  font-size: 14px;
+}
+
+.invitees-list li {
+  margin-bottom: 8px;
+}
+
+.logout-section {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(200, 182, 226, 0.1);
+  margin-top: 20px;
+}
+
+

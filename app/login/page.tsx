@@ -1,0 +1,145 @@
+"use client";
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [phone, setPhone] = useState('13472881751'); // 设置默认手机号
+  const [code, setCode] = useState('');
+  const [invite, setInvite] = useState('');
+  const [step, setStep] = useState<'send' | 'verify'>('send');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  async function sendCode() {
+    console.log('发送验证码，手机号:', phone); // 添加调试日志
+    if (!phone) {
+      setMsg('请输入手机号');
+      return;
+    }
+    
+    setLoading(true);
+    setMsg('');
+    
+    try {
+      const r = await fetch('/api/auth/send_otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      
+      console.log('API响应状态:', r.status); // 添加调试日志
+      
+      const data = await r.json().catch(() => ({}));
+      console.log('API响应数据:', data); // 添加调试日志
+      
+      if (data?.success) {
+        setStep('verify');
+        setMsg(`验证码已发送${data.debug_code ? `（本地调试码：${data.debug_code}）` : ''}`);
+        if (data.debug_code) {
+          setCode(String(data.debug_code));
+          alert(`本地调试码：${data.debug_code}`);
+        }
+      } else {
+        setMsg(data?.message || '发送失败');
+      }
+    } catch (error) {
+      console.error('发送验证码错误:', error); // 添加错误日志
+      setMsg('网络错误，请重试');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verify() {
+    setLoading(true);
+    setMsg('');
+    const r = await fetch('/api/auth/verify_otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code, invite }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (data?.success) {
+      setMsg('登录成功，正在跳转...');
+      setTimeout(() => router.push('/'), 200);
+    } else {
+      setMsg(data?.message || '验证失败');
+    }
+  }
+
+  return (
+    <main className="login-main">
+      <div className="login-container">
+        <div className="login-header">
+          <div className="login-logo">
+            <div className="login-logo-icon">S</div>
+            <div className="login-logo-title">赛斯助手</div>
+          </div>
+        </div>
+        
+        <div className="login-form">
+          <h1 className="login-title">登录</h1>
+          
+          <div className="form-group">
+            <label className="form-label">手机号</label>
+            <input 
+              className="form-input" 
+              value={phone} 
+              onChange={e => setPhone(e.target.value)} 
+              placeholder="请输入手机号" 
+            />
+          </div>
+          
+          {step === 'verify' && (
+            <div className="form-group">
+              <label className="form-label">验证码</label>
+              <input 
+                className="form-input" 
+                value={code} 
+                onChange={e => setCode(e.target.value)} 
+                placeholder="6位验证码" 
+              />
+            </div>
+          )}
+          
+          <div className="form-group">
+            <label className="form-label">邀请码（可选）</label>
+            <input 
+              className="form-input" 
+              value={invite} 
+              onChange={e => setInvite(e.target.value)} 
+              placeholder="没有可留空" 
+            />
+          </div>
+          
+          <div className="form-actions">
+            {step === 'send' ? (
+              <button 
+                onClick={sendCode} 
+                disabled={loading} 
+                className="btn-primary"
+              >
+                {loading ? '发送中...' : '发送验证码'}
+              </button>
+            ) : (
+              <button 
+                onClick={verify} 
+                disabled={loading} 
+                className="btn-primary"
+              >
+                {loading ? '验证中...' : '验证并登录'}
+              </button>
+            )}
+            <a href="/" className="btn-outline">返回</a>
+          </div>
+          
+          {msg && <div className="form-message">{msg}</div>}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
