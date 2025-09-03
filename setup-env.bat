@@ -45,8 +45,25 @@ echo WXPAY_APP_ID=test_app_id
 echo WXPAY_MCH_ID=test_mch_id
 echo WXPAY_API_KEY=test_api_key
 echo.
-echo # 短信配置（模拟模式）
-echo SMS_MOCK=true
+echo # 短信配置
+echo # Spug短信服务配置（优先使用）
+echo SPUG_USER_ID=46b2b2f98b174522817a4ea816eea216
+echo SPUG_API_KEY=ak_vW2GzOnlxw0byPj9MRjpYQVLXd4gR7Ek
+echo SPUG_SEND_URL=
+echo SPUG_NAME=Seth验证码
+echo # 兼容旧变量（如已存在可保留）
+echo SPUT_USER_ID=
+echo SPUT_API_KEY=
+echo SPUT_API_URL=
+echo SPUT_TEMPLATE_ID=
+echo.
+echo # 腾讯云短信配置（备用）
+echo TENCENTCLOUD_SECRET_ID=
+echo TENCENTCLOUD_SECRET_KEY=
+echo TENCENT_SMS_SDK_APP_ID=
+echo TENCENT_SMS_SIGN=
+echo TENCENT_SMS_TEMPLATE_ID=
+echo TENCENT_REGION=ap-guangzhou
 ) > .env.local
 
 echo ✅ 环境配置文件已创建：.env.local

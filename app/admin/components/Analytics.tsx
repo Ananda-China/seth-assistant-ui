@@ -53,6 +53,8 @@ export default function Analytics() {
   const [useSupabase, setUseSupabase] = useState(true); // 默认使用Supabase
   const [error, setError] = useState<string | null>(null);
 
+
+  
   // 获取统计数据
   const fetchAnalytics = async () => {
     try {

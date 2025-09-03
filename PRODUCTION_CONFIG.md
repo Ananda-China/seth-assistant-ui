@@ -19,7 +19,20 @@ DIFY_API_URL=https://api.dify.ai/v1
 DIFY_API_KEY=your_dify_api_key_here
 ```
 
-#### 腾讯云SMS配置（用于短信验证码）
+#### Spug短信服务配置（优先使用）
+```bash
+SPUG_USER_ID=46b2b2f98b174522817a4ea816eea216
+SPUG_API_KEY=ak_vW2GzOnlxw0byPj9MRjpYQVLXd4gR7Ek
+SPUG_SEND_URL=https://push.spug.cc/send/YourTokenHere
+SPUG_NAME=Seth验证码
+# 可选：兼容旧变量名
+SPUT_USER_ID=
+SPUT_API_KEY=
+SPUT_API_URL=
+SPUT_TEMPLATE_ID=
+```
+
+#### 腾讯云SMS配置（备用）
 ```bash
 TENCENTCLOUD_SECRET_ID=your_tencent_secret_id
 TENCENTCLOUD_SECRET_KEY=your_tencent_secret_key

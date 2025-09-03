@@ -13,6 +13,7 @@
     "open:pay": "start http://localhost:3000/pay",
     "open:pricing": "start http://localhost:3000/pricing",
     "open:admin": "start http://localhost:3000/admin",
+    
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
     "test:supabase": "node test-supabase-connection.js",
@@ -37,5 +38,9 @@
     "@types/node": "20.14.12",
     "@types/react": "18.3.3",
     "typescript": "5.5.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }

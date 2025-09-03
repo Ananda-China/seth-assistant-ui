@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { setOtp } from '../../../../lib/otpStore';
-import { sendSmsTencent } from '../../../../lib/sms';
+import { sendSms } from '../../../../lib/sms';
 
 function generateCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -17,17 +17,19 @@ export async function POST(req: NextRequest) {
     setOtp(phone, code); // 5分钟
 
     // 检查SMS配置是否完整
-    const hasSmsConfig = process.env.TENCENTCLOUD_SECRET_ID && 
-                        process.env.TENCENTCLOUD_SECRET_KEY && 
-                        process.env.TENCENT_SMS_SDK_APP_ID && 
-                        process.env.TENCENT_SMS_SIGN && 
-                        process.env.TENCENT_SMS_TEMPLATE_ID;
+    const hasSputConfig = process.env.SPUT_USER_ID && process.env.SPUT_API_KEY;
+    const hasTencentConfig = process.env.TENCENTCLOUD_SECRET_ID && 
+                            process.env.TENCENTCLOUD_SECRET_KEY && 
+                            process.env.TENCENT_SMS_SDK_APP_ID && 
+                            process.env.TENCENT_SMS_SIGN && 
+                            process.env.TENCENT_SMS_TEMPLATE_ID;
+    const hasSmsConfig = hasSputConfig || hasTencentConfig;
 
     // 生产环境：如果有SMS配置则尝试发送，否则返回调试码
     if (process.env.NODE_ENV === 'production') {
       if (hasSmsConfig) {
         try {
-          await sendSmsTencent({ phone, code });
+          await sendSms({ phone, code });
           console.log(`📱 生产环境短信发送成功: ${phone}`);
           return Response.json({ 
             success: true, 
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
     // 开发环境
     try {
       if (hasSmsConfig) {
-        await sendSmsTencent({ phone, code });
+        await sendSms({ phone, code });
         return Response.json({ success: true, debug_code: code });
       } else {
         // 开发环境没有SMS配置，直接返回调试码
