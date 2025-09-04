@@ -86,6 +86,14 @@ export async function POST(req: NextRequest) {
 
   const apiUrl = `${DIFY_API_URL.replace(/\/$/, '')}/chat-messages`; // e.g. https://api.dify.ai/v1
 
+  console.log('🔍 Dify API 请求参数:', {
+    apiUrl,
+    query: query.substring(0, 50) + '...',
+    conversationId,
+    clientConversationId,
+    hasConversationId: !!conversationId
+  });
+
   const difyRes = await fetch(apiUrl, {
     method: 'POST',
     headers: {
@@ -97,7 +105,7 @@ export async function POST(req: NextRequest) {
       query,
       response_mode: 'streaming',
       user: 'anonymous',
-      conversation_id: conversationId,
+      conversation_id: conversationId || undefined, // 如果为空则发送 undefined
     }),
   });
 
