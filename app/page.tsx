@@ -121,23 +121,33 @@ export default function HomePage() {
         if (!activeConv && data.list?.[0]) setActiveConv(data.list[0].id);
       }
       try {
+        console.log('🔍 开始获取用户信息...');
         const m = await fetch('/api/me');
+        console.log('📱 /api/me 响应状态:', m.status);
         if (m.ok) {
           const j = await m.json();
+          console.log('✅ 用户信息获取成功:', j);
           setMe(j.nickname || '');
           setMePhone(j.phone || '');
           setAuthed(true);
 
           // 获取用户权限信息
+          console.log('🔍 开始获取用户权限...');
           const p = await fetch('/api/user/permission');
+          console.log('📱 /api/user/permission 响应状态:', p.status);
           if (p.ok) {
             const permData = await p.json();
+            console.log('✅ 用户权限获取成功:', permData);
             setPermission(permData.data);
+          } else {
+            console.error('❌ 用户权限获取失败:', p.status);
           }
         } else {
+          console.error('❌ 用户信息获取失败:', m.status);
           setAuthed(false);
         }
-      } catch {
+      } catch (error) {
+        console.error('❌ 获取用户信息异常:', error);
         setAuthed(false);
       }
     })();
