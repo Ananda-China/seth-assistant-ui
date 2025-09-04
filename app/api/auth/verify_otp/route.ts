@@ -17,15 +17,17 @@ export async function POST(req: NextRequest) {
   if (!okPhone) return Response.json({ success: false, message: 'invalid phone' }, { status: 400 });
 
   // 调试日志
+  const shouldCheck = !!(INVITE_CODE && INVITE_CODE.trim() !== '');
   console.log('🔍 邀请码检查:', {
     hasInviteCode: !!INVITE_CODE,
     inviteCodeValue: INVITE_CODE,
     inviteCodeTrimmed: INVITE_CODE?.trim(),
     userInvite: invite,
-    shouldCheck: !!(INVITE_CODE && INVITE_CODE.trim() !== '')
+    shouldCheck: shouldCheck,
+    willCheck: shouldCheck && invite !== INVITE_CODE
   });
 
-  // 如果配置了邀请码，则必须输入正确的邀请码
+  // 如果配置了邀请码且不为空，则必须输入正确的邀请码
   if (INVITE_CODE && INVITE_CODE.trim() !== '' && invite !== INVITE_CODE) {
     console.log('❌ 邀请码验证失败:', { expected: INVITE_CODE, received: invite });
     return Response.json({ success: false, message: 'invalid invite' }, { status: 403 });
