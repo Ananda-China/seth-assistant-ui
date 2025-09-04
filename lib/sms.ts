@@ -103,7 +103,8 @@ export async function sendSmsTencent({ phone, code, ttlMinutes = 5 }: SendSmsPar
 // 智能选择短信服务
 export async function sendSms({ phone, code, ttlMinutes = 5 }: SendSmsParams) {
   // 优先使用Spug服务（兼容Sput变量名）
-  const hasSpugConfig = (process.env.SPUG_USER_ID || process.env.SPUT_USER_ID) && (process.env.SPUG_API_KEY || process.env.SPUT_API_KEY);
+  const hasSpugConfig = (process.env.SPUG_SEND_URL || process.env.SPUT_SEND_URL) || 
+                       ((process.env.SPUG_USER_ID || process.env.SPUT_USER_ID) && (process.env.SPUG_API_KEY || process.env.SPUT_API_KEY));
   const hasTencentConfig = process.env.TENCENTCLOUD_SECRET_ID && process.env.TENCENTCLOUD_SECRET_KEY;
 
   if (hasSpugConfig) {
