@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { getUsers } from '../../../lib/config';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   // 1) 解析并校验 JWT（失败只返回401）
   try {
