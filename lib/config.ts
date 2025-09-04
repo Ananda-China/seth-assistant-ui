@@ -1,5 +1,10 @@
 // 配置文件 - 控制是否使用 Supabase
-export const USE_SUPABASE = process.env.USE_SUPABASE === 'true';
+// 在 Vercel（无持久磁盘）环境下，默认启用 Supabase
+// 本地开发如果未显式设置，则默认使用本地文件存储
+const isVercel = !!process.env.VERCEL;
+export const USE_SUPABASE = process.env.USE_SUPABASE
+  ? process.env.USE_SUPABASE === 'true'
+  : isVercel;
 
 // 根据配置动态导入相应的模块
 export const getUsersModule = async () => {
