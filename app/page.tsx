@@ -112,6 +112,40 @@ export default function HomePage() {
     } catch {}
   }, []);
 
+  // 获取用户信息的函数
+  const fetchUserInfo = async () => {
+    try {
+      console.log('🔍 开始获取用户信息...');
+      const m = await fetch('/api/me');
+      console.log('📱 /api/me 响应状态:', m.status);
+      if (m.ok) {
+        const j = await m.json();
+        console.log('✅ 用户信息获取成功:', j);
+        setMe(j.nickname || '');
+        setMePhone(j.phone || '');
+        setAuthed(true);
+
+        // 获取用户权限信息
+        console.log('🔍 开始获取用户权限...');
+        const p = await fetch('/api/user/permission');
+        console.log('📱 /api/user/permission 响应状态:', p.status);
+        if (p.ok) {
+          const permData = await p.json();
+          console.log('✅ 用户权限获取成功:', permData);
+          setPermission(permData.data);
+        } else {
+          console.error('❌ 用户权限获取失败:', p.status);
+        }
+      } else {
+        console.error('❌ 用户信息获取失败:', m.status);
+        setAuthed(false);
+      }
+    } catch (error) {
+      console.error('❌ 获取用户信息异常:', error);
+      setAuthed(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const r = await fetch('/api/conversations');
@@ -120,37 +154,21 @@ export default function HomePage() {
         setConversations(data.list || []);
         if (!activeConv && data.list?.[0]) setActiveConv(data.list[0].id);
       }
-      try {
-        console.log('🔍 开始获取用户信息...');
-        const m = await fetch('/api/me');
-        console.log('📱 /api/me 响应状态:', m.status);
-        if (m.ok) {
-          const j = await m.json();
-          console.log('✅ 用户信息获取成功:', j);
-          setMe(j.nickname || '');
-          setMePhone(j.phone || '');
-          setAuthed(true);
-
-          // 获取用户权限信息
-          console.log('🔍 开始获取用户权限...');
-          const p = await fetch('/api/user/permission');
-          console.log('📱 /api/user/permission 响应状态:', p.status);
-          if (p.ok) {
-            const permData = await p.json();
-            console.log('✅ 用户权限获取成功:', permData);
-            setPermission(permData.data);
-          } else {
-            console.error('❌ 用户权限获取失败:', p.status);
-          }
-        } else {
-          console.error('❌ 用户信息获取失败:', m.status);
-          setAuthed(false);
-        }
-      } catch (error) {
-        console.error('❌ 获取用户信息异常:', error);
-        setAuthed(false);
-      }
+      await fetchUserInfo();
     })();
+  }, []);
+
+  // 监听页面可见性变化，当从其他页面返回时重新获取用户信息
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 页面重新可见，刷新用户信息');
+        fetchUserInfo();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   // 当切换会话时拉取历史消息
@@ -268,7 +286,7 @@ export default function HomePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         query: userMsg.content,
-        conversation_id: conversationIdRef.current,
+        conversation_id: currentConvId, // 修复：使用当前有效的对话ID
         client_conversation_id: currentConvId, // 使用当前有效的对话ID
       }),
     });
