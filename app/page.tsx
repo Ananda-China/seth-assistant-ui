@@ -221,8 +221,11 @@ export default function HomePage() {
   async function send() {
     if (!input.trim()) return;
     
+    console.log('🚀 开始发送消息:', input.trim());
+    
     // 确保有聊天记录，并等待创建完成
     const convId = await ensureConversation();
+    console.log('📝 获取到的对话ID:', { convId, activeConv });
     
     // 如果没有获取到对话ID，不允许发送消息
     if (!convId && !activeConv) {
@@ -281,6 +284,12 @@ export default function HomePage() {
       }));
     }
 
+    console.log('📤 发送到 /api/chat:', {
+      query: userMsg.content,
+      conversation_id: currentConvId,
+      client_conversation_id: currentConvId
+    });
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -290,6 +299,8 @@ export default function HomePage() {
         client_conversation_id: currentConvId, // 使用当前有效的对话ID
       }),
     });
+
+    console.log('📥 /api/chat 响应状态:', res.status);
 
     if (!res.ok || !res.body) {
       setLoading(false);
