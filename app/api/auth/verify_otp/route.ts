@@ -33,9 +33,15 @@ export async function POST(req: NextRequest) {
   });
 
   // 如果配置了邀请码且不为空，则必须输入正确的邀请码
+  // 修复：只有当INVITE_CODE不为空且用户输入不匹配时才验证失败
   if (INVITE_CODE && INVITE_CODE.trim() !== '' && invite !== INVITE_CODE) {
     console.log('❌ 邀请码验证失败:', { expected: INVITE_CODE, received: invite });
     return Response.json({ success: false, message: 'invalid invite' }, { status: 403 });
+  }
+  
+  // 如果INVITE_CODE为空字符串，则跳过邀请码检查
+  if (INVITE_CODE === '' || INVITE_CODE.trim() === '') {
+    console.log('✅ 邀请码为空，跳过检查');
   }
 
   const verified = consumeOtp(phone, normalizedCode);
