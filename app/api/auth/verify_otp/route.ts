@@ -24,7 +24,12 @@ export async function POST(req: NextRequest) {
     inviteCodeTrimmed: INVITE_CODE?.trim(),
     userInvite: invite,
     shouldCheck: shouldCheck,
-    willCheck: shouldCheck && invite !== INVITE_CODE
+    willCheck: shouldCheck && invite !== INVITE_CODE,
+    // 详细调试
+    inviteCodeExists: !!INVITE_CODE,
+    inviteCodeNotEmpty: INVITE_CODE?.trim() !== '',
+    logicResult: INVITE_CODE && INVITE_CODE.trim() !== '',
+    doubleNegation: !!(INVITE_CODE && INVITE_CODE.trim() !== '')
   });
 
   // 如果配置了邀请码且不为空，则必须输入正确的邀请码
