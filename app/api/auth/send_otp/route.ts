@@ -17,13 +17,45 @@ export async function POST(req: NextRequest) {
     setOtp(phone, code); // 5分钟
 
     // 检查SMS配置是否完整
+    const hasSpugConfig = process.env.SPUG_SEND_URL || process.env.SPUT_SEND_URL;
     const hasSputConfig = process.env.SPUT_USER_ID && process.env.SPUT_API_KEY;
     const hasTencentConfig = process.env.TENCENTCLOUD_SECRET_ID && 
                             process.env.TENCENTCLOUD_SECRET_KEY && 
                             process.env.TENCENT_SMS_SDK_APP_ID && 
                             process.env.TENCENT_SMS_SIGN && 
                             process.env.TENCENT_SMS_TEMPLATE_ID;
-    const hasSmsConfig = hasSputConfig || hasTencentConfig;
+    const hasSmsConfig = hasSpugConfig || hasSputConfig || hasTencentConfig;
+
+    // 调试日志
+    console.log('🔍 SMS配置检查:', {
+      hasSpugConfig: !!hasSpugConfig,
+      hasSputConfig: !!hasSputConfig,
+      hasTencentConfig: !!hasTencentConfig,
+      hasSmsConfig: !!hasSmsConfig,
+      spugSendUrl: process.env.SPUG_SEND_URL ? '已配置' : '未配置',
+      nodeEnv: process.env.NODE_ENV,
+      allEnvVars: Object.keys(process.env).filter(key => key.includes('SPUG') || key.includes('SPUT'))
+    });
+
+    // 临时强制测试：如果SPUG_SEND_URL存在，强制启用SMS
+    if (process.env.SPUG_SEND_URL) {
+      console.log('🚀 强制启用Spug SMS服务');
+      try {
+        await sendSms({ phone, code });
+        console.log(`📱 强制SMS发送成功: ${phone}`);
+        return Response.json({ 
+          success: true, 
+          message: '验证码已发送到您的手机'
+        });
+      } catch (smsError) {
+        console.error('❌ 强制SMS发送失败:', smsError);
+        return Response.json({ 
+          success: true, 
+          debug_code: code,
+          message: '短信发送失败，请查看控制台日志获取验证码'
+        });
+      }
+    }
 
     // 生产环境：如果有SMS配置则尝试发送，否则返回调试码
     if (process.env.NODE_ENV === 'production') {
@@ -37,20 +69,20 @@ export async function POST(req: NextRequest) {
           });
         } catch (smsError) {
           console.error('❌ 生产环境短信发送失败:', smsError);
-          // SMS失败时返回调试码
+          // SMS失败时返回调试码，但不显示弹窗
           return Response.json({ 
             success: true, 
             debug_code: code,
-            message: '短信发送失败，请查看控制台日志获取验证码'
+            message: '短信服务暂时不可用，验证码已生成'
           });
         }
       } else {
-        // 没有SMS配置，返回调试码
+        // 没有SMS配置，返回调试码但不显示弹窗
         console.log(`📱 生产环境验证码（无SMS配置）: ${phone} -> ${code}`);
         return Response.json({ 
           success: true, 
           debug_code: code,
-          message: '验证码已生成，请查看控制台日志'
+          message: '验证码已生成'
         });
       }
     }

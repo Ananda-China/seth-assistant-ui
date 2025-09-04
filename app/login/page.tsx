@@ -36,10 +36,10 @@ export default function LoginPage() {
       
       if (data?.success) {
         setStep('verify');
-        setMsg(`验证码已发送${data.debug_code ? `（本地调试码：${data.debug_code}）` : ''}`);
+        setMsg(data.message || '验证码已发送');
         if (data.debug_code) {
           setCode(String(data.debug_code));
-          alert(`本地调试码：${data.debug_code}`);
+          // 不再显示弹窗，直接设置验证码
         }
       } else {
         setMsg(data?.message || '发送失败');
