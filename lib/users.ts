@@ -119,15 +119,15 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   const now = Date.now();
   const today = new Date().toDateString();
 
-  // 检查是否需要重置每日聊天次数
-  if (user.last_chat_date !== today) {
+  // 检查试用期状态
+  const isTrialActive = user.trial_end ? now < user.trial_end : false;
+  
+  // 检查是否需要重置每日聊天次数（仅对非试用期用户）
+  if (!isTrialActive && user.last_chat_date !== today) {
     user.chat_count = 0;
     user.last_chat_date = today;
     await updateUser(user);
   }
-
-  // 检查试用期状态
-  const isTrialActive = user.trial_end ? now < user.trial_end : false;
   const trialRemainingDays = user.trial_end ? Math.max(0, Math.ceil((user.trial_end - now) / (24 * 60 * 60 * 1000))) : 0;
 
   // 检查付费订阅状态
@@ -139,7 +139,7 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   if (isPaidUser) {
     chatLimit = 1000; // 付费用户每日1000次
   } else if (isTrialActive) {
-    chatLimit = 50; // 试用期用户每日50次
+    chatLimit = 999999; // 试用期用户7天内不限制使用次数
   } else {
     chatLimit = 0; // 试用期结束且未付费，无法聊天
   }
@@ -156,7 +156,7 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
       trialRemainingDays,
     chatLimit,
     usedChats,
-    resetTime: isPaidUser || isTrialActive ? '每日0点重置' : undefined
+    resetTime: isPaidUser ? '每日0点重置' : isTrialActive ? '试用期内不限制' : undefined
   };
 }
 
