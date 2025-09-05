@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
-import { updateOrderStatus, getOrder } from '../../../../lib/billing';
-import { upgradeUserSubscription } from '../../../../lib/users';
+import { getBillingModule, getUsers } from '../../../../lib/config';
 
 export async function GET(req: NextRequest) {
   // 仅在开发环境或明确启用模拟模式时可用
@@ -26,7 +25,8 @@ export async function GET(req: NextRequest) {
     }
 
     // 获取订单信息
-    const order = await getOrder(orderId);
+    const billingModule = await getBillingModule();
+    const order = await billingModule.getOrder(orderId);
     if (!order) {
       return new Response(`
         <html>
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
             <p><strong>订单号:</strong> ${orderId}</p>
             <p><strong>商品:</strong> ${order.plan}</p>
             <p><strong>金额:</strong> <span class="amount">¥${(order.amount_fen / 100).toFixed(2)}</span></p>
-            <p><strong>用户:</strong> ${order.user}</p>
+            <p><strong>用户:</strong> ${'user_phone' in order ? order.user_phone : order.user}</p>
             <p><strong>状态:</strong> ${order.status}</p>
           </div>
 
@@ -147,7 +147,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const order = await getOrder(order_id);
+    const billingModule = await getBillingModule();
+    const order = await billingModule.getOrder(order_id);
     if (!order) {
       return Response.json({ 
         success: false, 
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
 
     if (result === 'success') {
       // 模拟支付成功
-      await updateOrderStatus(order_id, 'success', {
+      await billingModule.updateOrderStatus(order_id, 'success', {
         trade_no: `MOCK_${Date.now()}`,
         paid_at: Date.now(),
         zpay_status: 'success'
@@ -173,7 +174,9 @@ export async function POST(req: NextRequest) {
       const subscriptionType = planMapping[order.plan_id || 'monthly'] || 'monthly';
       
       try {
-        await upgradeUserSubscription(order.user, subscriptionType);
+        const usersModule = await getUsers();
+        const userPhone = 'user_phone' in order ? order.user_phone : order.user;
+        await usersModule.upgradeUserSubscription(userPhone, subscriptionType);
       } catch (error) {
         console.error('Failed to upgrade user subscription:', error);
       }
@@ -185,7 +188,7 @@ export async function POST(req: NextRequest) {
 
     } else if (result === 'failed') {
       // 模拟支付失败
-      await updateOrderStatus(order_id, 'failed', {
+      await billingModule.updateOrderStatus(order_id, 'failed', {
         zpay_status: 'failed',
         failed_at: Date.now()
       });

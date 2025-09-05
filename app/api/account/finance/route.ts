@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { getSubscription, listOrdersByUser } from '../../../../lib/billing';
+import { getBillingModule } from '../../../../lib/config';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,8 +11,9 @@ export async function GET(req: NextRequest) {
     const decoded = jwt.verify(token, secret) as any;
     const phone = decoded?.phone as string;
     if (!phone) return new Response('unauthorized', { status: 401 });
-    const sub = await getSubscription(phone);
-    const orders = await listOrdersByUser(phone);
+    const billingModule = await getBillingModule();
+    const sub = await billingModule.getSubscription(phone);
+    const orders = await billingModule.listOrdersByUser(phone);
     return Response.json({ subscription: sub || null, orders });
   } catch {
     return new Response('unauthorized', { status: 401 });

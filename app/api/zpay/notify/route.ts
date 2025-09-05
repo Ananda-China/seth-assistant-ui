@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { verifyZPayNotify } from '../../../../lib/zpay';
-import { updateOrderStatus, getOrder } from '../../../../lib/billing';
-import { upgradeUserSubscription } from '../../../../lib/users';
+import { getBillingModule, getUsers } from '../../../../lib/config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,8 +41,9 @@ export async function POST(req: NextRequest) {
       return new Response('FAIL', { status: 400 });
     }
 
-    // 获取本地订单
-    const localOrder = await getOrder(order_id);
+    // 获取订单
+    const billingModule = await getBillingModule();
+    const localOrder = await billingModule.getOrder(order_id);
     if (!localOrder) {
       console.error('ZPay notify: order not found', order_id);
       return new Response('FAIL', { status: 404 });
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     // 处理支付成功
     if (status === 'success' || status === 'paid') {
       // 更新订单状态
-      await updateOrderStatus(order_id, 'success', {
+      await billingModule.updateOrderStatus(order_id, 'success', {
         trade_no,
         paid_at: Date.now(),
         zpay_status: status
@@ -74,9 +74,11 @@ export async function POST(req: NextRequest) {
       const subscriptionType = planMapping[localOrder.plan_id || 'monthly'] || 'monthly';
       
       try {
-        await upgradeUserSubscription(localOrder.user, subscriptionType);
+        const usersModule = await getUsers();
+        const userPhone = 'user_phone' in localOrder ? localOrder.user_phone : localOrder.user;
+        await usersModule.upgradeUserSubscription(userPhone, subscriptionType);
         console.log('ZPay notify: user subscription upgraded', {
-          user: localOrder.user,
+          user: userPhone,
           plan: subscriptionType,
           order_id
         });
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // 处理支付失败
     if (status === 'failed' || status === 'cancelled') {
-      await updateOrderStatus(order_id, 'failed', {
+      await billingModule.updateOrderStatus(order_id, 'failed', {
         zpay_status: status,
         failed_at: Date.now()
       });

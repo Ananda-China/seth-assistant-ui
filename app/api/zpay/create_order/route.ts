@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createZPayOrder, ZPAY_PLANS } from '../../../../lib/zpay';
-import { createOrder } from '../../../../lib/billing';
+import { getBillingModule } from '../../../../lib/config';
 import { requireUser } from '../../../../lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
     const plan = ZPAY_PLANS[planId as keyof typeof ZPAY_PLANS];
     const outTradeNo = `zpay_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-    // 创建本地订单记录
-    await createOrder({
+    // 创建订单记录
+    const billingModule = await getBillingModule();
+    await billingModule.createOrder({
       out_trade_no: outTradeNo,
       user: auth.phone,
       plan: plan.name,

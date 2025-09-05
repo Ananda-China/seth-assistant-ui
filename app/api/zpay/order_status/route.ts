@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
 import { queryZPayOrder } from '../../../../lib/zpay';
-import { getOrder, updateOrderStatus } from '../../../../lib/billing';
+import { getBillingModule, getUsers } from '../../../../lib/config';
 import { requireUser } from '../../../../lib/auth';
-import { upgradeUserSubscription } from '../../../../lib/users';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,14 +17,16 @@ export async function GET(req: NextRequest) {
       return Response.json({ message: 'missing order_id' }, { status: 400 });
     }
 
-    // 获取本地订单
-    const localOrder = await getOrder(orderId);
+    // 获取订单
+    const billingModule = await getBillingModule();
+    const localOrder = await billingModule.getOrder(orderId);
     if (!localOrder) {
       return Response.json({ message: 'order not found' }, { status: 404 });
     }
 
     // 检查订单是否属于当前用户
-    if (localOrder.user !== auth.phone) {
+    const userPhone = 'user_phone' in localOrder ? localOrder.user_phone : localOrder.user;
+    if (userPhone !== auth.phone) {
       return Response.json({ message: 'access denied' }, { status: 403 });
     }
 
@@ -65,8 +66,8 @@ export async function GET(req: NextRequest) {
       if ((zPayResult.status === 'success' || zPayResult.status === 'paid') && 
           localOrder.status === 'pending') {
         
-        // 更新本地订单状态
-        await updateOrderStatus(orderId, 'success', {
+        // 更新订单状态
+        await billingModule.updateOrderStatus(orderId, 'success', {
           trade_no: zPayResult.trade_no,
           paid_at: Date.now(),
           zpay_status: zPayResult.status
@@ -82,7 +83,8 @@ export async function GET(req: NextRequest) {
         const subscriptionType = planMapping[localOrder.plan_id || 'monthly'] || 'monthly';
         
         try {
-          await upgradeUserSubscription(localOrder.user, subscriptionType);
+          const usersModule = await getUsers();
+          await usersModule.upgradeUserSubscription(userPhone, subscriptionType);
         } catch (error) {
           console.error('Failed to upgrade user subscription:', error);
         }
