@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
   const conversationId: string | undefined = body?.conversation_id || undefined;
   const clientConversationId: string | undefined = body?.client_conversation_id || undefined;
 
+  console.log('🔍 接收到的参数:', {
+    query: query.substring(0, 50) + '...',
+    conversationId,
+    clientConversationId,
+    hasConversationId: !!conversationId
+  });
+
   // 检查用户权限
   const usersModule = await getUsers();
   const permission = await usersModule.getUserPermission(auth.phone);
@@ -80,18 +87,36 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // 获取Dify对话ID（如果存在）
+  let difyConversationId: string | undefined = undefined;
+  if (clientConversationId) {
+    try {
+      const conv = await storeModule.getConversation(auth.phone, clientConversationId);
+      if (conv && conv.dify_conversation_id) {
+        difyConversationId = conv.dify_conversation_id;
+        console.log('✅ 找到Dify对话ID:', difyConversationId);
+      } else {
+        console.log('ℹ️ 未找到Dify对话ID，将创建新对话');
+      }
+    } catch (error) {
+      console.error('❌ 获取Dify对话ID失败:', error);
+    }
+  }
+
   if (!query) {
     return new Response('empty query', { status: 400 });
   }
 
   const apiUrl = `${DIFY_API_URL.replace(/\/$/, '')}/chat-messages`; // e.g. https://api.dify.ai/v1
 
+
   console.log('🔍 Dify API 请求参数:', {
     apiUrl,
     query: query.substring(0, 50) + '...',
     conversationId,
     clientConversationId,
-    hasConversationId: !!conversationId
+    difyConversationId,
+    hasDifyConversationId: !!difyConversationId
   });
 
   const difyRes = await fetch(apiUrl, {
@@ -105,7 +130,7 @@ export async function POST(req: NextRequest) {
       query,
       response_mode: 'streaming',
       user: 'anonymous',
-      conversation_id: conversationId || undefined, // 如果为空则发送 undefined
+      conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
     }),
   });
 
@@ -141,7 +166,12 @@ export async function POST(req: NextRequest) {
               // 独立一行发送，避免与后续回答内容黏连
               controller.enqueue(encoder.encode(`CID:${evt.conversation_id}\n`));
               if (clientConversationId) {
-                await storeModule.setDifyConversationId(auth.phone, clientConversationId, evt.conversation_id);
+                try {
+                  await storeModule.setDifyConversationId(auth.phone, clientConversationId, evt.conversation_id);
+                  console.log('✅ Dify对话ID已保存:', evt.conversation_id);
+                } catch (error) {
+                  console.error('❌ 保存Dify对话ID失败:', error);
+                }
               }
             }
             const content = evt?.answer || evt?.data || '';

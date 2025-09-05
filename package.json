@@ -13,7 +13,6 @@
     "open:pay": "start http://localhost:3000/pay",
     "open:pricing": "start http://localhost:3000/pricing",
     "open:admin": "start http://localhost:3000/admin",
-    
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
     "test:supabase": "node test-supabase-connection.js",
@@ -29,6 +28,7 @@
     "dotenv": "^17.2.1",
     "jsonwebtoken": "^9.0.2",
     "next": "14.2.5",
+    "node-fetch": "^3.3.2",
     "postcss": "8.4.39",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -36,8 +36,6 @@
     "tailwindcss": "3.4.10",
     "tencentcloud-sdk-nodejs": "^4.1.101",
     "typescript": "5.5.4"
-  },
-  "devDependencies": {
   },
   "engines": {
     "node": ">=18.0.0",

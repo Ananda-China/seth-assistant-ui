@@ -43,6 +43,11 @@ export async function createConversation(user: string, title = '新会话'): Pro
   all.push(conv); await writeJson(CONV_FILE, all); return conv;
 }
 
+export async function getConversation(user: string, id: string): Promise<Conversation | null> {
+  const all = await readJson<Conversation>(CONV_FILE);
+  return all.find(c => c.id === id && c.user === user) || null;
+}
+
 export async function renameConversation(user: string, id: string, title: string) {
   const all = await readJson<Conversation>(CONV_FILE); const conv = all.find(c => c.id === id && c.user === user); if (!conv) return false; conv.title = title; conv.updated_at = Date.now(); await writeJson(CONV_FILE, all); return true;
 }
