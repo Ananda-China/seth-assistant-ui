@@ -1,10 +1,17 @@
 import { NextRequest } from 'next/server';
+import { requireAdminAuth } from '../../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    // 添加管理员认证
+    const adminAuth = requireAdminAuth(req);
+    if (!adminAuth) {
+      return Response.json({ success: false, message: '需要管理员权限' }, { status: 401 });
+    }
+
     console.log('开始获取激活码列表...');
     console.log('环境变量检查:', {
       hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,

@@ -1,10 +1,16 @@
 import { NextRequest } from 'next/server';
+import { requireAdminAuth } from '../../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    // 添加管理员认证
+    const adminAuth = requireAdminAuth(req);
+    if (!adminAuth) {
+      return Response.json({ success: false, message: '需要管理员权限' }, { status: 401 });
+    }
     const { request_id, status, screenshot_url } = await req.json().catch(() => ({}));
     
     if (!request_id || !status) {
