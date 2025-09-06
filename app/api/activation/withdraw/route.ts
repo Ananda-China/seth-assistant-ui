@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     // 验证用户身份
