@@ -46,10 +46,17 @@ export default function ActivationManagement() {
 
   const loadActivationCodes = async () => {
     try {
+      console.log('开始加载激活码...');
       const res = await fetch('/api/admin/activation-codes');
+      console.log('激活码API响应状态:', res.status);
+      
       if (res.ok) {
         const data = await res.json();
+        console.log('激活码API响应数据:', data);
         setActivationCodes(data.codes || []);
+        console.log('设置激活码数量:', data.codes?.length || 0);
+      } else {
+        console.error('激活码API响应失败:', res.status, res.statusText);
       }
     } catch (error) {
       console.error('加载激活码失败:', error);
