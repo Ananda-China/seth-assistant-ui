@@ -1109,4 +1109,224 @@ body {
   margin-top: 20px;
 }
 
+/* ===== 激活码相关样式 ===== */
+.activation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.activation-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.activation-form .form-input {
+  flex: 1;
+}
+
+.activation-message {
+  color: #10B981;
+  font-size: 14px;
+  text-align: center;
+}
+
+.plans-info {
+  background: rgba(46, 51, 91, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.plans-title {
+  font-size: 14px;
+  color: #8A94B3;
+  margin-bottom: 12px;
+}
+
+.plan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.plan-item:last-child {
+  border-bottom: none;
+}
+
+.plan-name {
+  color: #EAEBF0;
+  font-size: 14px;
+}
+
+.plan-price {
+  color: #C8B6E2;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ===== 余额相关样式 ===== */
+.balance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.balance-amount {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(200, 182, 226, 0.1) 0%, rgba(138, 148, 179, 0.1) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(200, 182, 226, 0.2);
+}
+
+.balance-label {
+  color: #8A94B3;
+  font-size: 16px;
+}
+
+.balance-value {
+  color: #C8B6E2;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.withdrawal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.withdraw-message {
+  color: #10B981;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ===== 佣金记录样式 ===== */
+.commission-section {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.commission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(46, 51, 91, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.commission-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.commission-user {
+  color: #EAEBF0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.commission-plan {
+  color: #8A94B3;
+  font-size: 12px;
+}
+
+.commission-level {
+  color: #C8B6E2;
+  font-size: 12px;
+  background: rgba(200, 182, 226, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.commission-amount {
+  color: #10B981;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* ===== 提现记录样式 ===== */
+.withdrawal-section {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.withdrawal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.withdrawal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(46, 51, 91, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+.withdrawal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.withdrawal-amount {
+  color: #EAEBF0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.withdrawal-method {
+  color: #8A94B3;
+  font-size: 12px;
+}
+
+.withdrawal-status {
+  color: #F59E0B;
+  font-size: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.withdrawal-time {
+  color: #8A94B3;
+  font-size: 12px;
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+  .activation-form {
+    flex-direction: column;
+  }
+  
+  .balance-amount {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
 

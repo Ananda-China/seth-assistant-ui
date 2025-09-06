@@ -1,0 +1,47 @@
+import { NextRequest } from 'next/server';
+import jwt from 'jsonwebtoken';
+import { ActivationManager } from '../../../../lib/activation';
+import { supabaseAdmin } from '../../../../lib/supabase';
+
+export async function GET(req: NextRequest) {
+  try {
+    // 验证用户身份
+    const cookie = req.headers.get('cookie') || '';
+    const match = /(?:^|;\s*)sid=([^;]+)/.exec(cookie);
+    const token = match ? decodeURIComponent(match[1]) : '';
+    const secret = process.env.JWT_SECRET || 'dev_secret_change_me';
+    const decoded = jwt.verify(token, secret) as any;
+    const phone = decoded?.phone as string;
+    
+    if (!phone) {
+      return Response.json({ success: false, message: '未登录' }, { status: 401 });
+    }
+
+    // 获取用户ID
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('phone', phone)
+      .single();
+
+    if (userError || !user) {
+      return Response.json({ success: false, message: '用户不存在' }, { status: 404 });
+    }
+
+    // 获取用户余额
+    const result = await ActivationManager.getUserBalance(user.id);
+    
+    if (result.success) {
+      return Response.json({
+        success: true,
+        balance: result.balance,
+        balance_yuan: (result.balance || 0) / 100
+      });
+    } else {
+      return Response.json(result, { status: 500 });
+    }
+  } catch (error) {
+    console.error('获取余额错误:', error);
+    return Response.json({ success: false, message: '获取余额失败' }, { status: 500 });
+  }
+}

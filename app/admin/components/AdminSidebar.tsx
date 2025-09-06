@@ -12,7 +12,8 @@ export default function AdminSidebar({ activeTab, onTabChange }: AdminSidebarPro
     { id: 'users', label: '用户管理', icon: '👥' },
     { id: 'analytics', label: '数据统计', icon: '📊' },
     { id: 'content', label: '内容管理', icon: '💬' },
-    { id: 'payments', label: '支付管理', icon: '💰' }
+    { id: 'payments', label: '支付管理', icon: '💰' },
+    { id: 'activation', label: '激活码管理', icon: '🎫' }
   ];
 
   return (

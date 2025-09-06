@@ -7,6 +7,7 @@ import UserManagement from './UserManagement';
 import Analytics from './Analytics';
 import ContentManagement from './ContentManagement';
 import PaymentManagement from './PaymentManagement';
+import ActivationManagement from './ActivationManagement';
 
 interface AdminUser {
   username: string;
@@ -41,6 +42,8 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
         return <ContentManagement />;
       case 'payments':
         return <PaymentManagement />;
+      case 'activation':
+        return <ActivationManagement />;
       default:
         return <UserManagement />;
     }

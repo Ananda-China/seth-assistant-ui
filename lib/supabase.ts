@@ -226,6 +226,169 @@ export type Database = {
           created_at?: string;
         };
       };
+      plans: {
+        Row: {
+          id: string;
+          name: string;
+          price: number;
+          duration_days: number;
+          description: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          price: number;
+          duration_days: number;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          price?: number;
+          duration_days?: number;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      activation_codes: {
+        Row: {
+          id: string;
+          code: string;
+          plan_id: string;
+          is_used: boolean;
+          used_by_user_id: string | null;
+          activated_at: string | null;
+          expires_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          plan_id: string;
+          is_used?: boolean;
+          used_by_user_id?: string | null;
+          activated_at?: string | null;
+          expires_at: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          plan_id?: string;
+          is_used?: boolean;
+          used_by_user_id?: string | null;
+          activated_at?: string | null;
+          expires_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      balances: {
+        Row: {
+          user_id: string;
+          amount: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          amount?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          amount?: number;
+          updated_at?: string;
+        };
+      };
+      commission_records: {
+        Row: {
+          id: string;
+          inviter_user_id: string;
+          invited_user_id: string;
+          plan_id: string;
+          commission_amount: number;
+          commission_percentage: number;
+          level: number;
+          activation_code_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          inviter_user_id: string;
+          invited_user_id: string;
+          plan_id: string;
+          commission_amount: number;
+          commission_percentage: number;
+          level: number;
+          activation_code_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          inviter_user_id?: string;
+          invited_user_id?: string;
+          plan_id?: string;
+          commission_amount?: number;
+          commission_percentage?: number;
+          level?: number;
+          activation_code_id?: string | null;
+          created_at?: string;
+        };
+      };
+      withdrawal_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          status: 'pending' | 'processing' | 'completed' | 'rejected';
+          payment_method: 'alipay' | 'wechat';
+          account_info: string;
+          processed_by_admin_id: string | null;
+          processed_at: string | null;
+          transfer_screenshot_url: string | null;
+          rejection_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          status?: 'pending' | 'processing' | 'completed' | 'rejected';
+          payment_method: 'alipay' | 'wechat';
+          account_info: string;
+          processed_by_admin_id?: string | null;
+          processed_at?: string | null;
+          transfer_screenshot_url?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          status?: 'pending' | 'processing' | 'completed' | 'rejected';
+          payment_method?: 'alipay' | 'wechat';
+          account_info?: string;
+          processed_by_admin_id?: string | null;
+          processed_at?: string | null;
+          transfer_screenshot_url?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };

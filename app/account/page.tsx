@@ -15,6 +15,22 @@ export default function AccountPage() {
   const [invitedBy, setInvitedByState] = useState('');
   const [invitees, setInvitees] = useState<any[]>([]);
   const [inviteMsg, setInviteMsg] = useState('');
+  
+  // 激活码相关状态
+  const [activationCode, setActivationCode] = useState('');
+  const [activationLoading, setActivationLoading] = useState(false);
+  const [activationMsg, setActivationMsg] = useState('');
+  const [balance, setBalance] = useState(0);
+  const [commissionRecords, setCommissionRecords] = useState<any[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  
+  // 提现相关状态
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawMethod, setWithdrawMethod] = useState('alipay');
+  const [withdrawAccount, setWithdrawAccount] = useState('');
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawMsg, setWithdrawMsg] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -37,8 +53,45 @@ export default function AccountPage() {
         setInvitedByState(data.me?.invited_by || '');
         setInvitees(data.invitees || []);
       }
+      
+      // 加载激活码相关数据
+      await loadActivationData();
     })();
   }, []);
+
+  const loadActivationData = async () => {
+    try {
+      // 加载余额
+      const balanceRes = await fetch('/api/activation/balance');
+      if (balanceRes.ok) {
+        const balanceData = await balanceRes.json();
+        setBalance(balanceData.balance_yuan || 0);
+      }
+
+      // 加载佣金记录
+      const commissionRes = await fetch('/api/activation/commission');
+      if (commissionRes.ok) {
+        const commissionData = await commissionRes.json();
+        setCommissionRecords(commissionData.records || []);
+      }
+
+      // 加载提现记录
+      const withdrawRes = await fetch('/api/activation/withdraw');
+      if (withdrawRes.ok) {
+        const withdrawData = await withdrawRes.json();
+        setWithdrawalRequests(withdrawData.requests || []);
+      }
+
+      // 加载套餐信息
+      const plansRes = await fetch('/api/activation/plans');
+      if (plansRes.ok) {
+        const plansData = await plansRes.json();
+        setPlans(plansData.plans || []);
+      }
+    } catch (error) {
+      console.error('加载激活码数据失败:', error);
+    }
+  };
 
   async function save() {
     setLoading(true);
@@ -52,6 +105,92 @@ export default function AccountPage() {
       } else setMsg('保存失败');
     } finally {
       setLoading(false);
+    }
+  }
+
+  // 激活激活码
+  async function activateCode() {
+    if (!activationCode.trim()) {
+      setActivationMsg('请输入激活码');
+      return;
+    }
+
+    setActivationLoading(true);
+    setActivationMsg('');
+    
+    try {
+      const res = await fetch('/api/activation/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: activationCode.trim() })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setActivationMsg('激活成功！');
+        setActivationCode('');
+        // 重新加载数据
+        await loadActivationData();
+        // 重新加载财务数据
+        const f = await fetch('/api/account/finance');
+        if (f.ok) {
+          const financeData = await f.json();
+          setSub(financeData.subscription);
+          setOrders(financeData.orders || []);
+        }
+      } else {
+        setActivationMsg(data.message || '激活失败');
+      }
+    } catch (error) {
+      setActivationMsg('激活失败，请重试');
+    } finally {
+      setActivationLoading(false);
+    }
+  }
+
+  // 申请提现
+  async function submitWithdrawal() {
+    if (!withdrawAmount || !withdrawAccount) {
+      setWithdrawMsg('请填写完整信息');
+      return;
+    }
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount < 50) {
+      setWithdrawMsg('最低提现金额为50元');
+      return;
+    }
+
+    setWithdrawLoading(true);
+    setWithdrawMsg('');
+    
+    try {
+      const res = await fetch('/api/activation/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amount,
+          payment_method: withdrawMethod,
+          account_info: withdrawAccount
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setWithdrawMsg('提现申请已提交，请等待处理');
+        setWithdrawAmount('');
+        setWithdrawAccount('');
+        // 重新加载数据
+        await loadActivationData();
+      } else {
+        setWithdrawMsg(data.message || '提现申请失败');
+      }
+    } catch (error) {
+      setWithdrawMsg('提现申请失败，请重试');
+    } finally {
+      setWithdrawLoading(false);
     }
   }
 
@@ -151,6 +290,137 @@ export default function AccountPage() {
               ) : (
                 <p className="empty-text">暂无订单</p>
               )}
+            </div>
+
+            {/* 激活码激活卡 */}
+            <div className="account-card">
+              <h2 className="card-title">激活码激活</h2>
+              <div className="activation-section">
+                <div className="activation-form">
+                  <input
+                    className="form-input"
+                    placeholder="请输入激活码"
+                    value={activationCode}
+                    onChange={e => setActivationCode(e.target.value)}
+                  />
+                  <button 
+                    className="btn-primary" 
+                    onClick={activateCode}
+                    disabled={activationLoading}
+                  >
+                    {activationLoading ? '激活中...' : '激活'}
+                  </button>
+                </div>
+                {activationMsg && <span className="activation-message">{activationMsg}</span>}
+                
+                <div className="plans-info">
+                  <div className="plans-title">可用套餐</div>
+                  {plans.map(plan => (
+                    <div key={plan.id} className="plan-item">
+                      <span className="plan-name">{plan.name}</span>
+                      <span className="plan-price">¥{(plan.price / 100).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 我的余额卡 */}
+            <div className="account-card">
+              <h2 className="card-title">我的余额</h2>
+              <div className="balance-section">
+                <div className="balance-amount">
+                  <span className="balance-label">当前余额：</span>
+                  <span className="balance-value">¥{balance.toFixed(2)}</span>
+                </div>
+                
+                <div className="withdrawal-form">
+                  <div className="form-group">
+                    <label className="form-label">提现金额</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      placeholder="最低50元"
+                      value={withdrawAmount}
+                      onChange={e => setWithdrawAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">提现方式</label>
+                    <select
+                      className="form-input"
+                      value={withdrawMethod}
+                      onChange={e => setWithdrawMethod(e.target.value)}
+                    >
+                      <option value="alipay">支付宝</option>
+                      <option value="wechat">微信</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">收款账号</label>
+                    <input
+                      className="form-input"
+                      placeholder={withdrawMethod === 'alipay' ? '支付宝账号' : '微信账号'}
+                      value={withdrawAccount}
+                      onChange={e => setWithdrawAccount(e.target.value)}
+                    />
+                  </div>
+                  <button 
+                    className="btn-primary" 
+                    onClick={submitWithdrawal}
+                    disabled={withdrawLoading}
+                  >
+                    {withdrawLoading ? '提交中...' : '申请提现'}
+                  </button>
+                </div>
+                {withdrawMsg && <span className="withdraw-message">{withdrawMsg}</span>}
+              </div>
+            </div>
+
+            {/* 佣金记录卡 */}
+            <div className="account-card">
+              <h2 className="card-title">佣金记录</h2>
+              <div className="commission-section">
+                {commissionRecords && commissionRecords.length > 0 ? (
+                  <div className="commission-list">
+                    {commissionRecords.map(record => (
+                      <div key={record.id} className="commission-item">
+                        <div className="commission-info">
+                          <span className="commission-user">{record.invited_user?.nickname || record.invited_user?.phone}</span>
+                          <span className="commission-plan">{record.plan?.name}</span>
+                          <span className="commission-level">L{record.level}</span>
+                        </div>
+                        <div className="commission-amount">+¥{(record.commission_amount / 100).toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-text">暂无佣金记录</div>
+                )}
+              </div>
+            </div>
+
+            {/* 提现记录卡 */}
+            <div className="account-card">
+              <h2 className="card-title">提现记录</h2>
+              <div className="withdrawal-section">
+                {withdrawalRequests && withdrawalRequests.length > 0 ? (
+                  <div className="withdrawal-list">
+                    {withdrawalRequests.map(request => (
+                      <div key={request.id} className="withdrawal-item">
+                        <div className="withdrawal-info">
+                          <span className="withdrawal-amount">¥{(request.amount / 100).toFixed(2)}</span>
+                          <span className="withdrawal-method">{request.payment_method === 'alipay' ? '支付宝' : '微信'}</span>
+                          <span className="withdrawal-status">{request.status}</span>
+                        </div>
+                        <div className="withdrawal-time">{new Date(request.created_at).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-text">暂无提现记录</div>
+                )}
+              </div>
             </div>
 
             {/* 邀请关系卡 */}
