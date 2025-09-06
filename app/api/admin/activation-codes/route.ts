@@ -3,6 +3,8 @@ import { supabaseAdmin } from '../../../../lib/supabase';
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('开始获取激活码列表...');
+    
     // 获取激活码列表
     const { data: codes, error } = await supabaseAdmin
       .from('activation_codes')
@@ -13,9 +15,14 @@ export async function GET(req: NextRequest) {
       `)
       .order('created_at', { ascending: false });
 
+    console.log('激活码查询结果:', { codes, error });
+
     if (error) {
+      console.error('获取激活码失败:', error);
       return Response.json({ success: false, message: '获取激活码失败' }, { status: 500 });
     }
+
+    console.log('成功获取激活码数量:', codes?.length || 0);
 
     return Response.json({
       success: true,
