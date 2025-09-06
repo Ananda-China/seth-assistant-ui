@@ -6,6 +6,11 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     console.log('开始获取激活码列表...');
+    console.log('环境变量检查:', {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...'
+    });
     
     // 获取激活码列表
     const { data: codes, error } = await supabaseAdmin
@@ -18,10 +23,16 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false });
 
     console.log('激活码查询结果:', { codes, error });
+    console.log('错误详情:', error);
 
     if (error) {
       console.error('获取激活码失败:', error);
-      return Response.json({ success: false, message: '获取激活码失败' }, { status: 500 });
+      return Response.json({ 
+        success: false, 
+        message: '获取激活码失败',
+        error: error.message,
+        details: error
+      }, { status: 500 });
     }
 
     console.log('成功获取激活码数量:', codes?.length || 0);
@@ -32,6 +43,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('获取激活码错误:', error);
-    return Response.json({ success: false, message: '获取激活码失败' }, { status: 500 });
+    return Response.json({ 
+      success: false, 
+      message: '获取激活码失败',
+      error: error instanceof Error ? error.message : '未知错误'
+    }, { status: 500 });
   }
 }
