@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     // 获取提现申请列表

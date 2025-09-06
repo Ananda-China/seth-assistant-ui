@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { ActivationManager } from '../../../../lib/activation';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { plan_id, count } = await req.json().catch(() => ({}));
