@@ -144,7 +144,7 @@ export class ActivationManager {
           out_trade_no: orderId,
           user_phone: user.phone,
           plan: activationCode.plan.name,
-          plan_id: activationCode.plan_id,
+          plan_id: activationCode.plan.id,
           amount_fen: activationCode.plan.price,
           duration_days: activationCode.plan.duration_days,
           status: 'success',
