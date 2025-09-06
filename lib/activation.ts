@@ -96,8 +96,16 @@ export class ActivationManager {
         .single();
 
       if (codeError || !activationCode) {
+        console.error('激活码查询失败:', codeError);
         return { success: false, message: '激活码不存在' };
       }
+
+      console.log('找到激活码:', {
+        id: activationCode.id,
+        code: activationCode.code,
+        plan: activationCode.plan,
+        is_used: activationCode.is_used
+      });
 
       // 检查激活码是否已使用
       if (activationCode.is_used) {
@@ -156,6 +164,19 @@ export class ActivationManager {
 
       if (orderError) {
         console.error('创建订单失败:', orderError);
+        console.error('订单数据:', {
+          out_trade_no: orderId,
+          user_phone: user.phone,
+          plan: activationCode.plan.name,
+          plan_id: activationCode.plan.id,
+          amount_fen: activationCode.plan.price,
+          duration_days: activationCode.plan.duration_days,
+          status: 'success',
+          trade_no: `ACTIVATION_${activationCode.id}`,
+          paid_at: new Date().toISOString(),
+          activation_code_id: activationCode.id,
+          order_type: 'activation'
+        });
         // 回滚激活码状态
         await supabaseAdmin
           .from('activation_codes')
@@ -165,7 +186,7 @@ export class ActivationManager {
             activated_at: null
           })
           .eq('id', activationCode.id);
-        return { success: false, message: '创建订单失败' };
+        return { success: false, message: `创建订单失败: ${orderError.message}` };
       }
 
       // 计算订阅结束时间
