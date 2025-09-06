@@ -304,10 +304,21 @@ export class ActivationManager {
 
   // 检查是否首次购买
   static async isFirstPurchase(userId: string): Promise<boolean> {
+    // 先获取用户手机号
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('phone')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      return true; // 如果用户不存在，认为是首次购买
+    }
+
     const { data: orders, error } = await supabaseAdmin
       .from('orders')
       .select('id')
-      .eq('user_phone', (await supabaseAdmin.from('users').select('phone').eq('id', userId).single()).data?.phone)
+      .eq('user_phone', user.phone)
       .eq('status', 'success')
       .eq('order_type', 'activation');
 
