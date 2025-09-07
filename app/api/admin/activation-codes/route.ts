@@ -43,6 +43,9 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       codes: codes || [],
+      timestamp: new Date().toISOString(),
+      cacheBust: Math.random(),
+      version: "v2.0-cache-bust",
       debug: {
         codesCount: codes?.length || 0,
         hasError: !!error,
