@@ -146,9 +146,23 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   // 检查试用期状态
   const isTrialActive = user.trial_end ? new Date(user.trial_end) > now : false;
   
-  // 检查付费订阅状态
-  const isPaidUser = user.subscription_type !== 'free' && 
-                     user.subscription_end ? new Date(user.subscription_end) > now : false;
+  // 检查付费订阅状态（包括激活码订阅）
+  let isPaidUser = user.subscription_type !== 'free' && 
+                   user.subscription_end ? new Date(user.subscription_end) > now : false;
+  
+  // 检查激活码订阅
+  if (!isPaidUser) {
+    const { data: subscription } = await supabaseAdmin
+      .from('subscriptions')
+      .select('*')
+      .eq('user_phone', phone)
+      .eq('status', 'active')
+      .single();
+    
+    if (subscription && new Date(subscription.current_period_end) > now) {
+      isPaidUser = true;
+    }
+  }
   
   // 检查是否需要重置每日聊天次数（仅对非试用期且非付费用户）
   if (!isTrialActive && !isPaidUser && user.last_chat_date !== today) {
