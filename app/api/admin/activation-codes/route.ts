@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
-export const dynamic = 'force-dynamic';
+// 移除 force-dynamic，允许静态生成
 
 export async function GET() {
   try {
