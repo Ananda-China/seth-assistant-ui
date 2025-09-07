@@ -9,7 +9,7 @@ const ADMIN_CREDENTIALS = {
 };
 
 // JWT 密钥（生产环境应该使用环境变量）
-const JWT_SECRET = process.env.JWT_SECRET || 'SethAssistant2024!@#$%^&*()_+Secure';
+const JWT_SECRET = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
 
 export async function POST(req: NextRequest) {
   try {

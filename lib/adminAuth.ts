@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'SethAssistant2024!@#$%^&*()_+Secure';
+const JWT_SECRET = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
 
 export interface AdminUser {
   username: string;
