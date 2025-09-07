@@ -3,7 +3,7 @@ import { requireAdminAuth } from '../../../../lib/adminAuth';
 
 export async function GET(req: NextRequest) {
   // 验证管理员权限
-  const adminUser = await requireAdminAuth(req);
+  const adminUser = requireAdminAuth(req);
   if (!adminUser) {
     return new Response('Unauthorized', { status: 401 });
   }

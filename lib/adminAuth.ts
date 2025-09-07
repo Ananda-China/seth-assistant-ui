@@ -34,15 +34,10 @@ export function getAdminUser(req: NextRequest): AdminUser | null {
   return verifyAdminToken(token);
 }
 
-// 检查管理员权限的中间件
-export function requireAdminAuth(req: NextRequest): NextResponse | null {
+// 检查管理员权限，返回管理员用户信息或null
+export function requireAdminAuth(req: NextRequest): AdminUser | null {
   const adminUser = getAdminUser(req);
-  
-  if (!adminUser) {
-    return NextResponse.redirect(new URL('/admin/login', req.url));
-  }
-  
-  return null; // 继续处理请求
+  return adminUser;
 }
 
 // 登出函数
