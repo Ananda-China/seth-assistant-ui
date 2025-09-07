@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       tokenPreview: token.substring(0, 50) + (token.length > 50 ? '...' : '')
     });
 
-    const secret = process.env.JWT_SECRET || 'dev_secret_change_me';
+    const secret = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
     console.log('🔍 JWT Secret信息:', {
       hasSecret: !!secret,
       secretLength: secret.length,

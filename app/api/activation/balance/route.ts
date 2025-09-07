@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const cookie = req.headers.get('cookie') || '';
     const match = /(?:^|;\s*)sid=([^;]+)/.exec(cookie);
     const token = match ? decodeURIComponent(match[1]) : '';
-    const secret = process.env.JWT_SECRET || 'dev_secret_change_me';
+    const secret = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
     const decoded = jwt.verify(token, secret) as any;
     const phone = decoded?.phone as string;
     

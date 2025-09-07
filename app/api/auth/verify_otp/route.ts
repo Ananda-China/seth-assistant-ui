@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { consumeOtp } from '../../../../lib/otpStore';
 import { getUsers } from '../../../../lib/config';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+const JWT_SECRET = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
 const INVITE_CODE = process.env.INVITE_CODE || '';
 
 export async function POST(req: NextRequest) {
