@@ -429,12 +429,13 @@ export class ActivationManager {
         .select(`
           *,
           plan:plans(name, price),
-          invited_user:users(phone, nickname)
+          invited_user:users!commission_records_invited_user_id_fkey(phone, nickname)
         `)
         .eq('inviter_user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('获取佣金记录失败:', error);
         return { success: false, error: '获取佣金记录失败' };
       }
 

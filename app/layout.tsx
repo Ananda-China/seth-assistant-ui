@@ -4,6 +4,11 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Seth Assistant',
   description: 'MVP of Seth AI assistant',
+  icons: {
+    icon: '/logo-symbol.svg',
+    shortcut: '/logo-symbol.svg',
+    apple: '/logo-symbol.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
