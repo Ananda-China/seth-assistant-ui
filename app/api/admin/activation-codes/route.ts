@@ -1,10 +1,9 @@
-import { NextRequest } from 'next/server';
-import { requireAdminAuth } from '../../../../lib/adminAuth';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // 临时移除认证检查进行测试
     // const adminAuth = requireAdminAuth(req);
@@ -31,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('获取激活码失败:', error);
-      return Response.json({ 
+      return NextResponse.json({ 
         success: false, 
         message: '获取激活码失败',
         error: error.message,
@@ -41,13 +40,13 @@ export async function GET(req: NextRequest) {
 
     console.log('成功获取激活码数量:', codes?.length || 0);
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       codes: codes || []
     });
   } catch (error) {
     console.error('获取激活码错误:', error);
-    return Response.json({ 
+    return NextResponse.json({ 
       success: false, 
       message: '获取激活码失败',
       error: error instanceof Error ? error.message : '未知错误'
