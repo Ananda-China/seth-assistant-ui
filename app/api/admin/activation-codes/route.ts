@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
     console.log('环境变量检查:', {
       hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...'
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...',
+      serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
     });
     
     // 获取激活码列表 - 使用与构建时相同的查询方式
