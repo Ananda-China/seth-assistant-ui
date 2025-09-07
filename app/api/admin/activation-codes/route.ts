@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
-// 移除 force-dynamic，允许静态生成
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -19,7 +19,7 @@ export async function GET() {
       serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
     });
     
-    // 获取激活码列表 - 使用与构建时相同的查询方式
+    // 获取激活码列表 - 使用与构建时完全相同的查询方式
     const { data: codes, error } = await supabaseAdmin
       .from('activation_codes')
       .select('*')
@@ -42,7 +42,17 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      codes: codes || []
+      codes: codes || [],
+      debug: {
+        codesCount: codes?.length || 0,
+        hasError: !!error,
+        errorMessage: error?.message || null,
+        environment: {
+          hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+          serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
+        }
+      }
     });
   } catch (error) {
     console.error('获取激活码错误:', error);
