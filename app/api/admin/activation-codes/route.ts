@@ -19,11 +19,11 @@ export async function GET(req: NextRequest) {
       url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...'
     });
     
-    // 获取激活码列表 - 使用服务角色绕过RLS
+    // 获取激活码列表 - 使用与构建时相同的查询方式
     const { data: codes, error } = await supabaseAdmin
       .from('activation_codes')
       .select('*')
-      .order('created_at', { ascending: false });
+      .limit(5);
 
     console.log('激活码查询结果:', { codes, error });
     console.log('错误详情:', error);
