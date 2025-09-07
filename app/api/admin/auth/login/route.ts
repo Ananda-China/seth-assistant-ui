@@ -9,14 +9,16 @@ const ADMIN_CREDENTIALS = {
 };
 
 // JWT 密钥（生产环境应该使用环境变量）
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'SethAssistant2024!@#$%^&*()_+Secure';
 
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
+    console.log('管理员登录请求:', { username, hasPassword: !!password, jwtSecret: !!JWT_SECRET });
 
     // 验证用户名和密码
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      console.log('管理员登录验证成功，生成JWT token');
       // 生成 JWT token
       const token = jwt.sign(
         { 
@@ -40,12 +42,18 @@ export async function POST(req: NextRequest) {
       response.cookies.set('admin_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 // 24小时
+        sameSite: 'lax', // 改为lax以支持跨域
+        maxAge: 24 * 60 * 60, // 24小时
+        path: '/' // 明确设置路径
       });
 
       return response;
     } else {
+      console.log('管理员登录验证失败:', { 
+        providedUsername: username, 
+        expectedUsername: ADMIN_CREDENTIALS.username,
+        passwordMatch: password === ADMIN_CREDENTIALS.password 
+      });
       return NextResponse.json(
         { success: false, message: '用户名或密码错误' },
         { status: 401 }

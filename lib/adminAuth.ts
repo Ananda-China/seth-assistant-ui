@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'SethAssistant2024!@#$%^&*()_+Secure';
 
 export interface AdminUser {
   username: string;
@@ -34,10 +34,15 @@ export function getAdminUser(req: NextRequest): AdminUser | null {
   return verifyAdminToken(token);
 }
 
-// 检查管理员权限，返回管理员用户信息或null
-export async function requireAdminAuth(req: NextRequest): Promise<AdminUser | null> {
+// 检查管理员权限的中间件
+export function requireAdminAuth(req: NextRequest): NextResponse | null {
   const adminUser = getAdminUser(req);
-  return adminUser;
+  
+  if (!adminUser) {
+    return NextResponse.redirect(new URL('/admin/login', req.url));
+  }
+  
+  return null; // 继续处理请求
 }
 
 // 登出函数
