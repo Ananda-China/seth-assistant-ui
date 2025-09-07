@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...'
     });
     
-    // 获取激活码列表 - 先测试简单查询
+    // 获取激活码列表 - 使用服务角色绕过RLS
     const { data: codes, error } = await supabaseAdmin
       .from('activation_codes')
       .select('*')
