@@ -3,6 +3,9 @@ import { requireAdminAuth } from '../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../lib/supabase';
 import { getUsers } from '../../../lib/config';
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     console.log('🔍 开始调试管理员认证和用户数据...');
