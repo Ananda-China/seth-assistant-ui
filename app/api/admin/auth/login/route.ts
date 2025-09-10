@@ -14,20 +14,29 @@ const JWT_SECRET = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-20
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
-    console.log('管理员登录请求:', { username, hasPassword: !!password, jwtSecret: !!JWT_SECRET });
+    console.log('管理员登录请求:', {
+      username,
+      hasPassword: !!password,
+      jwtSecret: !!JWT_SECRET,
+      jwtSecretLength: JWT_SECRET.length,
+      nodeEnv: process.env.NODE_ENV,
+      hasEnvJwtSecret: !!process.env.JWT_SECRET
+    });
 
     // 验证用户名和密码
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       console.log('管理员登录验证成功，生成JWT token');
+
       // 生成 JWT token
-      const token = jwt.sign(
-        { 
-          username: ADMIN_CREDENTIALS.username, 
-          role: ADMIN_CREDENTIALS.role,
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24小时过期
-        },
-        JWT_SECRET
-      );
+      const payload = {
+        username: ADMIN_CREDENTIALS.username,
+        role: ADMIN_CREDENTIALS.role,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24小时过期
+      };
+
+      console.log('JWT payload:', payload);
+      const token = jwt.sign(payload, JWT_SECRET);
+      console.log('JWT token生成成功，长度:', token.length);
 
       // 设置 HTTP-only cookie
       const response = NextResponse.json({ 
