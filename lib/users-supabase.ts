@@ -28,9 +28,9 @@ export type UserPermission = {
   resetTime?: string;
 };
 
-// 生成邀请码
-function generateInviteCode(): string {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+// 生成邀请码 - 使用手机号作为邀请码
+function generateInviteCode(phone: string): string {
+  return phone; // 直接使用手机号作为邀请码
 }
 
 // 获取用户
@@ -62,7 +62,7 @@ export async function getOrCreateUser(phone: string): Promise<User> {
       .insert({
         phone,
         nickname: '',
-        invite_code: generateInviteCode(),
+        invite_code: generateInviteCode(phone),
         trial_start: now,
         trial_end: trialEnd,
         subscription_type: 'free',
@@ -94,7 +94,7 @@ export async function updateUserNickname(phone: string, nickname: string): Promi
 
 // 设置邀请人
 export async function setInvitedBy(phone: string, inviterCode: string): Promise<User | null> {
-  // 检查邀请码是否存在
+  // 检查邀请码是否存在（邀请码就是手机号）
   const { data: inviter } = await supabaseAdmin
     .from('users')
     .select('phone')
@@ -102,6 +102,9 @@ export async function setInvitedBy(phone: string, inviterCode: string): Promise<
     .single();
 
   if (!inviter) return null;
+
+  // 不能邀请自己
+  if (inviterCode === phone) return null;
 
   const { data, error } = await supabaseAdmin
     .from('users')

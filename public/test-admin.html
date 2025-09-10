@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .login-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .data-section {
+            margin-top: 20px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>管理员测试页面</h1>
+        
+        <div class="login-form">
+            <input type="text" id="username" placeholder="用户名" value="admin">
+            <input type="password" id="password" placeholder="密码" value="admin123">
+            <button onclick="login()">登录</button>
+            <button onclick="logout()">登出</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <div>
+            <button onclick="fetchUsers()">获取用户数据</button>
+            <button onclick="fetchAnalytics()">获取统计数据</button>
+            <button onclick="testDebug()">调试信息</button>
+        </div>
+        
+        <div id="stats" class="stats"></div>
+        <div id="data" class="data-section"></div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/admin/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    isLoggedIn = true;
+                    showStatus('登录成功！', 'success');
+                    console.log('登录成功:', data);
+                } else {
+                    showStatus('登录失败: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('登录错误: ' + error.message, 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/admin/auth/logout', { method: 'POST' });
+                isLoggedIn = false;
+                showStatus('已登出', 'success');
+                document.getElementById('data').innerHTML = '';
+                document.getElementById('stats').innerHTML = '';
+            } catch (error) {
+                showStatus('登出错误: ' + error.message, 'error');
+            }
+        }
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch('/api/admin/users?page=1&limit=10');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('用户数据获取成功', 'success');
+                    displayData('用户数据', data);
+                    
+                    // 显示统计信息
+                    const stats = `
+                        <div class="stat-card">
+                            <div class="stat-number">${data.users?.length || 0}</div>
+                            <div class="stat-label">用户数量</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.pagination?.total || 0}</div>
+                            <div class="stat-label">总用户数</div>
+                        </div>
+                    `;
+                    document.getElementById('stats').innerHTML = stats;
+                } else {
+                    showStatus('获取用户数据失败: ' + response.status + ' ' + response.statusText, 'error');
+                    displayData('错误信息', data);
+                }
+            } catch (error) {
+                showStatus('请求错误: ' + error.message, 'error');
+            }
+        }
+
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch('/api/admin/analytics-supabase?period=30d');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('统计数据获取成功', 'success');
+                    displayData('统计数据', data);
+                    
+                    // 显示关键统计信息
+                    const stats = `
+                        <div class="stat-card">
+                            <div class="stat-number">${data.overview?.user_growth?.total || 0}</div>
+                            <div class="stat-label">总用户数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.overview?.conversation_activity?.total || 0}</div>
+                            <div class="stat-label">总对话数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.overview?.message_stats?.total || 0}</div>
+                            <div class="stat-label">总消息数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.overview?.message_stats?.total_tokens || 0}</div>
+                            <div class="stat-label">总Token数</div>
+                        </div>
+                    `;
+                    document.getElementById('stats').innerHTML = stats;
+                } else {
+                    showStatus('获取统计数据失败: ' + response.status, 'error');
+                    displayData('错误信息', data);
+                }
+            } catch (error) {
+                showStatus('请求错误: ' + error.message, 'error');
+            }
+        }
+
+        async function testDebug() {
+            try {
+                const response = await fetch('/api/debug-supabase');
+                const data = await response.json();
+                
+                showStatus('调试信息获取成功', 'success');
+                displayData('调试信息', data);
+            } catch (error) {
+                showStatus('调试请求错误: ' + error.message, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function displayData(title, data) {
+            const dataDiv = document.getElementById('data');
+            dataDiv.innerHTML = `
+                <h3>${title}</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>

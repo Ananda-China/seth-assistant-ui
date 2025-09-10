@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
 
       response.cookies.set('admin_token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // 改为lax以支持跨域
+        secure: false, // 开发环境设为false
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60, // 24小时
-        path: '/' // 明确设置路径
+        path: '/'
       });
 
       return response;

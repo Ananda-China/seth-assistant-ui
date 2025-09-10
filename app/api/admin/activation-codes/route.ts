@@ -7,25 +7,56 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    // 临时移除认证检查进行测试
-    // const adminAuth = requireAdminAuth(req);
-    // if (!adminAuth) {
-    //   return Response.json({ success: false, message: '需要管理员权限' }, { status: 401 });
-    // }
+    console.log('🔍 开始获取激活码列表...');
 
-    console.log('开始获取激活码列表...');
-    console.log('环境变量检查:', {
-      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...',
-      serviceKeyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0
-    });
-    
-    // 获取激活码列表 - 使用与构建时完全相同的查询方式
-    const { data: codes, error } = await supabaseAdmin
+    // 先尝试简单查询，不联表
+    const { data: simpleCodes, error: simpleError } = await supabaseAdmin
       .from('activation_codes')
       .select('*')
-      .limit(5);
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    console.log('🔍 简单查询结果:', {
+      count: simpleCodes?.length || 0,
+      error: simpleError,
+      firstCode: simpleCodes?.[0]
+    });
+
+    if (simpleError) {
+      console.error('❌ 简单查询失败:', simpleError);
+      return NextResponse.json({
+        success: false,
+        message: '数据库查询失败',
+        error: simpleError.message
+      }, { status: 500 });
+    }
+
+    // 如果简单查询成功，再尝试联表查询
+    let codes = simpleCodes;
+    let error = simpleError;
+
+    // 尝试联表查询，如果失败则使用简单查询结果
+    try {
+      const { data: joinedCodes, error: joinError } = await supabaseAdmin
+        .from('activation_codes')
+        .select(`
+          *,
+          plan:plans(*),
+          used_by_user:users(phone, nickname)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (!joinError && joinedCodes) {
+        codes = joinedCodes;
+        error = joinError;
+        console.log('✅ 联表查询成功');
+      } else {
+        console.log('⚠️ 联表查询失败，使用简单查询结果:', joinError);
+      }
+    } catch (joinErr) {
+      console.log('⚠️ 联表查询异常，使用简单查询结果:', joinErr);
+    }
 
     console.log('激活码查询结果:', { codes, error });
     console.log('错误详情:', error);

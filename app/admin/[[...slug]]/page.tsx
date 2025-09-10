@@ -22,23 +22,18 @@ export default async function AdminCatchAllPage({
     redirect('/admin/login');
   }
 
-  // 如果是根admin路径，显示主面板
-  if (!params.slug || params.slug.length === 0) {
-    return (
-      <main
-        className="min-h-screen bg-gradient-to-b from-[#2E335B] to-[#23284A] text-[#EAEBF0]"
-        style={{
-          paddingTop: 0,
-          marginTop: 0,
-          position: 'relative',
-          zIndex: 1
-        }}
-      >
-        <AdminDashboard currentUser={adminUser} />
-      </main>
-    );
-  }
-
-  // 其他路径重定向到主面板
-  redirect('/admin');
+  // 如果是根admin路径或任何子路径，显示主面板
+  return (
+    <main
+      className="min-h-screen bg-gradient-to-b from-[#2E335B] to-[#23284A] text-[#EAEBF0]"
+      style={{
+        paddingTop: 0,
+        marginTop: 0,
+        position: 'relative',
+        zIndex: 1
+      }}
+    >
+      <AdminDashboard currentUser={adminUser} />
+    </main>
+  );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import InviteSection from '../../components/InviteSection';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -423,27 +424,21 @@ export default function AccountPage() {
               </div>
             </div>
 
+            {/* 邀请推广卡 */}
+            <div className="account-card">
+              <h2 className="card-title">邀请推广</h2>
+              <InviteSection phone={phone} />
+            </div>
+
             {/* 邀请关系卡 */}
             <div className="account-card">
               <h2 className="card-title">邀请关系</h2>
-              <div className="invite-section">
-                <div className="invite-code">
-                  <span className="invite-label">我的邀请码：</span>
-                  <span className="invite-badge">{inviteCode || '-'}</span>
-                  <button
-                    type="button"
-                    className="btn-copy"
-                    onClick={async ()=>{
-                      if (!inviteCode) return;
-                      try { await navigator.clipboard.writeText(inviteCode); alert('已复制邀请码'); } catch {}
-                    }}
-                  >复制</button>
-                </div>
+              <div className="invite-relation-section">
                 <div className="invite-info">邀请我的人：{invitedBy || '（未填写）'}</div>
                 <div className="invite-form">
                   <input
                     className="form-input"
-                    placeholder="输入邀请人的邀请码"
+                    placeholder="输入邀请人的手机号"
                     value={invitedBy}
                     onChange={e=>setInvitedByState(e.target.value)}
                   />

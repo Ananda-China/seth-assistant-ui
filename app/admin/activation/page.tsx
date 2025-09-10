@@ -49,13 +49,21 @@ export default function ActivationAdminPage() {
 
   const loadActivationCodes = async () => {
     try {
+      console.log('🔍 前端开始加载激活码...');
       const res = await fetch('/api/admin/activation-codes');
+      console.log('🔍 API响应状态:', res.status, res.ok);
+
       if (res.ok) {
         const data = await res.json();
+        console.log('🔍 API返回数据:', data);
+        console.log('🔍 激活码数量:', data.codes?.length || 0);
         setActivationCodes(data.codes || []);
+      } else {
+        const errorData = await res.text();
+        console.error('❌ API请求失败:', res.status, errorData);
       }
     } catch (error) {
-      console.error('加载激活码失败:', error);
+      console.error('❌ 加载激活码失败:', error);
     }
   };
 

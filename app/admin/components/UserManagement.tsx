@@ -7,7 +7,8 @@ interface User {
   phone: string;
   nickname: string;
   status: 'active' | 'suspended';
-  subscription: string;
+  subscription_type: string;
+  is_paid_user?: boolean;
   created_at: number;
   last_login: number;
   invite_code: string;
@@ -15,6 +16,9 @@ interface User {
   total_conversations: number;
   total_messages: number;
   total_tokens: number;
+  balance?: number;
+  total_commission?: number;
+  total_withdrawn?: number;
 }
 
 interface Pagination {
@@ -37,7 +41,7 @@ export default function UserManagement() {
     total: pagination.total,
     active: users.filter(u => u.status === 'active').length,
     suspended: users.filter(u => u.status === 'suspended').length,
-    paid: users.filter(u => u.subscription !== 'free').length
+    paid: users.filter(u => u.is_paid_user || (u.subscription_type && u.subscription_type !== 'free')).length
   };
 
   // 获取用户数据
@@ -198,6 +202,9 @@ export default function UserManagement() {
                   使用统计
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">
+                  财务信息
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">
                   状态
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-medium text-[#8A94B3] uppercase tracking-wider">
@@ -222,15 +229,16 @@ export default function UserManagement() {
                   <td className="px-6 py-5">
                     <div className="space-y-2">
                       <div className="text-sm text-[#EAEBF0] font-medium">
-                        {user.subscription === 'free' ? '免费版' :
-                         user.subscription === 'premium' ? '高级版' : '企业版'}
+                        {user.subscription_type === 'free' ? '免费版' :
+                         user.subscription_type === 'monthly' ? '月套餐' :
+                         user.subscription_type === 'yearly' ? '年套餐' : '其他套餐'}
                       </div>
                       <div className={`text-xs px-2 py-1 rounded-full inline-block ${
-                        user.subscription !== 'free'
+                        user.subscription_type !== 'free'
                           ? 'bg-green-900/20 text-green-400'
                           : 'bg-gray-900/20 text-gray-400'
                       }`}>
-                        {user.subscription !== 'free' ? '付费' : '免费'}
+                        {user.subscription_type !== 'free' ? '付费' : '免费'}
                       </div>
                     </div>
                   </td>
@@ -249,6 +257,13 @@ export default function UserManagement() {
                       <div>对话：<span className="text-[#EAEBF0] font-medium">{user.total_conversations}</span></div>
                       <div>消息：<span className="text-[#EAEBF0] font-medium">{user.total_messages}</span></div>
                       <div>Token：<span className="text-[#EAEBF0] font-medium">{user.total_tokens}</span></div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="text-xs text-[#8A94B3] space-y-1">
+                      <div>余额：<span className="text-green-400 font-medium">¥{(user.balance || 0).toFixed(2)}</span></div>
+                      <div>佣金：<span className="text-blue-400 font-medium">¥{(user.total_commission || 0).toFixed(2)}</span></div>
+                      <div>已提现：<span className="text-yellow-400 font-medium">¥{(user.total_withdrawn || 0).toFixed(2)}</span></div>
                     </div>
                   </td>
                   <td className="px-6 py-5">

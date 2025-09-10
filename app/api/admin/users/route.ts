@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAdminAuth } from '../../../../lib/adminAuth';
 import { getUsers } from '../../../../lib/config';
+import { supabaseAdmin } from '../../../../lib/supabase';
 
 // 模拟用户状态数据（因为当前用户系统没有状态字段）
 const mockUserStatuses = new Map<string, { status: 'active' | 'suspended', subscription: 'free' | 'premium' | 'enterprise' }>();
@@ -39,22 +40,89 @@ export async function GET(req: NextRequest) {
       // 使用 Supabase 版本
       const result = await usersModule.getAllUsers(page, limit);
 
+      // 获取所有对话和消息数据
+      const { data: conversations } = await supabaseAdmin
+        .from('conversations')
+        .select('id, user_phone');
+
+      const { data: messages } = await supabaseAdmin
+        .from('messages')
+        .select('conversation_id, token_usage');
+
+      // 获取用户余额数据
+      const { data: balances } = await supabaseAdmin
+        .from('balances')
+        .select('user_id, amount');
+
+      // 获取佣金记录
+      const { data: commissions } = await supabaseAdmin
+        .from('commission_records')
+        .select('inviter_user_id, commission_amount');
+
+      // 获取提现记录
+      const { data: withdrawals } = await supabaseAdmin
+        .from('withdrawal_requests')
+        .select('user_id, amount, status')
+        .eq('status', 'completed');
+
+      // 获取激活码订阅数据
+      const { data: subscriptions } = await supabaseAdmin
+        .from('subscriptions')
+        .select('user_phone, status, current_period_end');
+
       const enrichedUsers = result.users.map((user: any) => {
         const mockStatus = getMockUserStatus(user.phone);
+
+        // 计算用户统计数据
+        const userConversations = conversations?.filter(conv => conv.user_phone === user.phone) || [];
+        const userMessages = messages?.filter(msg =>
+          userConversations.some(conv => conv.id === msg.conversation_id)
+        ) || [];
+        const userTokens = userMessages.reduce((sum, msg) => sum + (msg.token_usage || 0), 0);
+
+        // 获取财务数据
+        const userBalance = balances?.find(b => b.user_id === user.id);
+        const userCommissions = commissions?.filter(c => c.inviter_user_id === user.id) || [];
+        const totalCommission = userCommissions.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        const userWithdrawals = withdrawals?.filter(w => w.user_id === user.id) || [];
+        const totalWithdrawn = userWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
+
+        // 检查是否为付费用户
+        const now = new Date();
+        let isPaidUser = false;
+
+        // 1. 检查users表中的订阅
+        if (user.subscription_type && user.subscription_type !== 'free' && user.subscription_end) {
+          isPaidUser = new Date(user.subscription_end) > now;
+        }
+
+        // 2. 检查激活码订阅
+        if (!isPaidUser) {
+          const userSubscription = subscriptions?.find(s =>
+            s.user_phone === user.phone &&
+            s.status === 'active' &&
+            new Date(s.current_period_end) > now
+          );
+          isPaidUser = !!userSubscription;
+        }
 
         return {
           id: user.id,
           phone: user.phone,
           nickname: user.nickname || '未设置',
           status: user.status || mockStatus.status,
-          subscription: user.subscription_type || mockStatus.subscription,
+          subscription_type: isPaidUser ? (user.subscription_type || 'monthly') : 'free',
+          is_paid_user: isPaidUser,
           created_at: user.created_at,
           last_login: user.created_at,
           invite_code: user.invite_code || 'N/A',
           invited_by: user.invited_by || null,
-          total_conversations: 0, // TODO: 从 conversations 表获取
-          total_messages: 0, // TODO: 从 messages 表获取
-          total_tokens: 0 // TODO: 计算 token 使用量
+          total_conversations: userConversations.length,
+          total_messages: userMessages.length,
+          total_tokens: userTokens,
+          balance: (userBalance?.amount || 0) / 100, // 转换为元
+          total_commission: totalCommission / 100, // 转换为元
+          total_withdrawn: totalWithdrawn / 100 // 转换为元
         };
       });
 

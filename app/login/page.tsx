@@ -1,16 +1,25 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [phone, setPhone] = useState('13472881751'); // 设置默认手机号
   const [code, setCode] = useState('');
   const [invite, setInvite] = useState('');
   const [step, setStep] = useState<'send' | 'verify'>('send');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+
+  // 从URL参数中获取邀请码
+  useEffect(() => {
+    const inviteParam = searchParams.get('invite');
+    if (inviteParam) {
+      setInvite(inviteParam);
+    }
+  }, [searchParams]);
 
   async function sendCode() {
     console.log('发送验证码，手机号:', phone); // 添加调试日志
@@ -139,6 +148,14 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
 

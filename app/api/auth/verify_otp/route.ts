@@ -51,7 +51,20 @@ export async function POST(req: NextRequest) {
   try {
     const usersModule = await getUsers();
     await usersModule.getOrCreateUser(phone);
-  } catch {}
+
+    // 如果有邀请码，保存邀请关系
+    if (invite && invite.trim()) {
+      console.log('🔗 保存邀请关系:', { phone, inviterCode: invite });
+      const result = await usersModule.setInvitedBy(phone, invite.trim());
+      if (result) {
+        console.log('✅ 邀请关系保存成功');
+      } else {
+        console.log('❌ 邀请关系保存失败，邀请码可能无效:', invite);
+      }
+    }
+  } catch (error) {
+    console.error('用户创建或邀请关系保存失败:', error);
+  }
   return new Response(JSON.stringify({ success: true }), {
     headers: {
       'Content-Type': 'application/json',

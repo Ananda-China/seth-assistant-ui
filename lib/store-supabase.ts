@@ -14,6 +14,7 @@ export type Message = {
   conversation_id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  token_usage?: number;
   created_at: string;
 };
 
@@ -137,7 +138,8 @@ export async function addMessage(
   userPhone: string,
   conversationId: string,
   role: 'user' | 'assistant' | 'system',
-  content: string
+  content: string,
+  token_usage?: number
 ): Promise<Message> {
   // 首先验证对话是否属于该用户
   const conversation = await getConversation(userPhone, conversationId);
@@ -150,7 +152,8 @@ export async function addMessage(
     .insert({
       conversation_id: conversationId,
       role,
-      content
+      content,
+      token_usage: token_usage || 0
     })
     .select()
     .single();

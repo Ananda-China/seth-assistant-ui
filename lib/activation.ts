@@ -193,10 +193,17 @@ export class ActivationManager {
       const subscriptionEnd = new Date();
       subscriptionEnd.setDate(subscriptionEnd.getDate() + activationCode.plan.duration_days);
 
-      // 创建或更新订阅记录
+      // 先取消现有的活跃订阅
+      await supabaseAdmin
+        .from('subscriptions')
+        .update({ status: 'cancelled' })
+        .eq('user_phone', user.phone)
+        .eq('status', 'active');
+
+      // 创建新的订阅记录
       const { error: subscriptionError } = await supabaseAdmin
         .from('subscriptions')
-        .upsert({
+        .insert({
           user_phone: user.phone,
           plan: activationCode.plan.name,
           status: 'active',
@@ -204,8 +211,6 @@ export class ActivationManager {
           current_period_end: subscriptionEnd.toISOString(),
           activation_code_id: activationCode.id,
           subscription_type: 'activation'
-        }, {
-          onConflict: 'user_phone,status'
         });
 
       if (subscriptionError) {

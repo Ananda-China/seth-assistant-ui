@@ -40,6 +40,7 @@ CREATE TABLE messages (
   conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
   content TEXT NOT NULL,
+  token_usage INTEGER DEFAULT 0, -- Token使用量
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

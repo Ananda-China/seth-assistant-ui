@@ -242,6 +242,8 @@ export default function Analytics() {
           </div>
           <div className="mt-3 text-xs text-[#8A94B3]">
             新增：{data.overview.message_stats.new} | Token：{data.overview.message_stats.total_tokens.toLocaleString()}
+            <br />
+            最近Token使用：{data.overview.message_stats.recent_tokens.toLocaleString()} (过去{period === '7d' ? '7天' : period === '14d' ? '14天' : '30天'})
           </div>
         </div>
 
