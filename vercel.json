@@ -1,20 +1,8 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm ci",
   "framework": "nextjs",
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
-    }
-  },
-  "env": {
-    "USE_SUPABASE": "true"
-  },
-  "build": {
-    "env": {
-      "NODE_VERSION": "18",
-      "NPM_CONFIG_PRODUCTION": "false"
     }
   }
 }
