@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
       response.cookies.set('admin_token', token, {
         httpOnly: true,
-        secure: false, // 开发环境设为false
+        secure: process.env.NODE_ENV === 'production', // 生产环境使用HTTPS
         sameSite: 'lax',
         maxAge: 24 * 60 * 60, // 24小时
         path: '/'
