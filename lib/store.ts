@@ -87,6 +87,16 @@ export async function addMessage(user: string, conversationId: string, role: Mes
   msgs.push(message); await writeJson(MSG_FILE, msgs); return message;
 }
 
+// 更新消息的token使用量
+export async function updateMessageTokens(messageId: string, tokenUsage: number): Promise<void> {
+  const msgs = await readJson<Message>(MSG_FILE);
+  const message = msgs.find(m => m.id === messageId);
+  if (message) {
+    message.token_usage = tokenUsage;
+    await writeJson(MSG_FILE, msgs);
+  }
+}
+
 export type { Conversation, Message };
 
 
