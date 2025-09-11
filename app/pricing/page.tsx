@@ -321,47 +321,70 @@ export default function PricingPage() {
                 ))}
               </div>
 
+              {/* 暂时禁用在线支付 */}
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '12px',
+                marginBottom: '16px'
+              }}>
+                <div style={{
+                  color: '#F59E0B',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  marginBottom: '8px'
+                }}>
+                  🚧 在线支付暂时维护中
+                </div>
+                <div style={{
+                  color: '#8A94B3',
+                  fontSize: '12px',
+                  lineHeight: '1.5'
+                }}>
+                  我们正在完善企业资质认证，在线支付功能暂时关闭。<br/>
+                  如需购买会员，请联系客服获取激活码。
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                  onClick={() => handlePurchase(plan.id, 'alipay')}
-                  disabled={loading === plan.id}
+                  disabled={true}
                   style={{
                     flex: 1,
-                    background: plan.popular 
-                      ? 'linear-gradient(135deg, #C8B6E2 0%, #8A94B3 100%)'
-                      : 'rgba(200, 182, 226, 0.1)',
-                    color: plan.popular ? '#1A1D33' : '#C8B6E2',
-                    border: plan.popular ? 'none' : '1px solid #C8B6E2',
+                    background: 'rgba(76, 85, 138, 0.1)',
+                    color: '#6B7280',
+                    border: '1px solid rgba(76, 85, 138, 0.3)',
                     padding: '14px 20px',
                     borderRadius: '12px',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    cursor: loading === plan.id ? 'not-allowed' : 'pointer',
-                    opacity: loading === plan.id ? 0.7 : 1,
+                    cursor: 'not-allowed',
+                    opacity: 0.5,
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  {loading === plan.id ? '创建订单中...' : '支付宝支付'}
+                  支付宝支付（维护中）
                 </button>
-                
+
                 <button
-                  onClick={() => handlePurchase(plan.id, 'wechat')}
-                  disabled={loading === plan.id}
+                  disabled={true}
                   style={{
                     flex: 1,
-                    background: 'rgba(76, 85, 138, 0.2)',
-                    color: '#EAEBF0',
-                    border: '1px solid rgba(76, 85, 138, 0.5)',
+                    background: 'rgba(76, 85, 138, 0.1)',
+                    color: '#6B7280',
+                    border: '1px solid rgba(76, 85, 138, 0.3)',
                     padding: '14px 20px',
                     borderRadius: '12px',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    cursor: loading === plan.id ? 'not-allowed' : 'pointer',
-                    opacity: loading === plan.id ? 0.7 : 1,
+                    cursor: 'not-allowed',
+                    opacity: 0.5,
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  {loading === plan.id ? '创建订单中...' : '微信支付'}
+                  微信支付（维护中）
                 </button>
               </div>
             </div>

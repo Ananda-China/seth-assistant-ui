@@ -39,10 +39,22 @@ export default function PayPage() {
   return (
     <main className="mx-auto max-w-md p-6">
       <h1 className="text-2xl font-semibold mb-6">购买订阅</h1>
+
+      {/* 维护提示 */}
+      <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="flex items-center mb-2">
+          <span className="text-yellow-600 text-lg mr-2">🚧</span>
+          <h2 className="text-yellow-800 font-semibold">在线支付暂时维护中</h2>
+        </div>
+        <p className="text-yellow-700 text-sm">
+          我们正在完善企业资质认证，在线支付功能暂时关闭。如需购买会员，请联系客服获取激活码。
+        </p>
+      </div>
+
       <div className="space-y-3">
-        <button onClick={() => createWxOrder(9900, '月付')} className="w-full px-4 py-2 rounded bg-black text-white" disabled={loading}>微信扫码支付 - 月付 ¥99</button>
-        <button onClick={() => createWxOrder(25900, '季付')} className="w-full px-4 py-2 rounded bg-black text-white" disabled={loading}>微信扫码支付 - 季付 ¥259</button>
-        <button onClick={() => createWxOrder(89900, '年付')} className="w-full px-4 py-2 rounded bg-black text-white" disabled={loading}>微信扫码支付 - 年付 ¥899</button>
+        <button disabled className="w-full px-4 py-2 rounded bg-gray-300 text-gray-500 cursor-not-allowed">微信扫码支付 - 月付 ¥99（维护中）</button>
+        <button disabled className="w-full px-4 py-2 rounded bg-gray-300 text-gray-500 cursor-not-allowed">微信扫码支付 - 季付 ¥259（维护中）</button>
+        <button disabled className="w-full px-4 py-2 rounded bg-gray-300 text-gray-500 cursor-not-allowed">微信扫码支付 - 年付 ¥899（维护中）</button>
       </div>
 
       {qr && (
