@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const auth = requireUser(req);
   if (!auth) {
     console.log('❌ /api/user/permission 认证失败');
-    return new Response('unauthorized', { status: 401 });
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   console.log('✅ /api/user/permission 认证成功，用户手机号:', auth.phone);

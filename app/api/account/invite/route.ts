@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
     const secret = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
     const decoded = jwt.verify(token, secret) as any;
     const phone = decoded?.phone as string;
-    if (!phone) return new Response('unauthorized', { status: 401 });
+    if (!phone) return Response.json({ error: 'unauthorized' }, { status: 401 });
     const usersModule = await getUsers();
     const me = await usersModule.getUser(phone);
     const invitees = me?.invite_code ? await usersModule.listInvitees(me.invite_code) : [];
     return Response.json({ me, invitees });
   } catch {
-    return new Response('unauthorized', { status: 401 });
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 }
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const secret = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
     const decoded = jwt.verify(token, secret) as any;
     const phone = decoded?.phone as string;
-    if (!phone) return new Response('unauthorized', { status: 401 });
+    if (!phone) return Response.json({ error: 'unauthorized' }, { status: 401 });
     const body = await req.json().catch(()=>({}));
     const code = String(body?.inviter_code || '').trim();
     if (!code) return new Response('missing code', { status: 400 });

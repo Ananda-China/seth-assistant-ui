@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     if (!decoded || !decoded.phone) {
       console.log('❌ JWT验证失败: 缺少decoded或phone');
-      return new Response('unauthorized', { status: 401 });
+      return Response.json({ error: 'unauthorized' }, { status: 401 });
     }
 
     // 2) 用户信息读写失败时，不再返回401，至少返回已验证的手机号
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     }
   } catch (err) {
     console.error('❌ /api/me 认证失败:', err);
-    return new Response('unauthorized', { status: 401 });
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
   }
 }
 
