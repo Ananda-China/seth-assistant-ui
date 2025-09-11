@@ -126,6 +126,38 @@ export async function GET(req: NextRequest) {
         };
       });
 
+      // 计算所有用户的统计数据（不仅仅是当前页面）
+      const allUsersResult = await usersModule.getAllUsers(1, 1000); // 获取所有用户
+      const allEnrichedUsers = allUsersResult.users.map((user: any) => {
+        // 检查是否为付费用户
+        const now = new Date();
+        let isPaidUser = false;
+
+        // 1. 检查users表中的订阅
+        if (user.subscription_type && user.subscription_type !== 'free' && user.subscription_end) {
+          isPaidUser = new Date(user.subscription_end) > now;
+        }
+
+        // 2. 检查激活码订阅
+        if (!isPaidUser) {
+          const userSubscription = subscriptions?.find(s =>
+            s.user_phone === user.phone &&
+            s.status === 'active' &&
+            new Date(s.current_period_end) > now
+          );
+          isPaidUser = !!userSubscription;
+        }
+
+        return {
+          ...user,
+          is_paid_user: isPaidUser
+        };
+      });
+
+      const totalPaidUsers = allEnrichedUsers.filter(u => u.is_paid_user).length;
+      const totalActiveUsers = allEnrichedUsers.filter(u => u.status === 'active').length;
+      const totalSuspendedUsers = allEnrichedUsers.filter(u => u.status === 'suspended').length;
+
       return Response.json({
         users: enrichedUsers,
         pagination: {
@@ -133,6 +165,12 @@ export async function GET(req: NextRequest) {
           limit: result.limit,
           total: result.total,
           pages: result.totalPages
+        },
+        statistics: {
+          total_users: result.total,
+          paid_users: totalPaidUsers,
+          active_users: totalActiveUsers,
+          suspended_users: totalSuspendedUsers
         }
       });
     }

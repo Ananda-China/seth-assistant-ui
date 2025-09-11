@@ -28,20 +28,28 @@ interface Pagination {
   pages: number;
 }
 
+interface Statistics {
+  total_users: number;
+  paid_users: number;
+  active_users: number;
+  suspended_users: number;
+}
+
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [statistics, setStatistics] = useState<Statistics>({ total_users: 0, paid_users: 0, active_users: 0, suspended_users: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
 
-  // 计算统计数据
+  // 使用API返回的统计数据
   const stats = {
-    total: pagination.total,
-    active: users.filter(u => u.status === 'active').length,
-    suspended: users.filter(u => u.status === 'suspended').length,
-    paid: users.filter(u => u.is_paid_user || (u.subscription_type && u.subscription_type !== 'free')).length
+    total: statistics.total_users,
+    active: statistics.active_users,
+    suspended: statistics.suspended_users,
+    paid: statistics.paid_users
   };
 
   // 获取用户数据
@@ -60,6 +68,10 @@ export default function UserManagement() {
         const data = await response.json();
         setUsers(data.users);
         setPagination(data.pagination);
+        // 更新统计数据
+        if (data.statistics) {
+          setStatistics(data.statistics);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -229,16 +241,18 @@ export default function UserManagement() {
                   <td className="px-6 py-5">
                     <div className="space-y-2">
                       <div className="text-sm text-[#EAEBF0] font-medium">
-                        {user.subscription_type === 'free' ? '免费版' :
-                         user.subscription_type === 'monthly' ? '月套餐' :
-                         user.subscription_type === 'yearly' ? '年套餐' : '其他套餐'}
+                        {user.is_paid_user ? (
+                          user.subscription_type === 'monthly' ? '月套餐' :
+                          user.subscription_type === 'yearly' ? '年套餐' :
+                          user.subscription_type === 'quarterly' ? '季套餐' : '激活码套餐'
+                        ) : '免费版'}
                       </div>
                       <div className={`text-xs px-2 py-1 rounded-full inline-block ${
-                        user.subscription_type !== 'free'
+                        user.is_paid_user
                           ? 'bg-green-900/20 text-green-400'
                           : 'bg-gray-900/20 text-gray-400'
                       }`}>
-                        {user.subscription_type !== 'free' ? '付费' : '免费'}
+                        {user.is_paid_user ? '付费' : '免费'}
                       </div>
                     </div>
                   </td>

@@ -65,11 +65,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 先把用户消息落库
+  // 先把用户消息落库（暂时不包含token，稍后更新）
   const storeModule = await getStoreModule();
+  let userMessageId: string | null = null;
   if (clientConversationId) {
     try {
-      await storeModule.addMessage(auth.phone, clientConversationId, 'user', query);
+      const userMessage = await storeModule.addMessage(auth.phone, clientConversationId, 'user', query);
+      userMessageId = userMessage.id;
       // 若标题还是默认值，则用用户问题前 15 字更新标题
       const suggested = query.slice(0, 15);
       await storeModule.ensureConversationTitle(auth.phone, clientConversationId, suggested);
@@ -144,6 +146,9 @@ export async function POST(req: NextRequest) {
   const reader = difyRes.body.getReader();
   const encoder = new TextEncoder();
   let assistantFull = '';
+  let totalTokens = 0;
+  let userTokens = 0;
+  let assistantTokens = 0;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let firstEventSent = false;
@@ -174,6 +179,16 @@ export async function POST(req: NextRequest) {
                 }
               }
             }
+
+            // 解析token使用量
+            if (evt?.metadata?.usage) {
+              const usage = evt.metadata.usage;
+              totalTokens = usage.total_tokens || 0;
+              userTokens = usage.prompt_tokens || 0;
+              assistantTokens = usage.completion_tokens || 0;
+              console.log('📊 Token使用量:', { totalTokens, userTokens, assistantTokens });
+            }
+
             const content = evt?.answer || evt?.data || '';
             if (content) {
               // 清理内容，过滤掉可能的对象字符串
@@ -184,7 +199,7 @@ export async function POST(req: NextRequest) {
               cleanContent = cleanContent.replace(/null/gi, '');
               cleanContent = cleanContent.replace(/undefined/gi, '');
               cleanContent = cleanContent.trim();
-              
+
               if (cleanContent) {
                 assistantFull += cleanContent;
                 controller.enqueue(encoder.encode(cleanContent));
@@ -195,12 +210,20 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-      // 助手消息落库
+      // 助手消息落库，包含token使用量
       try {
         if (clientConversationId && assistantFull) {
-          await storeModule.addMessage(auth.phone, clientConversationId, 'assistant', assistantFull);
+          await storeModule.addMessage(auth.phone, clientConversationId, 'assistant', assistantFull, assistantTokens);
+
+          // 更新用户消息的token使用量
+          if (userMessageId && userTokens > 0) {
+            await storeModule.updateMessageTokens(userMessageId, userTokens);
+            console.log(`✅ 已更新用户消息token使用量: ${userTokens}`);
+          }
         }
-      } catch {}
+      } catch (error) {
+        console.error('❌ 保存消息或更新token失败:', error);
+      }
       controller.close();
     },
   });

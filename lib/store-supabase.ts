@@ -296,3 +296,16 @@ export async function renameConversation(userPhone: string, conversationId: stri
     return false;
   }
 }
+
+// 更新消息的token使用量
+export async function updateMessageTokens(messageId: string, tokenUsage: number): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('messages')
+    .update({ token_usage: tokenUsage })
+    .eq('id', messageId);
+
+  if (error) {
+    console.error('Failed to update message tokens:', error);
+    throw error;
+  }
+}
