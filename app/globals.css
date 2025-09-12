@@ -1511,4 +1511,23 @@ body {
   }
 }
 
+/* ===== 个人信息页面 - 移动端优化 ===== */
+@media (max-width: 768px) {
+  .account-main { padding-top: 60px; }
+  .account-container { padding: 16px 12px; }
+  .account-header { padding: 16px; margin-bottom: 16px; border-radius: 16px; }
+  .account-logo { gap: 12px; }
+  .account-logo-icon { width: 40px; height: 40px; font-size: 20px; border-radius: 10px; }
+  .account-logo-title { font-size: 22px; }
+  .account-content { max-width: 100%; }
+  .account-title { font-size: 28px; margin: 16px 0 20px; }
+  .account-card { padding: 16px; border-radius: 16px; }
+
+  .table-header, .table-cell { padding: 12px 10px; font-size: 13px; }
+  .table { min-width: 560px; }
+
+  .form-input { padding: 12px 14px; font-size: 16px; }
+}
+
+
 
