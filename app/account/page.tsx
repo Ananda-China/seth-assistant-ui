@@ -16,7 +16,7 @@ export default function AccountPage() {
   const [invitedBy, setInvitedByState] = useState('');
   const [invitees, setInvitees] = useState<any[]>([]);
   const [inviteMsg, setInviteMsg] = useState('');
-  
+
   // 激活码相关状态
   const [activationCode, setActivationCode] = useState('');
   const [activationLoading, setActivationLoading] = useState(false);
@@ -25,13 +25,19 @@ export default function AccountPage() {
   const [commissionRecords, setCommissionRecords] = useState<any[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
-  
+
   // 提现相关状态
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('alipay');
   const [withdrawAccount, setWithdrawAccount] = useState('');
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawMsg, setWithdrawMsg] = useState('');
+
+  // 登录密码设置
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passMsg, setPassMsg] = useState('');
+  const [passLoading, setPassLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -54,7 +60,7 @@ export default function AccountPage() {
         setInvitedByState(data.me?.invited_by || '');
         setInvitees(data.invitees || []);
       }
-      
+
       // 加载激活码相关数据
       await loadActivationData();
     })();
@@ -109,6 +115,39 @@ export default function AccountPage() {
     }
   }
 
+  // 设置登录密码
+  async function updatePassword() {
+    setPassMsg('');
+    if (!newPassword || newPassword.length < 6) {
+      setPassMsg('密码至少6位');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPassMsg('两次输入不一致');
+      return;
+    }
+    setPassLoading(true);
+    try {
+      const res = await fetch('/api/me/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPassMsg('密码已更新');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setPassMsg(data.message || '更新失败');
+      }
+    } catch (e) {
+      setPassMsg('网络错误，请重试');
+    } finally {
+      setPassLoading(false);
+    }
+  }
+
   // 激活激活码
   async function activateCode() {
     if (!activationCode.trim()) {
@@ -118,16 +157,16 @@ export default function AccountPage() {
 
     setActivationLoading(true);
     setActivationMsg('');
-    
+
     try {
       const res = await fetch('/api/activation/activate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: activationCode.trim() })
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setActivationMsg('激活成功！');
         setActivationCode('');
@@ -165,7 +204,7 @@ export default function AccountPage() {
 
     setWithdrawLoading(true);
     setWithdrawMsg('');
-    
+
     try {
       const res = await fetch('/api/activation/withdraw', {
         method: 'POST',
@@ -176,9 +215,9 @@ export default function AccountPage() {
           account_info: withdrawAccount
         })
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setWithdrawMsg('提现申请已提交，请等待处理');
         setWithdrawAmount('');
@@ -204,10 +243,10 @@ export default function AccountPage() {
             <div className="account-logo-title">听心如意</div>
           </div>
         </div>
-        
+
         <div className="account-content">
           <h1 className="account-title">个人中心</h1>
-          
+
           <div className="account-cards">
             {/* 个人信息卡 */}
             <div className="account-card">
@@ -227,6 +266,40 @@ export default function AccountPage() {
                 {msg && <span className="card-message">{msg}</span>}
               </div>
             </div>
+
+            {/* 登录密码卡 */}
+            <div className="account-card">
+              <h2 className="card-title">登录密码</h2>
+              <div className="card-grid">
+                <div className="form-group">
+                  <label className="form-label">输入密码</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="至少6位"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">确认密码</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="再次输入密码"
+                  />
+                </div>
+              </div>
+              <div className="card-actions">
+                <button onClick={updatePassword} disabled={passLoading} className="btn-outline">
+                  {passLoading ? '保存中...' : '确认修改'}
+                </button>
+                {passMsg && <span className="card-message">{passMsg}</span>}
+              </div>
+            </div>
+
 
             {/* 订阅信息卡 */}
             <div className="account-card">
@@ -314,8 +387,8 @@ export default function AccountPage() {
                     value={activationCode}
                     onChange={e => setActivationCode(e.target.value)}
                   />
-                  <button 
-                    className="btn-primary" 
+                  <button
+                    className="btn-primary"
                     onClick={activateCode}
                     disabled={activationLoading}
                   >
@@ -323,7 +396,7 @@ export default function AccountPage() {
                   </button>
                 </div>
                 {activationMsg && <span className="activation-message">{activationMsg}</span>}
-                
+
                 <div className="plans-info">
                   <div className="plans-title">可用套餐</div>
                   {plans.map(plan => (
@@ -344,7 +417,7 @@ export default function AccountPage() {
                   <span className="balance-label">当前余额：</span>
                   <span className="balance-value">¥{balance.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="withdrawal-form">
                   <div className="form-group">
                     <label className="form-label">提现金额</label>
@@ -376,8 +449,8 @@ export default function AccountPage() {
                       onChange={e => setWithdrawAccount(e.target.value)}
                     />
                   </div>
-                  <button 
-                    className="btn-primary" 
+                  <button
+                    className="btn-primary"
                     onClick={submitWithdrawal}
                     disabled={withdrawLoading}
                   >

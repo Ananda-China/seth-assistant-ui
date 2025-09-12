@@ -1,6 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 
+import crypto from 'crypto';
+
 const DATA_DIR = path.join(process.cwd(), '.data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
@@ -18,6 +20,7 @@ export type User = {
   subscription_end?: number; // 订阅结束时间
   chat_count?: number; // 聊天次数统计
   last_chat_date?: string; // 最后聊天日期（用于每日重置）
+  password_hash?: string; // 形如 "saltHex:hashHex"
 };
 
 async function ensure() {
@@ -121,11 +124,11 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
 
   // 检查试用期状态
   const isTrialActive = user.trial_end ? now < user.trial_end : false;
-  
+
   // 检查付费订阅状态
   const isPaidUser = user.subscription_type !== 'free' &&
                      user.subscription_end ? now < user.subscription_end : false;
-  
+
   // 检查是否需要重置每日聊天次数（仅对非试用期且非付费用户）
   if (!isTrialActive && !isPaidUser && user.last_chat_date !== today) {
     user.chat_count = 0;
@@ -216,5 +219,49 @@ export async function upgradeUserSubscription(
   await writeUsers(users);
   return user;
 }
+
+// 简单密码哈希（salt + sha256），无强安全诉求
+function makeSalt(bytes = 16) {
+  return crypto.randomBytes(bytes).toString('hex');
+}
+function sha256Hex(input: string) {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+function buildPasswordHash(raw: string) {
+  const salt = makeSalt(16);
+  const hash = sha256Hex(salt + raw);
+  return `${salt}:${hash}`;
+}
+function checkPassword(raw: string, stored: string) {
+  const [salt, hash] = String(stored || '').split(':');
+  if (!salt || !hash) return false;
+  const calc = sha256Hex(salt + raw);
+  return calc === hash;
+}
+
+export async function setPassword(phone: string, password: string): Promise<boolean> {
+  const users = await readUsers();
+  let user = users.find(u => u.phone === phone);
+  if (!user) {
+    user = await getOrCreateUser(phone);
+  }
+  const password_hash = buildPasswordHash(password);
+  user.password_hash = password_hash;
+  await writeUsers(users);
+  return true;
+}
+
+export async function verifyPassword(
+  phone: string,
+  password: string
+): Promise<'OK' | 'NO_PASSWORD' | 'INVALID'> {
+  const users = await readUsers();
+  const user = users.find(u => u.phone === phone);
+  if (!user) return 'INVALID';
+  const stored = user.password_hash || '';
+  if (!stored) return 'NO_PASSWORD';
+  return checkPassword(password, stored) ? 'OK' : 'INVALID';
+}
+
 
 

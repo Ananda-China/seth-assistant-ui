@@ -46,6 +46,7 @@ export type Database = {
           last_chat_date: string | null;
           status: 'active' | 'suspended';
           updated_at: string;
+          password_hash: string | null;
         };
         Insert: {
           id?: string;
@@ -63,6 +64,7 @@ export type Database = {
           last_chat_date?: string | null;
           status?: 'active' | 'suspended';
           updated_at?: string;
+          password_hash?: string | null;
         };
         Update: {
           id?: string;
@@ -80,6 +82,7 @@ export type Database = {
           last_chat_date?: string | null;
           status?: 'active' | 'suspended';
           updated_at?: string;
+          password_hash?: string | null;
         };
       };
       conversations: {

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase';
+import crypto from 'crypto';
 
 export type User = {
   id: string;
@@ -16,6 +17,7 @@ export type User = {
   last_chat_date?: string;
   status: 'active' | 'suspended';
   updated_at: string;
+  password_hash?: string | null;
 };
 
 export type UserPermission = {
@@ -52,11 +54,11 @@ export async function getUser(phone: string): Promise<User | null> {
 // 创建或获取用户
 export async function getOrCreateUser(phone: string): Promise<User> {
   let user = await getUser(phone);
-  
+
   if (!user) {
     const now = new Date().toISOString();
     const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    
+
     const { data, error } = await supabaseAdmin
       .from('users')
       .insert({
@@ -145,14 +147,14 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
 
   const now = new Date();
   const today = now.toISOString().split('T')[0];
-  
+
   // 检查试用期状态
   const isTrialActive = user.trial_end ? new Date(user.trial_end) > now : false;
-  
+
   // 检查付费订阅状态（包括激活码订阅）
-  let isPaidUser = user.subscription_type !== 'free' && 
+  let isPaidUser = user.subscription_type !== 'free' &&
                    user.subscription_end ? new Date(user.subscription_end) > now : false;
-  
+
   // 检查激活码订阅
   if (!isPaidUser) {
     const { data: subscription } = await supabaseAdmin
@@ -161,28 +163,28 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
       .eq('user_phone', phone)
       .eq('status', 'active')
       .single();
-    
+
     if (subscription && new Date(subscription.current_period_end) > now) {
       isPaidUser = true;
     }
   }
-  
+
   // 检查是否需要重置每日聊天次数（仅对非试用期且非付费用户）
   if (!isTrialActive && !isPaidUser && user.last_chat_date !== today) {
     await supabaseAdmin
       .from('users')
-      .update({ 
-        chat_count: 0, 
-        last_chat_date: today 
+      .update({
+        chat_count: 0,
+        last_chat_date: today
       })
       .eq('phone', phone);
-    
+
     user.chat_count = 0;
     user.last_chat_date = today;
   }
-  const trialRemainingDays = user.trial_end ? 
+  const trialRemainingDays = user.trial_end ?
     Math.max(0, Math.ceil((new Date(user.trial_end).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0;
-  
+
   // 确定聊天限制
   let chatLimit = 0;
   if (isPaidUser) {
@@ -200,8 +202,8 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
     canChat,
     isTrialActive,
     isPaidUser,
-    remainingDays: isPaidUser ? 
-      Math.ceil((new Date(user.subscription_end!).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) : 
+    remainingDays: isPaidUser ?
+      Math.ceil((new Date(user.subscription_end!).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) :
       trialRemainingDays,
     chatLimit,
     usedChats,
@@ -226,7 +228,7 @@ export async function incrementChatCount(phone: string): Promise<boolean> {
 
 // 升级用户订阅
 export async function upgradeUserSubscription(
-  phone: string, 
+  phone: string,
   subscriptionType: 'monthly' | 'quarterly' | 'yearly'
 ): Promise<User | null> {
   const now = new Date();
@@ -264,7 +266,7 @@ export async function upgradeUserSubscription(
 // 获取所有用户（管理员用）
 export async function getAllUsers(page = 1, limit = 10) {
   const offset = (page - 1) * limit;
-  
+
   const { data, error, count } = await supabaseAdmin
     .from('users')
     .select('*', { count: 'exact' })
@@ -281,3 +283,49 @@ export async function getAllUsers(page = 1, limit = 10) {
     totalPages: Math.ceil((count || 0) / limit)
   };
 }
+
+// 简单密码哈希（salt + sha256），无强安全诉求
+function makeSalt(bytes = 16) {
+  return crypto.randomBytes(bytes).toString('hex');
+}
+function sha256Hex(input: string) {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+function buildPasswordHash(raw: string) {
+  const salt = makeSalt(16);
+  const hash = sha256Hex(salt + raw);
+  return `${salt}:${hash}`;
+}
+function checkPassword(raw: string, stored: string) {
+  const [salt, hash] = String(stored || '').split(':');
+  if (!salt || !hash) return false;
+  const calc = sha256Hex(salt + raw);
+  return calc === hash;
+}
+
+// 设置/更新密码
+export async function setPassword(phone: string, password: string): Promise<boolean> {
+  const password_hash = buildPasswordHash(password);
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({ password_hash })
+    .eq('phone', phone);
+  return !error;
+}
+
+// 校验密码
+export async function verifyPassword(
+  phone: string,
+  password: string
+): Promise<'OK' | 'NO_PASSWORD' | 'INVALID'> {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('password_hash')
+    .eq('phone', phone)
+    .single();
+  if (error) return 'INVALID';
+  const stored = data?.password_hash as string | null;
+  if (!stored) return 'NO_PASSWORD';
+  return checkPassword(password, stored) ? 'OK' : 'INVALID';
+}
+
