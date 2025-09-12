@@ -644,6 +644,75 @@ body {
   position: static !important;
 }
 
+/* ===== 个人中心页面样式 ===== */
+
+/* 禁用按钮样式 */
+.btn-disabled {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #6B7280; /* 灰紫色 */
+  color: #9CA3AF;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+  cursor: not-allowed;
+  border: none;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: none;
+}
+
+.btn-disabled:hover {
+  background: #6B7280;
+  color: #9CA3AF;
+  transform: none;
+}
+
+/* 支付通知样式 */
+.payment-notice {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #F59E0B;
+  line-height: 1.4;
+}
+
+.payment-notice p {
+  margin: 0;
+  margin-bottom: 4px;
+}
+
+.payment-notice p:last-child {
+  margin-bottom: 0;
+}
+
+/* 邀请关系样式优化 */
+.invite-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(76, 85, 138, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(200, 182, 226, 0.2);
+}
+
+.invite-label {
+  color: #8A94B3;
+  font-size: 14px;
+}
+
+.invite-value {
+  color: #EAEBF0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
 /* ===== 登录页面样式 ===== */
 .login-main {
   min-height: 100vh;

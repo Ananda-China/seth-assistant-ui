@@ -250,7 +250,17 @@ export default function AccountPage() {
                     </span>
                   </div>
                   <div className="subscription-actions">
-                    <a href="/pay" className="btn-primary">续费/升级</a>
+                    <button
+                      className="btn-disabled"
+                      disabled
+                      title="我们正在完善企业资质认证，在线支付功能暂时关闭。如需购买会员，请联系客服获取激活码。"
+                    >
+                      续费/升级
+                    </button>
+                    <div className="payment-notice">
+                      <p>我们正在完善企业资质认证，在线支付功能暂时关闭。</p>
+                      <p>如需购买会员，请联系客服获取激活码。</p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -434,25 +444,10 @@ export default function AccountPage() {
             <div className="account-card">
               <h2 className="card-title">邀请关系</h2>
               <div className="invite-relation-section">
-                <div className="invite-info">邀请我的人：{invitedBy || '（未填写）'}</div>
-                <div className="invite-form">
-                  <input
-                    className="form-input"
-                    placeholder="输入邀请人的手机号"
-                    value={invitedBy}
-                    onChange={e=>setInvitedByState(e.target.value)}
-                  />
-                  <button className="btn-outline" onClick={async ()=>{
-                    setInviteMsg('');
-                    const r = await fetch('/api/account/invite', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ inviter_code: invitedBy })});
-                    if (r.ok) {
-                      setInviteMsg('已保存');
-                    } else {
-                      setInviteMsg('邀请码无效');
-                    }
-                  }}>保存邀请人</button>
+                <div className="invite-info">
+                  <span className="invite-label">邀请我的人：</span>
+                  <span className="invite-value">{invitedBy || '无'}</span>
                 </div>
-                {inviteMsg && <span className="invite-message">{inviteMsg}</span>}
 
                 <div className="invitees-section">
                   <div className="invitees-title">我邀请的人</div>
