@@ -639,19 +639,58 @@ body {
 
 /* ===== 响应式设计 ===== */
 @media (max-width: 768px) {
+  /* 侧边栏改为“抽屉式”覆盖，默认隐藏，点击按钮滑出 */
   .sidebar {
-    width: 260px; /* 保持固定宽度 */
-    padding: 20px;
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100dvh;
+    width: 82vw; /* 覆盖大部分屏幕 */
+    max-width: 320px;
+    background: rgba(46, 51, 91, 0.96);
+    backdrop-filter: blur(16px);
+    border-right: 1px solid rgba(200, 182, 226, 0.15);
+    z-index: 1000;
+    padding: 20px 16px;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    padding: 20px 0; /* 折叠时减少点击穿透 */
   }
 
-  .chat-messages {
-    padding: 20px 16px 100px 16px; /* 移动端也调整顶部间距 */
+  /* 主内容区占满宽度，不再受侧边栏影响 */
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: 0 !important;
   }
 
-  .composer {
-    margin: 0 16px;
+  /* 聊天消息与输入区的内边距优化 */
+  .chat-messages { padding: 16px 14px 96px 14px; }
+  .composer { margin: 0 12px; }
+
+  /* 浮动开关按钮（仅移动端显示） */
+  .sidebar-fab {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(200, 182, 226, 0.15);
+    border: 1px solid rgba(200, 182, 226, 0.25);
+    color: rgba(255, 255, 255, 0.85);
+    z-index: 1100;
+    backdrop-filter: blur(10px);
   }
 }
+
+/* 桌面端隐藏浮动按钮 */
+@media (min-width: 769px) { .sidebar-fab { display: none; } }
 
 /* ===== 后台管理页面样式重置 ===== */
 /* 为后台页面添加特定的body类来区分 */

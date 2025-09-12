@@ -481,6 +481,17 @@ export default function HomePage() {
 
       {/* 主应用区域 */}
       <div className="app-shell">
+        {/* 移动端浮动开关按钮 */}
+        <button
+          className="sidebar-fab"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          aria-label="切换侧边栏"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+
         {/* 左侧边栏 */}
         <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           {/* 顶部品牌区域 */}
@@ -489,7 +500,7 @@ export default function HomePage() {
               <div className="logo-icon">
                 <span className="logo-text">S</span>
               </div>
-              <div className="brand-title">赛斯助手</div>
+              <div className="brand-title">听心如意</div>
             </div>
             <button
               className="sidebar-toggle"
