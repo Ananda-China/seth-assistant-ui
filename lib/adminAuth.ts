@@ -62,10 +62,22 @@ export function getAdminUser(req: NextRequest): AdminUser | null {
   return verifyAdminToken(token);
 }
 
-// 检查管理员权限，返回管理员用户信息或null
-export function requireAdminAuth(req: NextRequest): AdminUser | null {
+// 检查管理员权限，返回管理员用户信息或错误响应
+export function requireAdminAuth(req: NextRequest): { user: AdminUser } | { error: NextResponse } {
   const adminUser = getAdminUser(req);
-  return adminUser;
+
+  if (!adminUser) {
+    console.log('❌ 管理员认证失败');
+    return {
+      error: NextResponse.json({
+        success: false,
+        message: '需要管理员权限'
+      }, { status: 401 })
+    };
+  }
+
+  console.log('✅ 管理员认证成功:', adminUser.username);
+  return { user: adminUser };
 }
 
 // 登出函数

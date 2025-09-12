@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     // 添加管理员认证
-    const adminAuth = requireAdminAuth(req);
-    if (!adminAuth) {
-      return Response.json({ success: false, message: '需要管理员权限' }, { status: 401 });
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
     }
     const { request_id, status, screenshot_url } = await req.json().catch(() => ({}));
     
@@ -55,25 +55,30 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, message: '更新状态失败' }, { status: 500 });
     }
 
-    // 如果状态是已完成，需要扣除用户余额
-    if (status === 'completed') {
+    // 如果状态是拒绝，需要退还用户余额
+    if (status === 'rejected') {
       const { data: balance, error: balanceError } = await supabaseAdmin
         .from('balances')
         .select('amount')
         .eq('user_id', request.user_id)
         .single();
 
-      if (!balanceError && balance) {
-        const newAmount = Math.max(0, balance.amount - request.amount);
-        
+      if (!balanceError) {
+        const currentAmount = balance?.amount || 0;
+        const refundAmount = currentAmount + request.amount;
+
         await supabaseAdmin
           .from('balances')
           .upsert({
             user_id: request.user_id,
-            amount: newAmount
+            amount: refundAmount
           });
+
+        console.log(`✅ 提现被拒绝，退还用户余额 ¥${(request.amount / 100).toFixed(2)}`);
       }
     }
+
+    // 注意：如果状态是completed，余额已经在申请时扣减，无需再次扣减
 
     return Response.json({
       success: true,

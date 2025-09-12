@@ -1,12 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminAuth } from '../../../../lib/adminAuth';
 import { supabaseAdmin } from '../../../../lib/supabase';
 
 // 强制动态执行，绕过所有缓存
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // 验证管理员权限
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
+    }
+    const adminUser = authResult.user;
+
     console.log('🔍 开始获取激活码列表...');
 
     // 先尝试简单查询，不联表

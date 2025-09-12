@@ -17,7 +17,17 @@
     "deploy:preview": "vercel",
     "test:supabase": "node test-supabase-connection.js",
     "maintenance:supabase": "node supabase-maintenance.js",
-    "check:status": "node check-status.js"
+    "check:status": "node check-status.js",
+    "import:test-data": "node scripts/import-test-data.js",
+    "test:activation-api": "node scripts/test-activation-api.js",
+    "fix:user-subscriptions": "node scripts/fix-user-subscriptions.js",
+    "test:api-endpoints": "node scripts/test-api-endpoints.js",
+    "verify:production": "node scripts/verify-production.js",
+    "fix:pending-withdrawals": "node scripts/fix-pending-withdrawals.js",
+    "test:invite-restrictions": "node scripts/test-invite-restrictions.js",
+    "diagnose:admin": "node scripts/diagnose-admin-issues.js",
+    "check:token-usage": "node scripts/check-token-usage.js",
+    "fix:vercel-protection": "node scripts/fix-vercel-protection.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.56.0",

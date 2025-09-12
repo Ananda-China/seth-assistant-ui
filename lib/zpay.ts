@@ -139,26 +139,18 @@ export function verifyZPayNotify(params: Record<string, any>, signature: string)
 export const ZPAY_PLANS = {
   monthly: {
     id: 'monthly',
-    name: '月度会员',
-    price: 2900, // 29元，单位：分
+    name: '月套餐',
+    price: 99900, // 999元，单位：分
     duration: 30, // 天数
-    description: '月度会员，享受无限聊天',
+    description: '月套餐，享受无限聊天',
     features: ['无限聊天次数', '优先响应', '专属客服']
-  },
-  quarterly: {
-    id: 'quarterly',
-    name: '季度会员',
-    price: 7900, // 79元，单位：分
-    duration: 90, // 天数
-    description: '季度会员，更优惠的选择',
-    features: ['无限聊天次数', '优先响应', '专属客服', '季度优惠']
   },
   yearly: {
     id: 'yearly',
-    name: '年度会员',
-    price: 29900, // 299元，单位：分
+    name: '年套餐',
+    price: 399900, // 3999元，单位：分
     duration: 365, // 天数
-    description: '年度会员，最超值的选择',
+    description: '年套餐，最超值的选择',
     features: ['无限聊天次数', '优先响应', '专属客服', '年度超值', '专属徽章']
   }
 };

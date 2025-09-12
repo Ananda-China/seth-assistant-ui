@@ -746,6 +746,37 @@ body {
   opacity: 0.7;
 }
 
+.form-input-disabled {
+  background: rgba(76, 85, 138, 0.1) !important;
+  color: #8A94B3 !important;
+  cursor: not-allowed !important;
+  border-color: rgba(138, 148, 179, 0.3) !important;
+}
+
+.form-input-disabled:focus {
+  box-shadow: none !important;
+  border-color: rgba(138, 148, 179, 0.3) !important;
+}
+
+.invite-check-message {
+  font-size: 12px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.invite-check-success {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.invite-check-warning {
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
 .form-actions {
   display: flex;
   gap: 16px;

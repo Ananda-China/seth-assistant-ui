@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
     };
 
     // 1. 检查管理员认证
-    const adminUser = requireAdminAuth(req);
+    const authResult = requireAdminAuth(req);
+    const adminUser = 'user' in authResult ? authResult.user : null;
     results.adminAuth = {
       isAuthenticated: !!adminUser,
       adminUser: adminUser,

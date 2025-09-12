@@ -66,28 +66,56 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, message: '您有待处理的提现申请' }, { status: 400 });
     }
 
-    // 创建提现申请
-    const { data: request, error: requestError } = await supabaseAdmin
-      .from('withdrawal_requests')
-      .insert({
-        user_id: user.id,
-        amount: amountFen,
-        payment_method,
-        account_info
-      })
-      .select()
-      .single();
+    // 使用事务：创建提现申请并立即扣减余额
+    try {
+      // 1. 创建提现申请
+      const { data: request, error: requestError } = await supabaseAdmin
+        .from('withdrawal_requests')
+        .insert({
+          user_id: user.id,
+          amount: amountFen,
+          payment_method,
+          account_info
+        })
+        .select()
+        .single();
 
-    if (requestError) {
-      console.error('创建提现申请失败:', requestError);
-      return Response.json({ success: false, message: '创建提现申请失败' }, { status: 500 });
+      if (requestError) {
+        console.error('创建提现申请失败:', requestError);
+        return Response.json({ success: false, message: '创建提现申请失败' }, { status: 500 });
+      }
+
+      // 2. 立即扣减用户余额（冻结资金）
+      const newBalance = currentBalance - amountFen;
+      const { error: balanceUpdateError } = await supabaseAdmin
+        .from('balances')
+        .upsert({
+          user_id: user.id,
+          amount: newBalance
+        });
+
+      if (balanceUpdateError) {
+        console.error('扣减余额失败:', balanceUpdateError);
+        // 如果扣减余额失败，删除刚创建的提现申请
+        await supabaseAdmin
+          .from('withdrawal_requests')
+          .delete()
+          .eq('id', request.id);
+
+        return Response.json({ success: false, message: '余额扣减失败，请重试' }, { status: 500 });
+      }
+
+      console.log(`✅ 用户 ${phone} 提现申请成功，扣减余额 ¥${(amountFen / 100).toFixed(2)}`);
+
+      return Response.json({
+        success: true,
+        message: '提现申请已提交，余额已扣减，请等待处理',
+        request_id: request.id
+      });
+    } catch (error) {
+      console.error('提现申请事务失败:', error);
+      return Response.json({ success: false, message: '提现申请失败' }, { status: 500 });
     }
-
-    return Response.json({
-      success: true,
-      message: '提现申请已提交，请等待处理',
-      request_id: request.id
-    });
   } catch (error) {
     console.error('创建提现申请错误:', error);
     return Response.json({ success: false, message: '创建提现申请失败' }, { status: 500 });

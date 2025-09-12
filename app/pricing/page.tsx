@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 const PLANS = {
   monthly: {
     id: 'monthly',
-    name: '月度会员',
-    price: 29,
-    originalPrice: 39,
+    name: '月套餐',
+    price: 999,
+    originalPrice: 1299,
     duration: '1个月',
     description: '适合轻度使用用户',
     features: [
@@ -17,29 +17,13 @@ const PLANS = {
       '专属客服支持',
       '历史记录保存'
     ],
-    popular: false
-  },
-  quarterly: {
-    id: 'quarterly',
-    name: '季度会员',
-    price: 79,
-    originalPrice: 117,
-    duration: '3个月',
-    description: '最受欢迎的选择',
-    features: [
-      '无限聊天次数',
-      '优先响应速度',
-      '专属客服支持',
-      '历史记录保存',
-      '季度优惠32%'
-    ],
     popular: true
   },
   yearly: {
     id: 'yearly',
-    name: '年度会员',
-    price: 299,
-    originalPrice: 468,
+    name: '年套餐',
+    price: 3999,
+    originalPrice: 11988,
     duration: '12个月',
     description: '最超值的长期选择',
     features: [
@@ -47,7 +31,7 @@ const PLANS = {
       '优先响应速度',
       '专属客服支持',
       '历史记录保存',
-      '年度优惠36%',
+      '年度优惠67%',
       '专属会员徽章'
     ],
     popular: false

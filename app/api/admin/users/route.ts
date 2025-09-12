@@ -21,9 +21,9 @@ function getMockUserStatus(phone: string) {
 
 export async function GET(req: NextRequest) {
   // 验证管理员权限
-  const adminUser = requireAdminAuth(req);
-  if (!adminUser) {
-    return new Response('Unauthorized', { status: 401 });
+  const authResult = requireAdminAuth(req);
+  if ('error' in authResult) {
+    return authResult.error;
   }
 
   const { searchParams } = new URL(req.url);
@@ -291,9 +291,9 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   // 验证管理员权限
-  const adminUser = requireAdminAuth(req);
-  if (!adminUser) {
-    return new Response('Unauthorized', { status: 401 });
+  const authResult = requireAdminAuth(req);
+  if ('error' in authResult) {
+    return authResult.error;
   }
 
   try {

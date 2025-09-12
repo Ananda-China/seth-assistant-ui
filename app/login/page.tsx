@@ -12,6 +12,8 @@ function LoginForm() {
   const [step, setStep] = useState<'send' | 'verify'>('send');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [canSetInvite, setCanSetInvite] = useState(true);
+  const [inviteCheckMsg, setInviteCheckMsg] = useState('');
 
   // 从URL参数中获取邀请码
   useEffect(() => {
@@ -20,6 +22,48 @@ function LoginForm() {
       setInvite(inviteParam);
     }
   }, [searchParams]);
+
+  // 检查邀请码状态
+  const checkInviteStatus = async (phoneNumber: string) => {
+    if (!phoneNumber || !/^1[3-9]\d{9}$/.test(phoneNumber)) {
+      setCanSetInvite(true);
+      setInviteCheckMsg('');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/check-invite-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCanSetInvite(data.canSetInvite);
+        setInviteCheckMsg(data.message);
+
+        // 如果不能设置邀请码，清空邀请码输入
+        if (!data.canSetInvite) {
+          setInvite('');
+        }
+      }
+    } catch (error) {
+      console.error('检查邀请状态失败:', error);
+      setCanSetInvite(true);
+      setInviteCheckMsg('');
+    }
+  };
+
+  // 监听手机号变化，检查邀请状态
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      checkInviteStatus(phone);
+    }, 500); // 防抖，500ms后检查
+
+    return () => clearTimeout(timeoutId);
+  }, [phone]);
 
   async function sendCode() {
     console.log('发送验证码，手机号:', phone); // 添加调试日志
@@ -115,12 +159,18 @@ function LoginForm() {
           
           <div className="form-group">
             <label className="form-label">邀请码（可选）</label>
-            <input 
-              className="form-input" 
-              value={invite} 
-              onChange={e => setInvite(e.target.value)} 
-              placeholder="没有可留空" 
+            <input
+              className={`form-input ${!canSetInvite ? 'form-input-disabled' : ''}`}
+              value={invite}
+              onChange={e => canSetInvite && setInvite(e.target.value)}
+              placeholder={canSetInvite ? "没有可留空" : "该手机号已有邀请关系"}
+              disabled={!canSetInvite}
             />
+            {inviteCheckMsg && (
+              <div className={`invite-check-message ${canSetInvite ? 'invite-check-success' : 'invite-check-warning'}`}>
+                {inviteCheckMsg}
+              </div>
+            )}
           </div>
           
           <div className="form-actions">
