@@ -6,7 +6,7 @@ import { useState, useEffect, Suspense } from 'react';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [phone, setPhone] = useState('13472881751'); // 设置默认手机号
+  const [phone, setPhone] = useState(''); // 默认留空，避免泄露
   const [code, setCode] = useState('');
   const [invite, setInvite] = useState('');
   const [step, setStep] = useState<'send' | 'verify'>('send');
