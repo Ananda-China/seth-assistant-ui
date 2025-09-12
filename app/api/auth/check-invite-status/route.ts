@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // 如果用户不存在，可以填写邀请码
+    // 如果用户不存在，可以填写邀请码（新用户）
     if (!user) {
       return NextResponse.json({
         success: true,
@@ -37,21 +37,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 如果用户存在但没有邀请关系，可以填写邀请码
-    if (!user.invited_by) {
-      return NextResponse.json({
-        success: true,
-        canSetInvite: true,
-        message: '可以填写邀请码'
-      });
-    }
-
-    // 如果用户已有邀请关系，不能再填写邀请码
+    // 如果用户已存在（不管有没有邀请关系），都不能再填写邀请码
     return NextResponse.json({
       success: true,
       canSetInvite: false,
-      invitedBy: user.invited_by,
-      message: `该手机号已被 ${user.invited_by} 邀请，无法修改邀请关系`
+      invitedBy: user.invited_by || null,
+      message: user.invited_by
+        ? `该手机号已被 ${user.invited_by} 邀请，无法修改邀请关系`
+        : '该手机号已注册，无法填写邀请码'
     });
 
   } catch (error) {

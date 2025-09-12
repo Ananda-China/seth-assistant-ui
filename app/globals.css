@@ -62,6 +62,40 @@ body {
   border-bottom: 1px solid rgba(200, 182, 226, 0.1);
 }
 
+/* 侧边栏折叠按钮（仅主聊天页使用） */
+.sidebar-toggle {
+  background: rgba(200, 182, 226, 0.1);
+  border: 1px solid rgba(200, 182, 226, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  color: rgba(200, 182, 226, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar-toggle:hover {
+  background: rgba(200, 182, 226, 0.2);
+  color: rgba(200, 182, 226, 1);
+  transform: scale(1.05);
+}
+
+/* 折叠状态样式（仅主聊天页使用） */
+.sidebar.collapsed {
+  width: 60px !important;
+  padding: 24px 12px !important;
+}
+.sidebar.collapsed .brand-title,
+.sidebar.collapsed .chat-history-label,
+.sidebar.collapsed .conversation-list,
+.sidebar.collapsed .new-chat-btn {
+  display: none;
+}
+.sidebar.collapsed .brand-logo { justify-content: center; }
+.sidebar.collapsed .sidebar-header { flex-direction: column; gap: 16px; }
+
+
 .brand-logo {
   display: flex;
   align-items: center;
@@ -296,6 +330,15 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/*        */
+/*     */
+/* :  .main-content  margin-left  260px,  .sidebar  260px */
+/*    60px   */
+.main-content.sidebar-collapsed {
+  margin-left: 60px !important;
+  transition: margin-left 0.3s ease;
 }
 
 /* 登录链接样式 */
@@ -600,11 +643,11 @@ body {
     width: 260px; /* 保持固定宽度 */
     padding: 20px;
   }
-  
+
   .chat-messages {
     padding: 20px 16px 100px 16px; /* 移动端也调整顶部间距 */
   }
-  
+
   .composer {
     margin: 0 16px;
   }
@@ -1422,7 +1465,7 @@ body {
   .activation-form {
     flex-direction: column;
   }
-  
+
   .balance-amount {
     flex-direction: column;
     text-align: center;

@@ -157,22 +157,23 @@ function LoginForm() {
             </div>
           )}
           
-          <div className="form-group">
-            <label className="form-label">邀请码（可选）</label>
-            <input
-              className={`form-input ${!canSetInvite ? 'form-input-disabled' : ''}`}
-              value={invite}
-              onChange={e => canSetInvite && setInvite(e.target.value)}
-              placeholder={canSetInvite ? "没有可留空" : "该手机号已有邀请关系"}
-              disabled={!canSetInvite}
-            />
-            {inviteCheckMsg && (
-              <div className={`invite-check-message ${canSetInvite ? 'invite-check-success' : 'invite-check-warning'}`}>
-                {inviteCheckMsg}
-              </div>
-            )}
-          </div>
-          
+          {canSetInvite && (
+            <div className="form-group">
+              <label className="form-label">邀请码（可选）</label>
+              <input
+                className="form-input"
+                value={invite}
+                onChange={e => setInvite(e.target.value)}
+                placeholder="没有可留空"
+              />
+              {inviteCheckMsg && (
+                <div className="invite-check-message invite-check-success">
+                  {inviteCheckMsg}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="form-actions">
             {step === 'send' ? (
               <button 

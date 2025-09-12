@@ -19,6 +19,13 @@ export default function HomePage() {
   const [mePhone, setMePhone] = useState<string | null>(null);
   const [authed, setAuthed] = useState<boolean>(false);
   const [permission, setPermission] = useState<any>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768; // 手机端默认折叠
+    }
+    return false;
+  });
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const creatingConversationRef = useRef<boolean>(false);
 
@@ -47,19 +54,19 @@ export default function HomePage() {
       console.log('✅ 已有活跃对话:', activeConv);
       return activeConv;
     }
-    
+
     // 检查是否已有未使用的对话（标题为"新会话"且没有消息的对话）
-    const existingEmptyConv = conversations.find(c => 
-      c.title === '新会话' && 
+    const existingEmptyConv = conversations.find(c =>
+      c.title === '新会话' &&
       !messages.some(m => m.role === 'user' || m.role === 'assistant')
     );
-    
+
     if (existingEmptyConv) {
       console.log('✅ 找到现有空对话:', existingEmptyConv.id);
       setActiveConv(existingEmptyConv.id);
       return existingEmptyConv.id;
     }
-    
+
     // 如果正在创建中，等待一下再重试
     if (creatingConversationRef.current) {
       console.log('⏳ 对话正在创建中，等待...');
@@ -74,7 +81,7 @@ export default function HomePage() {
         return activeConv;
       }
     }
-    
+
     try {
       creatingConversationRef.current = true;
       console.log('🔄 自动创建新聊天记录...');
@@ -171,6 +178,18 @@ export default function HomePage() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+
+  //  监听窗口大小变化，自动调整侧边栏状态（移动端默认折叠）
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      setSidebarCollapsed(isMobile);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+
   // 当切换会话时拉取历史消息
   useEffect(() => {
     if (!activeConv) return;
@@ -207,49 +226,49 @@ export default function HomePage() {
         document.documentElement.scrollHeight,
         document.documentElement.offsetHeight
       );
-      
+
       window.scrollTo({
         top: scrollHeight,
         behavior: 'smooth'
       });
     };
-    
+
     const timer = setTimeout(scrollToBottom, 300);
     return () => clearTimeout(timer);
   }, [messages]);
 
   async function send() {
     if (!input.trim()) return;
-    
+
     console.log('🚀 开始发送消息:', input.trim());
-    
+
     // 确保有聊天记录，并等待创建完成
     const convId = await ensureConversation();
     console.log('📝 获取到的对话ID:', { convId, activeConv });
-    
+
     // 如果没有获取到对话ID，不允许发送消息
     if (!convId && !activeConv) {
       console.error('❌ 无法创建或获取对话ID，消息发送失败');
       return;
     }
-    
+
     const originalInput = input;
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: originalInput };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
-    
+
     // 确保有活跃的对话ID，优先使用新创建的对话ID
     const currentConvId = convId || activeConv;
     if (!activeConv && convId) {
       setActiveConv(convId);
     }
-    
+
     // 重置输入框高度
     if (textareaRef.current) {
       textareaRef.current.style.height = '50px';
     }
-    
+
     // 立即滚动到底部，显示用户消息
     setTimeout(() => {
       window.scrollTo({
@@ -334,19 +353,19 @@ export default function HomePage() {
         try {
           const errorData = await res.json();
           console.error('❌ 聊天API错误:', errorData);
-          
+
           // 检查是否是Dify认证问题
           if (errorData.error && (errorData.error.includes('unauthorized') || errorData.error.includes('Access token is invalid'))) {
-            setMessages(prev => [...prev, { 
-              id: crypto.randomUUID(), 
-              role: 'system', 
-              content: `⚠️ Dify API认证失败\n\n您的消息已保存，但AI助手暂时无法回复。\n请联系管理员检查Dify API配置。` 
+            setMessages(prev => [...prev, {
+              id: crypto.randomUUID(),
+              role: 'system',
+              content: `⚠️ Dify API认证失败\n\n您的消息已保存，但AI助手暂时无法回复。\n请联系管理员检查Dify API配置。`
             }]);
           } else {
-            setMessages(prev => [...prev, { 
-              id: crypto.randomUUID(), 
-              role: 'system', 
-              content: `⚠️ ${errorData.error || '服务器错误，请重试'}` 
+            setMessages(prev => [...prev, {
+              id: crypto.randomUUID(),
+              role: 'system',
+              content: `⚠️ ${errorData.error || '服务器错误，请重试'}`
             }]);
           }
         } catch {
@@ -357,7 +376,7 @@ export default function HomePage() {
         const errText = await res.text().catch(() => '请求失败');
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: errText || '请求失败' }]);
       }
-      
+
       // 重要：即使出错，也要保留用户消息，并更新对话标题
       if (activeConv) {
         const snippet = originalInput.slice(0, 15);
@@ -369,7 +388,7 @@ export default function HomePage() {
           return c;
         }));
       }
-      
+
       return;
     }
 
@@ -378,7 +397,7 @@ export default function HomePage() {
     let assistantText = '';
     let assistantMessageId = '';
     let isFirstChunk = true;
-    
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -395,26 +414,26 @@ export default function HomePage() {
           }
           continue;
         }
-        
+
         // 过滤掉可能的 [object Object] 内容
         if (part.includes('[object Object]') || part.includes('[Object object]')) {
           console.log('⚠️ 过滤掉 [object Object]:', part);
           continue;
         }
-        
+
         // 过滤掉其他可能的无效内容
         if (part.trim() === '' || part.trim() === 'null' || part.trim() === 'undefined') {
           continue;
         }
-        
+
         assistantText += part;
-        
+
         // 只在第一次创建消息，后续只更新内容
         if (isFirstChunk) {
-          const assistantMessage = { 
-            id: crypto.randomUUID(), 
-            role: 'assistant' as const, 
-            content: assistantText 
+          const assistantMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant' as const,
+            content: assistantText
           };
           setMessages(prev => [...prev, assistantMessage]);
           assistantMessageId = assistantMessage.id;
@@ -463,7 +482,7 @@ export default function HomePage() {
       {/* 主应用区域 */}
       <div className="app-shell">
         {/* 左侧边栏 */}
-        <aside className="sidebar">
+        <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           {/* 顶部品牌区域 */}
           <div className="sidebar-header">
             <div className="brand-logo">
@@ -472,28 +491,42 @@ export default function HomePage() {
               </div>
               <div className="brand-title">赛斯助手</div>
             </div>
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                {sidebarCollapsed ? (
+                  <path d="M9 18l6-6-6-6" />
+                ) : (
+                  <path d="M15 18l-6-6 6-6" />
+                )}
+              </svg>
+            </button>
+
           </div>
-          
+
           {/* 聊天记录标签和新建按钮 */}
           <div className="chat-history-header">
             <div className="chat-history-label">聊天记录</div>
-            <button 
-              className="new-chat-btn" 
-              title="新建会话" 
+            <button
+              className="new-chat-btn"
+              title="新建会话"
               onClick={async () => {
                 // 如果当前对话是空的，直接切换到它
                 if (activeConv && messages.length === 0) {
                   console.log('✅ 当前对话为空，直接使用');
                   return;
                 }
-                
+
                 // 创建新对话
                 const res = await fetch('/api/conversations', { method: 'POST' });
                 const data = await res.json();
                 const conv = data.conversation;
                 setConversations(prev => [conv, ...prev]);
                 setActiveConv(conv.id);
-                conversationIdRef.current = null; 
+                conversationIdRef.current = null;
                 try { localStorage.removeItem('cid'); } catch {}
                 setMessages([]);
               }}
@@ -503,65 +536,65 @@ export default function HomePage() {
               </svg>
             </button>
           </div>
-          
+
           {/* 聊天记录列表 */}
           <ul className="conversation-list">
             {conversations.map(c => (
               <li key={c.id} className="conversation-item">
                 <div className={`conversation-content ${activeConv === c.id ? 'selected' : ''}`}>
-                  <button 
-                    className="conversation-title" 
+                  <button
+                    className="conversation-title"
                     onClick={() => {
                       setActiveConv(c.id);
-                      conversationIdRef.current = null; 
+                      conversationIdRef.current = null;
                       try { localStorage.removeItem('cid'); } catch {}
                       setMessages([]);
                     }}
                   >
                     {c.title}
                   </button>
-                  
+
                   {/* 操作按钮 */}
                   <div className="conversation-actions">
-                    <button 
-                      className="action-btn rename-btn" 
+                    <button
+                      className="action-btn rename-btn"
                       onClick={async (e) => {
                         e.stopPropagation();
                         const title = prompt('重命名会话', c.title);
                         if (!title) return;
-                        await fetch(`/api/conversations/${c.id}`, { 
-                          method: 'PATCH', 
-                          headers: { 'Content-Type': 'application/json' }, 
-                          body: JSON.stringify({ title }) 
+                        await fetch(`/api/conversations/${c.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ title })
                         });
                         setConversations(prev => prev.map(x => x.id === c.id ? { ...x, title } : x));
-                      }} 
+                      }}
                       title="重命名"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
-                    <button 
-                      className="action-btn delete-btn" 
+                    <button
+                      className="action-btn delete-btn"
                       onClick={async (e) => {
                         e.stopPropagation();
                         if (!confirm('确定删除该会话？')) return;
-                        
+
                         try {
                           console.log('🗑️ 删除对话:', c.id);
                           const response = await fetch(`/api/conversations/${c.id}`, { method: 'DELETE' });
-                          
+
                           if (response.ok) {
                             console.log('✅ 对话删除成功');
                             // 从本地状态中移除
                             setConversations(prev => prev.filter(x => x.id !== c.id));
-                            
+
                             // 如果删除的是当前活跃对话，清空消息
                             if (activeConv === c.id) {
                               setActiveConv(null);
                               setMessages([]);
-                              conversationIdRef.current = null; 
+                              conversationIdRef.current = null;
                               try { localStorage.removeItem('cid'); } catch {}
                             }
                           } else {
@@ -573,7 +606,7 @@ export default function HomePage() {
                           console.error('❌ 删除对话失败:', error);
                           alert('删除失败，请重试');
                         }
-                      }} 
+                      }}
                       title="删除"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -585,7 +618,7 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-          
+
           {/* 个人账户区域 */}
           {authed ? (
             <div className="user-profile">
@@ -690,7 +723,7 @@ export default function HomePage() {
         </aside>
 
         {/* 右侧主内容区域 */}
-        <div className="main-content">
+        <div className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           {/* 聊天消息区域 */}
           <div className="chat-messages">
             {messages.map(m => (
@@ -702,7 +735,7 @@ export default function HomePage() {
             ))}
             {loading && <div className="loading-indicator">生成中...</div>}
           </div>
-          
+
           {/* 输入区域 */}
           <div className="input-area">
             <div className="composer">
@@ -715,8 +748,8 @@ export default function HomePage() {
                   adjustTextareaHeight();
                 }}
                 placeholder="问问赛斯"
-                style={{ 
-                  minHeight: '50px', 
+                style={{
+                  minHeight: '50px',
                   maxHeight: '140px',
                   fontSize: '16px',
                   lineHeight: '1.6'
