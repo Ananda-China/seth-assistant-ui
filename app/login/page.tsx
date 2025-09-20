@@ -17,6 +17,8 @@ function LoginForm() {
   const [canSetInvite, setCanSetInvite] = useState(true);
   const [inviteCheckMsg, setInviteCheckMsg] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // 从URL参数中获取邀请码
   useEffect(() => {
@@ -187,13 +189,36 @@ function LoginForm() {
               </div>
               <div className="form-group">
                 <label className="form-label">密码</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="请输入密码"
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="请输入密码"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? '隐藏' : '显示'}
+                    style={{
+                      position: 'absolute',
+                      right: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#8A94B3',
+                      cursor: 'pointer',
+                      fontSize: 16,
+                      lineHeight: 1,
+                      padding: 4,
+                    }}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
               <div className="form-actions">
                 <button onClick={loginPassword} disabled={loading} className="btn-primary">

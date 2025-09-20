@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理功能页面预览</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1A1D33 0%, #2E335B 100%);
+            color: #EAEBF0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #C8B6E2;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .feature-card {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .feature-card h3 {
+            margin-top: 0;
+            color: #C8B6E2;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-list li:before {
+            content: "✨";
+            color: #C8B6E2;
+        }
+        
+        .code-block {
+            background: rgba(46, 51, 91, 0.6);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(200, 182, 226, 0.2);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .warning-icon {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+        
+        .info {
+            background: rgba(13, 202, 240, 0.1);
+            border: 1px solid rgba(13, 202, 240, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .info-icon {
+            color: #0dcaf0;
+            margin-right: 8px;
+        }
+        
+        .steps {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .steps h3 {
+            color: #C8B6E2;
+            margin-top: 0;
+        }
+        
+        .steps ol {
+            padding-left: 20px;
+        }
+        
+        .steps li {
+            margin: 12px 0;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🛠️ 管理功能页面开发完成</h1>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h3>
+                    <span class="feature-icon">👤</span>
+                    创建用户账号
+                </h3>
+                <ul class="feature-list">
+                    <li>手机号验证（支持中国手机号格式）</li>
+                    <li>可选昵称设置</li>
+                    <li>订阅类型选择（免费/月度/季度/年度）</li>
+                    <li>自定义订阅天数</li>
+                    <li>可选密码设置（至少6位）</li>
+                    <li>自动生成邀请码</li>
+                    <li>防重复注册检查</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>
+                    <span class="feature-icon">🔐</span>
+                    修改管理员密码
+                </h3>
+                <ul class="feature-list">
+                    <li>当前密码验证</li>
+                    <li>新密码强度要求（至少8位）</li>
+                    <li>密码确认验证</li>
+                    <li>bcrypt安全哈希存储</li>
+                    <li>数据库密码更新</li>
+                    <li>操作日志记录</li>
+                    <li>实时反馈提示</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <span class="warning-icon">⚠️</span>
+            <strong>重要安全提醒：</strong>
+            <br>默认管理员密码已从简单的 "admin123" 更新为更安全的 "AdminPass123!"
+            <br>请在首次登录后立即修改为您的专属密码！
+        </div>
+        
+        <div class="info">
+            <span class="info-icon">ℹ️</span>
+            <strong>数据库迁移：</strong>
+            <br>需要执行 supabase/migrations/009_update_admin_password.sql 来更新管理员密码哈希
+        </div>
+        
+        <div class="steps">
+            <h3>🚀 使用步骤</h3>
+            <ol>
+                <li><strong>执行数据库迁移</strong>
+                    <div class="code-block">
+-- 在 Supabase 控制台中执行以下 SQL：
+DELETE FROM admins WHERE username = 'admin';
+INSERT INTO admins (username, password_hash) VALUES
+('admin', '$2b$12$hpN2yaecdgBDsYXWy14jzuAJFbsLpQgHPqcCufV1QqKTKbryWwEC.');
+                    </div>
+                </li>
+                <li><strong>访问管理后台</strong>
+                    <div class="code-block">http://localhost:3002/admin/login</div>
+                </li>
+                <li><strong>使用新密码登录</strong>
+                    <div class="code-block">
+用户名: admin
+密码: AdminPass123!
+                    </div>
+                </li>
+                <li><strong>进入管理功能页面</strong>
+                    <br>在侧边栏点击 "⚙️ 管理功能" 菜单项
+                </li>
+                <li><strong>立即修改密码</strong>
+                    <br>切换到 "修改管理员密码" 标签页，设置您的专属密码
+                </li>
+                <li><strong>开始创建用户</strong>
+                    <br>切换到 "创建用户账号" 标签页，开始管理用户账户
+                </li>
+            </ol>
+        </div>
+        
+        <div class="feature-card">
+            <h3>
+                <span class="feature-icon">🔧</span>
+                技术实现亮点
+            </h3>
+            <ul class="feature-list">
+                <li>使用 bcryptjs 进行密码安全哈希（12轮加盐）</li>
+                <li>完整的表单验证和错误处理</li>
+                <li>响应式设计，支持桌面和移动端</li>
+                <li>实时消息反馈系统</li>
+                <li>管理员权限验证中间件</li>
+                <li>数据库事务安全操作</li>
+                <li>TypeScript 类型安全</li>
+                <li>与现有用户系统完全兼容</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px; color: #8A94B3;">
+            <p>🎉 管理功能开发完成，请按照上述步骤进行测试！</p>
+            <p>如有任何问题，请检查控制台日志获取详细信息。</p>
+        </div>
+    </div>
+</body>
+</html>

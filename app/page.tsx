@@ -33,8 +33,10 @@ export default function HomePage() {
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      const newHeight = Math.min(textareaRef.current.scrollHeight, 140);
-      textareaRef.current.style.height = Math.max(newHeight, 50) + 'px';
+      // 使用视口高度的30%作为最大高度，最小高度为120px
+      const maxHeight = Math.min(window.innerHeight * 0.3, 300);
+      const newHeight = Math.min(textareaRef.current.scrollHeight, maxHeight);
+      textareaRef.current.style.height = Math.max(newHeight, 120) + 'px';
     }
   };
 
@@ -266,7 +268,7 @@ export default function HomePage() {
 
     // 重置输入框高度
     if (textareaRef.current) {
-      textareaRef.current.style.height = '50px';
+      textareaRef.current.style.height = '120px';
     }
 
     // 立即滚动到底部，显示用户消息
@@ -760,8 +762,8 @@ export default function HomePage() {
                 }}
                 placeholder="问问赛斯"
                 style={{
-                  minHeight: '50px',
-                  maxHeight: '140px',
+                  minHeight: '120px',
+                  maxHeight: '30vh',
                   fontSize: '16px',
                   lineHeight: '1.6'
                 }}

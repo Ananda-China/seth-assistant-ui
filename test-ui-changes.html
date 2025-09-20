@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天界面调整效果预览</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1A1D33 0%, #2E335B 100%);
+            color: #EAEBF0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #C8B6E2;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .section {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .section h3 {
+            margin-top: 0;
+            color: #C8B6E2;
+            text-align: center;
+        }
+        
+        .old-input {
+            background: rgba(46, 51, 91, 0.4);
+            border-radius: 50px;
+            padding: 8px 0;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .old-input textarea {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #EAEBF0;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            padding: 12px 0 12px 20px;
+            min-height: 50px;
+            max-height: 140px;
+        }
+        
+        .old-input button {
+            background: transparent;
+            border: none;
+            color: #8A94B3;
+            margin-right: 20px;
+            padding: 12px;
+            border-radius: 50%;
+            min-width: 44px;
+            min-height: 44px;
+            cursor: pointer;
+        }
+        
+        .new-input {
+            background: rgba(46, 51, 91, 0.4);
+            border-radius: 32px;
+            padding: 12px 0;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-height: 140px;
+            margin-bottom: 20px;
+        }
+        
+        .new-input textarea {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #EAEBF0;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            padding: 16px 0 16px 24px;
+            min-height: 120px;
+            max-height: 30vh;
+            overflow-y: auto;
+        }
+        
+        .new-input button {
+            background: rgba(200, 182, 226, 0.1);
+            border: 2px solid rgba(200, 182, 226, 0.3);
+            color: #C8B6E2;
+            margin-right: 24px;
+            margin-top: 12px;
+            padding: 16px;
+            border-radius: 50%;
+            min-width: 56px;
+            min-height: 56px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(200, 182, 226, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .new-input button:hover {
+            background: rgba(200, 182, 226, 0.25);
+            border-color: rgba(200, 182, 226, 0.5);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(200, 182, 226, 0.4);
+        }
+        
+        .features {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .features h3 {
+            color: #C8B6E2;
+            margin-top: 0;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .features li:before {
+            content: "✨ ";
+            color: #C8B6E2;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🎨 聊天界面优化效果预览</h1>
+        
+        <div class="comparison">
+            <div class="section">
+                <h3>调整前</h3>
+                <div class="old-input">
+                    <textarea placeholder="问问赛斯" readonly>这是原来的输入框，比较小...</textarea>
+                    <button>📤</button>
+                </div>
+                <p style="font-size: 14px; color: #8A94B3;">
+                    • 最小高度：50px<br>
+                    • 最大高度：140px<br>
+                    • 发送按钮：44x44px<br>
+                    • 按钮颜色：较淡
+                </p>
+            </div>
+            
+            <div class="section">
+                <h3>调整后</h3>
+                <div class="new-input">
+                    <textarea placeholder="问问赛斯" readonly>这是新的输入框，更大更舒适！
+
+可以输入更多内容，
+支持多行文本，
+视觉效果更好。</textarea>
+                    <button>📤</button>
+                </div>
+                <p style="font-size: 14px; color: #8A94B3;">
+                    • 最小高度：120px<br>
+                    • 最大高度：30vh (屏幕的30%)<br>
+                    • 发送按钮：56x56px<br>
+                    • 按钮颜色：更明显，有边框和阴影
+                </p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>🚀 优化亮点</h3>
+            <ul>
+                <li>输入框高度增加到屏幕的四分之一到三分之一，提供更舒适的输入体验</li>
+                <li>发送按钮尺寸从 44x44px 增大到 56x56px，更容易点击</li>
+                <li>发送按钮增加了边框、背景色和阴影效果，视觉更突出</li>
+                <li>支持自动高度调整，最大高度为视口的30%</li>
+                <li>移动端适配：在小屏幕上使用稍小的尺寸以保持良好体验</li>
+                <li>保持了原有的圆角设计和磨砂玻璃效果</li>
+                <li>按钮hover效果更明显，包括缩放和发光效果</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px; color: #8A94B3;">
+            <p>请在实际应用中测试这些更改效果</p>
+            <p>访问: <a href="http://localhost:3002" style="color: #C8B6E2;">http://localhost:3002</a></p>
+        </div>
+    </div>
+</body>
+</html>

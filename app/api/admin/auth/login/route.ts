@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-
-// 管理员账号配置（生产环境应该存储在数据库中）
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123', // 生产环境请使用强密码
-  role: 'admin'
-};
+import bcrypt from 'bcryptjs';
+import { supabaseAdmin } from '../../../../../lib/supabase';
 
 // JWT 密钥（生产环境应该使用环境变量）
 const JWT_SECRET = process.env.JWT_SECRET || 'seth-assistant-super-secret-key-2024';
@@ -16,58 +11,71 @@ export async function POST(req: NextRequest) {
     const { username, password } = await req.json();
     console.log('管理员登录请求:', {
       username,
-      hasPassword: !!password,
-      jwtSecret: !!JWT_SECRET,
-      jwtSecretLength: JWT_SECRET.length,
-      nodeEnv: process.env.NODE_ENV,
-      hasEnvJwtSecret: !!process.env.JWT_SECRET
+      hasPassword: !!password
     });
 
-    // 验证用户名和密码
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      console.log('管理员登录验证成功，生成JWT token');
+    if (!username || !password) {
+      return NextResponse.json(
+        { success: false, message: '请提供用户名和密码' },
+        { status: 400 }
+      );
+    }
 
-      // 生成 JWT token
-      const payload = {
-        username: ADMIN_CREDENTIALS.username,
-        role: ADMIN_CREDENTIALS.role,
-        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24小时过期
-      };
+    // 从数据库获取管理员信息
+    const { data: admin, error } = await supabaseAdmin
+      .from('admins')
+      .select('username, password_hash')
+      .eq('username', username)
+      .single();
 
-      console.log('JWT payload:', payload);
-      const token = jwt.sign(payload, JWT_SECRET);
-      console.log('JWT token生成成功，长度:', token.length);
-
-      // 设置 HTTP-only cookie
-      const response = NextResponse.json({ 
-        success: true, 
-        message: '登录成功',
-        user: {
-          username: ADMIN_CREDENTIALS.username,
-          role: ADMIN_CREDENTIALS.role
-        }
-      });
-
-      response.cookies.set('admin_token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // 生产环境使用HTTPS
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60, // 24小时
-        path: '/'
-      });
-
-      return response;
-    } else {
-      console.log('管理员登录验证失败:', { 
-        providedUsername: username, 
-        expectedUsername: ADMIN_CREDENTIALS.username,
-        passwordMatch: password === ADMIN_CREDENTIALS.password 
-      });
+    if (error || !admin) {
+      console.log('管理员账户不存在:', username);
       return NextResponse.json(
         { success: false, message: '用户名或密码错误' },
         { status: 401 }
       );
     }
+
+    // 验证密码
+    const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
+    if (!isPasswordValid) {
+      console.log('管理员密码验证失败:', username);
+      return NextResponse.json(
+        { success: false, message: '用户名或密码错误' },
+        { status: 401 }
+      );
+    }
+
+    console.log('管理员登录验证成功，生成JWT token');
+
+    // 生成 JWT token
+    const payload = {
+      username: admin.username,
+      role: 'admin',
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24小时过期
+    };
+
+    const token = jwt.sign(payload, JWT_SECRET);
+
+    // 设置 HTTP-only cookie
+    const response = NextResponse.json({ 
+      success: true, 
+      message: '登录成功',
+      user: {
+        username: admin.username,
+        role: 'admin'
+      }
+    });
+
+    response.cookies.set('admin_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60, // 24小时
+      path: '/'
+    });
+
+    return response;
   } catch (error) {
     console.error('Admin login error:', error);
     return NextResponse.json(

@@ -512,14 +512,15 @@ body {
   margin: 0 auto; /* 水平居中 */
   background: rgba(46, 51, 91, 0.4); /* 与Sidebar一致的磨砂玻璃效果 */
   backdrop-filter: blur(16px);
-  border-radius: 50px;
-  padding: 8px 0; /* 调整padding让按钮更突出 */
+  border-radius: 32px; /* 调整圆角以适应更大的输入框 */
+  padding: 12px 0; /* 增加内边距以适应更大的输入框 */
   border: 1px solid rgba(200, 182, 226, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   display: flex;
-  align-items: center;
-  gap: 8px; /* 添加间距 */
+  align-items: flex-start; /* 改为顶部对齐，适应多行输入 */
+  gap: 12px; /* 增加间距 */
+  min-height: 140px; /* 设置最小高度 */
 }
 
 .composer:focus-within {
@@ -536,11 +537,11 @@ body {
   font-size: 16px; /* 严格按照规范 */
   line-height: 1.6;
   resize: none;
-  overflow: hidden;
-  padding: 12px 0 12px 20px; /* 调整padding */
+  overflow-y: auto; /* 允许垂直滚动 */
+  padding: 16px 0 16px 24px; /* 增加内边距 */
   font-family: inherit;
-  min-height: 50px;
-  max-height: 140px;
+  min-height: 120px; /* 增大最小高度 */
+  max-height: 30vh; /* 使用视口高度的30%，约为屏幕的三分之一 */
 }
 
 .message-input::placeholder {
@@ -548,32 +549,39 @@ body {
 }
 
 .send-btn {
-  background: transparent;
-  border: none;
+  background: rgba(200, 182, 226, 0.1); /* 增加默认背景 */
+  border: 2px solid rgba(200, 182, 226, 0.3); /* 增加边框 */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8A94B3; /* 耳语灰 */
+  color: #C8B6E2; /* 使用更明显的颜色 */
   transition: all 0.3s ease;
-  margin-right: 20px; /* 严格按照规范：右padding 20px */
-  padding: 12px;
+  margin-right: 24px; /* 增加右边距 */
+  margin-top: 12px; /* 添加顶部边距，使按钮在多行输入时位置更好 */
+  padding: 16px; /* 增大内边距 */
   border-radius: 50%;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 56px; /* 增大按钮尺寸 */
+  min-height: 56px; /* 增大按钮尺寸 */
+  box-shadow: 0 4px 12px rgba(200, 182, 226, 0.2); /* 增加阴影 */
+  flex-shrink: 0; /* 防止按钮被压缩 */
 }
 
 .send-btn:hover {
-  color: #C8B6E2; /* 灵性丁香紫 */
-  background: rgba(200, 182, 226, 0.1);
-  transform: scale(1.05);
+  color: #EAEBF0; /* 更亮的颜色 */
+  background: rgba(200, 182, 226, 0.25); /* 更明显的背景 */
+  border-color: rgba(200, 182, 226, 0.5); /* 更明显的边框 */
+  transform: scale(1.1); /* 更大的缩放效果 */
+  box-shadow: 0 6px 20px rgba(200, 182, 226, 0.4); /* 更强的阴影 */
 }
 
 .send-btn.active {
-  color: #C8B6E2; /* 灵性丁香紫 */
-  background: rgba(200, 182, 226, 0.15);
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 8px rgba(200, 182, 226, 0.4));
+  color: #EAEBF0; /* 更亮的颜色 */
+  background: rgba(200, 182, 226, 0.3); /* 更明显的背景 */
+  border-color: rgba(200, 182, 226, 0.6); /* 更明显的边框 */
+  transform: scale(1.1); /* 更大的缩放效果 */
+  box-shadow: 0 8px 24px rgba(200, 182, 226, 0.5); /* 更强的阴影 */
+  filter: drop-shadow(0 0 12px rgba(200, 182, 226, 0.6)); /* 更强的发光效果 */
 }
 
 .send-btn:disabled {
@@ -585,8 +593,8 @@ body {
 
 .send-btn svg {
   transition: all 0.3s ease;
-  width: 20px;
-  height: 20px;
+  width: 24px; /* 增大图标尺寸 */
+  height: 24px; /* 增大图标尺寸 */
 }
 
 .send-btn.active svg {
@@ -667,8 +675,25 @@ body {
   }
 
   /* 聊天消息与输入区的内边距优化 */
-  .chat-messages { padding: 16px 14px 96px 14px; }
-  .composer { margin: 0 12px; }
+  .chat-messages { padding: 16px 14px 160px 14px; } /* 增加底部间距以适应更大的输入框 */
+  .composer {
+    margin: 0 12px;
+    min-height: 100px; /* 移动端稍微减小最小高度 */
+  }
+
+  /* 移动端输入框调整 */
+  .message-input {
+    min-height: 100px; /* 移动端减小最小高度 */
+    max-height: 25vh; /* 移动端使用稍小的最大高度 */
+    padding: 12px 0 12px 20px; /* 移动端减小内边距 */
+  }
+
+  /* 移动端发送按钮调整 */
+  .send-btn {
+    min-width: 48px; /* 移动端稍微减小按钮尺寸 */
+    min-height: 48px;
+    margin-right: 16px; /* 移动端减小右边距 */
+  }
 
   /* 浮动开关按钮（仅移动端显示） */
   .sidebar-fab {
@@ -1058,6 +1083,37 @@ body {
   text-align: center;
 }
 
+/* 账户页面分区布局 */
+.account-section {
+  margin-bottom: 48px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #C8B6E2; /* 灵性丁香紫 */
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(200, 182, 226, 0.2);
+  display: flex;
+  align-items: center;
+}
+
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #C8B6E2, #8A94B3);
+  border-radius: 2px;
+  margin-right: 12px;
+}
+
+.section-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
 .account-cards {
   display: flex;
   flex-direction: column;
@@ -1074,12 +1130,17 @@ body {
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #EAEBF0; /* 意识白 */
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+}
+
+/* 全宽卡片样式 */
+.account-card.full-width {
+  grid-column: 1 / -1;
 }
 
 .card-grid {
@@ -1522,6 +1583,18 @@ body {
   .account-content { max-width: 100%; }
   .account-title { font-size: 28px; margin: 16px 0 20px; }
   .account-card { padding: 16px; border-radius: 16px; }
+
+  /* 移动端分区样式 */
+  .account-section { margin-bottom: 32px; }
+  .section-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+  .section-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 
   .table-header, .table-cell { padding: 12px 10px; font-size: 13px; }
   .table { min-width: 560px; }

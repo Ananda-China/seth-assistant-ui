@@ -8,6 +8,8 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -42,7 +44,7 @@ export default function AdminLoginPage() {
           <h1 className="text-3xl font-serif-brand text-[#C8B6E2] mb-2">管理员登录</h1>
           <p className="text-sm text-[#8A94B3]">赛斯助手后台管理系统</p>
         </div>
-        
+
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm mb-2 text-[#EAEBF0]">用户名</label>
@@ -55,25 +57,36 @@ export default function AdminLoginPage() {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm mb-2 text-[#EAEBF0]">密码</label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 rounded-xl bg-[#2E335B] border-none text-[#EAEBF0] placeholder-[#8A94B3] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2] transition-all"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="请输入密码"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="w-full px-4 py-3 rounded-xl bg-[#2E335B] border-none text-[#EAEBF0] placeholder-[#8A94B3] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2] transition-all pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="请输入密码"
+                required
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                title={showPassword ? '隐藏' : '显示'}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A94B3] hover:text-[#C8B6E2] focus:outline-none"
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
-          
+
           {error && (
             <div className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">
               {error}
             </div>
           )}
-          
+
           <button
             type="submit"
             disabled={loading}
@@ -82,7 +95,7 @@ export default function AdminLoginPage() {
             {loading ? '登录中...' : '登录'}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
           <a href="/" className="text-sm text-[#8A94B3] hover:text-[#C8B6E2] transition-colors">
             返回首页

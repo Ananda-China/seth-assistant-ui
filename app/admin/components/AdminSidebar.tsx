@@ -13,7 +13,8 @@ export default function AdminSidebar({ activeTab, onTabChange }: AdminSidebarPro
     { id: 'analytics', label: '数据统计', icon: '📊' },
     { id: 'content', label: '内容管理', icon: '💬' },
     { id: 'payments', label: '支付管理', icon: '💰' },
-    { id: 'activation', label: '激活码管理', icon: '🎫' }
+    { id: 'activation', label: '激活码管理', icon: '🎫' },
+    { id: 'admin', label: '管理功能', icon: '⚙️' }
   ];
 
   return (
