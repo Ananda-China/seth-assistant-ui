@@ -505,17 +505,15 @@ export default function HomePage() {
         console.log('✅ 浏览器支持语音识别');
         const recognition = new SpeechRecognition();
 
+        // 配置语音识别参数
+        recognition.continuous = true;  // 持续识别，不自动停止
+        recognition.interimResults = true;  // 显示中间结果
+        recognition.lang = 'zh-CN';
+
         // Edge浏览器特殊配置
         if (isEdge) {
           console.log('🔧 为Edge浏览器优化配置');
-          recognition.continuous = false;
-          recognition.interimResults = false;
-          recognition.lang = 'zh-CN';
           recognition.maxAlternatives = 1;
-        } else {
-          recognition.continuous = false;
-          recognition.interimResults = false;
-          recognition.lang = 'zh-CN';
         }
 
         recognition.onstart = () => {
@@ -526,20 +524,58 @@ export default function HomePage() {
         recognition.onresult = (event: any) => {
           console.log('🎤 语音识别结果:', event.results);
           if (event.results && event.results.length > 0) {
-            const transcript = event.results[0][0].transcript;
-            console.log('📝 识别文字:', transcript);
-            setInput(prev => {
-              const newValue = prev + transcript;
-              console.log('📝 更新输入框:', newValue);
-              return newValue;
-            });
-            setTimeout(adjustTextareaHeight, 10);
+            let finalTranscript = '';
+            let interimTranscript = '';
+
+            // 处理所有结果
+            for (let i = 0; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+              } else {
+                interimTranscript += transcript;
+              }
+            }
+
+            // 只有最终结果才添加到输入框
+            if (finalTranscript) {
+              console.log('📝 最终识别文字:', finalTranscript);
+              setInput(prev => {
+                const newValue = prev + finalTranscript;
+                console.log('📝 更新输入框:', newValue);
+                return newValue;
+              });
+              setTimeout(adjustTextareaHeight, 10);
+            }
+
+            // 显示中间结果（可选，用于用户反馈）
+            if (interimTranscript) {
+              console.log('📝 中间识别文字:', interimTranscript);
+            }
           }
         };
 
         recognition.onend = () => {
           console.log('🎤 语音识别结束');
-          setIsRecording(false);
+          // 只有在用户主动停止时才设置为false，否则自动重启
+          if (!isRecording) {
+            console.log('🎤 用户主动停止，不重启');
+            return;
+          }
+
+          // 如果是意外结束，尝试重启（但有限制）
+          console.log('🎤 意外结束，尝试重启...');
+          setTimeout(() => {
+            if (isRecording && recognition) {
+              try {
+                recognition.start();
+                console.log('🎤 语音识别重启成功');
+              } catch (error) {
+                console.error('❌ 语音识别重启失败:', error);
+                setIsRecording(false);
+              }
+            }
+          }, 100);
         };
 
         recognition.onerror = (event: any) => {
@@ -615,24 +651,44 @@ export default function HomePage() {
         // Edge浏览器特殊处理
         if (isEdge) {
           console.log('🔧 Edge浏览器特殊启动流程');
-          // 确保完全停止之前的识别
-          if (recognition.state && recognition.state !== 'inactive') {
-            console.log('⚠️ Edge: 语音识别状态异常，强制重置...');
-            recognition.abort();
-            // Edge需要更长的等待时间
+          // Edge浏览器总是重新创建识别对象，避免状态问题
+          try {
+            // 停止当前识别（如果存在）
+            if (recognition.state && recognition.state !== 'inactive') {
+              console.log('⚠️ Edge: 停止当前识别...');
+              recognition.abort();
+            }
+
+            // Edge浏览器延迟更长时间确保状态重置
             setTimeout(() => {
               try {
+                console.log('🎤 Edge: 启动新的语音识别...');
                 recognition.start();
                 console.log('✅ Edge: 语音识别启动成功');
               } catch (edgeError) {
-                console.error('❌ Edge: 重试启动失败:', edgeError);
+                console.error('❌ Edge: 启动失败:', edgeError);
                 setIsRecording(false);
-                alert('Edge浏览器语音识别启动失败，请刷新页面后重试');
+
+                // 更友好的错误提示
+                if (edgeError.name === 'InvalidStateError') {
+                  // 尝试重新初始化
+                  console.log('🔄 Edge: 尝试重新初始化语音识别...');
+                  setTimeout(() => {
+                    try {
+                      recognition.start();
+                    } catch (retryError) {
+                      alert('Edge浏览器语音识别初始化失败，请刷新页面后重试');
+                    }
+                  }, 500);
+                } else {
+                  alert(`Edge浏览器语音识别错误: ${edgeError.message}`);
+                }
               }
-            }, 200);
-          } else {
-            recognition.start();
-            console.log('✅ Edge: 语音识别直接启动');
+            }, 300); // 增加到300ms
+          } catch (error) {
+            console.error('❌ Edge: 预处理失败:', error);
+            setIsRecording(false);
+            alert('Edge浏览器语音识别预处理失败，请刷新页面后重试');
           }
         } else {
           // 其他浏览器的处理
@@ -700,21 +756,26 @@ export default function HomePage() {
   };
 
   const stopRecording = () => {
-    console.log('🛑 停止语音识别...');
+    console.log('🛑 用户主动停止语音识别...');
     console.log('- isRecording:', isRecording);
     console.log('- recognition对象:', !!recognition);
 
+    // 先设置状态，防止onend事件重启
+    setIsRecording(false);
+
     if (recognition) {
       try {
-        if (isRecording) {
-          recognition.stop();
-        } else {
-          recognition.abort(); // 强制停止
-        }
+        console.log('🛑 执行停止操作...');
+        recognition.stop(); // 使用stop而不是abort，确保获取最后的结果
       } catch (error) {
         console.error('❌ 停止语音识别失败:', error);
+        // 如果stop失败，尝试abort
+        try {
+          recognition.abort();
+        } catch (abortError) {
+          console.error('❌ 强制停止语音识别也失败:', abortError);
+        }
       }
-      setIsRecording(false);
     }
   };
 
