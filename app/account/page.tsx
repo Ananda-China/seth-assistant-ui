@@ -79,7 +79,7 @@ export default function AccountPage() {
             block: 'start'
           });
         }
-      }, 500); // 延迟500ms确保页面完全加载
+      }, 1000); // 延迟1秒确保页面完全加载
     })();
   }, []);
 

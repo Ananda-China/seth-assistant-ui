@@ -50,17 +50,20 @@ export default function QRCodeManagement() {
     setMsg('');
 
     try {
-      const url = editingQR ? `/api/admin/qr-codes/${editingQR.id}` : '/api/admin/qr-codes';
+      const url = '/api/admin/qr-codes';
       const method = editingQR ? 'PUT' : 'POST';
-      
+
+      // 对于PUT请求，需要包含ID
+      const requestData = editingQR ? { ...formData, id: editingQR.id } : formData;
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestData)
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setMsg(editingQR ? '更新成功' : '添加成功');
         setShowAddForm(false);
@@ -71,6 +74,7 @@ export default function QRCodeManagement() {
         setMsg(result.message || '操作失败');
       }
     } catch (error) {
+      console.error('提交错误:', error);
       setMsg('操作失败，请重试');
     } finally {
       setLoading(false);
@@ -92,12 +96,12 @@ export default function QRCodeManagement() {
     if (!confirm('确定要删除这个二维码配置吗？')) return;
 
     try {
-      const response = await fetch(`/api/admin/qr-codes/${id}`, {
+      const response = await fetch(`/api/admin/qr-codes?id=${id}`, {
         method: 'DELETE'
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setMsg('删除成功');
         await loadQRCodes();
@@ -105,6 +109,7 @@ export default function QRCodeManagement() {
         setMsg(result.message || '删除失败');
       }
     } catch (error) {
+      console.error('删除错误:', error);
       setMsg('删除失败，请重试');
     }
   };

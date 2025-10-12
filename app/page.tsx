@@ -490,14 +490,33 @@ export default function HomePage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       console.log('🎤 初始化语音识别...');
+      console.log('🌐 浏览器信息:', navigator.userAgent);
+
+      // 检测浏览器类型
+      const isEdge = navigator.userAgent.includes('Edg/');
+      const isChrome = navigator.userAgent.includes('Chrome/') && !isEdge;
+      const isSafari = navigator.userAgent.includes('Safari/') && !isChrome && !isEdge;
+
+      console.log('🌐 浏览器类型:', { isEdge, isChrome, isSafari });
+
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
         console.log('✅ 浏览器支持语音识别');
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'zh-CN';
+
+        // Edge浏览器特殊配置
+        if (isEdge) {
+          console.log('🔧 为Edge浏览器优化配置');
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.lang = 'zh-CN';
+          recognition.maxAlternatives = 1;
+        } else {
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.lang = 'zh-CN';
+        }
 
         recognition.onstart = () => {
           console.log('🎤 语音识别已启动');
@@ -506,14 +525,16 @@ export default function HomePage() {
 
         recognition.onresult = (event: any) => {
           console.log('🎤 语音识别结果:', event.results);
-          const transcript = event.results[0][0].transcript;
-          console.log('📝 识别文字:', transcript);
-          setInput(prev => {
-            const newValue = prev + transcript;
-            console.log('📝 更新输入框:', newValue);
-            return newValue;
-          });
-          setTimeout(adjustTextareaHeight, 10);
+          if (event.results && event.results.length > 0) {
+            const transcript = event.results[0][0].transcript;
+            console.log('📝 识别文字:', transcript);
+            setInput(prev => {
+              const newValue = prev + transcript;
+              console.log('📝 更新输入框:', newValue);
+              return newValue;
+            });
+            setTimeout(adjustTextareaHeight, 10);
+          }
         };
 
         recognition.onend = () => {
@@ -523,13 +544,28 @@ export default function HomePage() {
 
         recognition.onerror = (event: any) => {
           console.error('❌ 语音识别错误:', event.error);
+          console.error('❌ 错误详情:', event);
           setIsRecording(false);
-          if (event.error === 'not-allowed') {
-            alert('请允许麦克风权限以使用语音输入功能');
-          } else if (event.error === 'no-speech') {
-            alert('未检测到语音，请重试');
+
+          // Edge浏览器特殊错误处理
+          if (isEdge) {
+            if (event.error === 'not-allowed') {
+              alert('请在Edge浏览器中允许麦克风权限：\n1. 点击地址栏左侧的锁图标\n2. 将麦克风权限设置为"允许"\n3. 刷新页面后重试');
+            } else if (event.error === 'no-speech') {
+              alert('未检测到语音，请重试');
+            } else if (event.error === 'network') {
+              alert('网络错误，请检查网络连接后重试');
+            } else {
+              alert(`Edge浏览器语音识别错误: ${event.error}\n请尝试刷新页面或重启浏览器`);
+            }
           } else {
-            alert(`语音识别失败: ${event.error}`);
+            if (event.error === 'not-allowed') {
+              alert('请允许麦克风权限以使用语音输入功能');
+            } else if (event.error === 'no-speech') {
+              alert('未检测到语音，请重试');
+            } else {
+              alert(`语音识别失败: ${event.error}`);
+            }
           }
         };
 
@@ -547,6 +583,10 @@ export default function HomePage() {
     console.log('- isRecording:', isRecording);
     console.log('- recognition对象:', !!recognition);
     console.log('- window.location.protocol:', window.location.protocol);
+
+    // 检测浏览器类型
+    const isEdge = navigator.userAgent.includes('Edg/');
+    console.log('🌐 当前浏览器是Edge:', isEdge);
 
     // 如果已经在录音，先停止
     if (isRecording) {
@@ -571,48 +611,91 @@ export default function HomePage() {
     const doStartRecognition = () => {
       try {
         console.log('🎤 启动语音识别...');
-        // 确保状态正确
-        if (recognition.state && recognition.state !== 'inactive') {
-          console.log('⚠️ 语音识别状态异常，重置...');
-          recognition.abort();
-          setTimeout(() => {
+
+        // Edge浏览器特殊处理
+        if (isEdge) {
+          console.log('🔧 Edge浏览器特殊启动流程');
+          // 确保完全停止之前的识别
+          if (recognition.state && recognition.state !== 'inactive') {
+            console.log('⚠️ Edge: 语音识别状态异常，强制重置...');
+            recognition.abort();
+            // Edge需要更长的等待时间
+            setTimeout(() => {
+              try {
+                recognition.start();
+                console.log('✅ Edge: 语音识别启动成功');
+              } catch (edgeError) {
+                console.error('❌ Edge: 重试启动失败:', edgeError);
+                setIsRecording(false);
+                alert('Edge浏览器语音识别启动失败，请刷新页面后重试');
+              }
+            }, 200);
+          } else {
             recognition.start();
-          }, 100);
+            console.log('✅ Edge: 语音识别直接启动');
+          }
         } else {
-          recognition.start();
+          // 其他浏览器的处理
+          if (recognition.state && recognition.state !== 'inactive') {
+            console.log('⚠️ 语音识别状态异常，重置...');
+            recognition.abort();
+            setTimeout(() => {
+              recognition.start();
+            }, 100);
+          } else {
+            recognition.start();
+          }
         }
       } catch (error) {
         console.error('❌ 启动语音识别失败:', error);
         setIsRecording(false);
-        if (error.name === 'InvalidStateError') {
-          alert('语音识别状态异常，请刷新页面后重试');
+
+        if (isEdge) {
+          if (error.name === 'InvalidStateError') {
+            alert('Edge浏览器语音识别状态异常，请刷新页面后重试');
+          } else if (error.name === 'NotAllowedError') {
+            alert('请在Edge浏览器中允许麦克风权限：\n1. 点击地址栏左侧的锁图标\n2. 将麦克风权限设置为"允许"\n3. 刷新页面后重试');
+          } else {
+            alert(`Edge浏览器启动语音识别失败: ${error.message}\n请尝试刷新页面`);
+          }
         } else {
-          alert(`启动语音识别失败: ${error.message}`);
+          if (error.name === 'InvalidStateError') {
+            alert('语音识别状态异常，请刷新页面后重试');
+          } else {
+            alert(`启动语音识别失败: ${error.message}`);
+          }
         }
       }
     };
 
-    // 检查麦克风权限
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      console.log('🎤 请求麦克风权限...');
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-          console.log('✅ 麦克风权限已获取');
-          doStartRecognition();
-        })
-        .catch((error) => {
-          console.error('❌ 麦克风权限被拒绝:', error);
-          if (error.name === 'NotAllowedError') {
-            alert('请点击地址栏的麦克风图标，允许麦克风权限后重试');
-          } else if (error.name === 'NotFoundError') {
-            alert('未找到麦克风设备，请检查您的麦克风是否正常连接');
-          } else {
-            alert(`麦克风权限错误: ${error.message}`);
-          }
-        });
-    } else {
-      console.log('⚠️ 使用旧版API直接启动');
+    // Edge浏览器的权限检查策略
+    if (isEdge) {
+      console.log('🔧 Edge浏览器权限检查策略');
+      // Edge浏览器直接启动，不预先检查权限
       doStartRecognition();
+    } else {
+      // 其他浏览器检查麦克风权限
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        console.log('🎤 请求麦克风权限...');
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(() => {
+            console.log('✅ 麦克风权限已获取');
+            doStartRecognition();
+          })
+          .catch((error) => {
+            console.error('❌ 麦克风权限被拒绝:', error);
+            if (error.name === 'NotAllowedError') {
+              alert('请点击地址栏的麦克风图标，允许麦克风权限后重试');
+            } else if (error.name === 'NotFoundError') {
+              alert('未找到麦克风设备，请检查您的麦克风是否正常连接');
+            } else {
+              alert(`麦克风权限错误: ${error.message}`);
+            }
+          });
+      } else {
+        console.log('⚠️ 使用旧版API直接启动');
+        doStartRecognition();
+      }
     }
   };
 
