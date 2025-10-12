@@ -50,11 +50,37 @@ export default function QRCodeManagement() {
     setMsg('');
 
     try {
+      console.log('🔧 提交二维码数据:', formData);
+
+      // 数据验证
+      if (!formData.name.trim()) {
+        setMsg('请输入二维码名称');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.url.trim()) {
+        setMsg('请输入二维码URL');
+        setLoading(false);
+        return;
+      }
+
+      // 验证URL格式
+      try {
+        new URL(formData.url);
+      } catch {
+        setMsg('请输入有效的URL格式');
+        setLoading(false);
+        return;
+      }
+
       const url = '/api/admin/qr-codes';
       const method = editingQR ? 'PUT' : 'POST';
 
       // 对于PUT请求，需要包含ID
       const requestData = editingQR ? { ...formData, id: editingQR.id } : formData;
+
+      console.log('🚀 发送请求:', { method, url, data: requestData });
 
       const response = await fetch(url, {
         method,
@@ -62,7 +88,17 @@ export default function QRCodeManagement() {
         body: JSON.stringify(requestData)
       });
 
+      console.log('📡 响应状态:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 响应错误:', errorText);
+        setMsg(`请求失败: ${response.status} ${response.statusText}`);
+        return;
+      }
+
       const result = await response.json();
+      console.log('✅ 响应结果:', result);
 
       if (result.success) {
         setMsg(editingQR ? '更新成功' : '添加成功');
@@ -74,8 +110,8 @@ export default function QRCodeManagement() {
         setMsg(result.message || '操作失败');
       }
     } catch (error) {
-      console.error('提交错误:', error);
-      setMsg('操作失败，请重试');
+      console.error('❌ 提交错误:', error);
+      setMsg(`操作失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
       setLoading(false);
     }

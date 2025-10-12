@@ -503,18 +503,23 @@ export default function HomePage() {
 
       if (SpeechRecognition) {
         console.log('✅ 浏览器支持语音识别');
-        const recognition = new SpeechRecognition();
 
-        // 配置语音识别参数
-        recognition.continuous = true;  // 持续识别，不自动停止
-        recognition.interimResults = true;  // 显示中间结果
-        recognition.lang = 'zh-CN';
+        try {
+          const recognition = new SpeechRecognition();
 
-        // Edge浏览器特殊配置
-        if (isEdge) {
-          console.log('🔧 为Edge浏览器优化配置');
-          recognition.maxAlternatives = 1;
-        }
+          // 配置语音识别参数
+          recognition.continuous = true;  // 持续识别，不自动停止
+          recognition.interimResults = true;  // 显示中间结果
+          recognition.lang = 'zh-CN';
+
+          // Edge浏览器特殊配置
+          if (isEdge) {
+            console.log('🔧 为Edge浏览器优化配置');
+            recognition.maxAlternatives = 1;
+            // Edge浏览器可能需要更保守的配置
+            recognition.continuous = false;  // Edge浏览器先使用非持续模式
+            recognition.interimResults = false;  // Edge浏览器先禁用中间结果
+          }
 
         recognition.onstart = () => {
           console.log('🎤 语音识别已启动');
@@ -648,47 +653,25 @@ export default function HomePage() {
       try {
         console.log('🎤 启动语音识别...');
 
-        // Edge浏览器特殊处理
+        // Edge浏览器简化处理
         if (isEdge) {
-          console.log('🔧 Edge浏览器特殊启动流程');
-          // Edge浏览器总是重新创建识别对象，避免状态问题
+          console.log('🔧 Edge浏览器简化启动流程');
           try {
-            // 停止当前识别（如果存在）
-            if (recognition.state && recognition.state !== 'inactive') {
-              console.log('⚠️ Edge: 停止当前识别...');
-              recognition.abort();
-            }
-
-            // Edge浏览器延迟更长时间确保状态重置
-            setTimeout(() => {
-              try {
-                console.log('🎤 Edge: 启动新的语音识别...');
-                recognition.start();
-                console.log('✅ Edge: 语音识别启动成功');
-              } catch (edgeError) {
-                console.error('❌ Edge: 启动失败:', edgeError);
-                setIsRecording(false);
-
-                // 更友好的错误提示
-                if (edgeError.name === 'InvalidStateError') {
-                  // 尝试重新初始化
-                  console.log('🔄 Edge: 尝试重新初始化语音识别...');
-                  setTimeout(() => {
-                    try {
-                      recognition.start();
-                    } catch (retryError) {
-                      alert('Edge浏览器语音识别初始化失败，请刷新页面后重试');
-                    }
-                  }, 500);
-                } else {
-                  alert(`Edge浏览器语音识别错误: ${edgeError.message}`);
-                }
-              }
-            }, 300); // 增加到300ms
-          } catch (error) {
-            console.error('❌ Edge: 预处理失败:', error);
+            // 直接启动，不做复杂的状态检查
+            console.log('🎤 Edge: 直接启动语音识别...');
+            recognition.start();
+            console.log('✅ Edge: 语音识别启动成功');
+          } catch (edgeError) {
+            console.error('❌ Edge: 启动失败:', edgeError);
             setIsRecording(false);
-            alert('Edge浏览器语音识别预处理失败，请刷新页面后重试');
+
+            if (edgeError.name === 'InvalidStateError') {
+              alert('Edge浏览器语音识别状态错误，请刷新页面后重试');
+            } else if (edgeError.name === 'NotAllowedError') {
+              alert('请在Edge浏览器中允许麦克风权限：\n1. 点击地址栏左侧的锁图标\n2. 将麦克风权限设置为"允许"\n3. 刷新页面后重试');
+            } else {
+              alert(`Edge浏览器语音识别错误: ${edgeError.message}\n请尝试刷新页面`);
+            }
           }
         } else {
           // 其他浏览器的处理

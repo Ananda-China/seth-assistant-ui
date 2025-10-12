@@ -71,15 +71,38 @@ export default function AccountPage() {
       await loadQRCodes();
 
       // 页面加载完成后自动滚动到客服区域
-      setTimeout(() => {
+      // 使用智能等待机制，确保内容完全渲染后再滚动
+      const scrollToCustomerService = () => {
         const customerServiceElement = document.getElementById('customer-service');
         if (customerServiceElement) {
-          customerServiceElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+          // 检查元素是否已经完全渲染（有实际高度）
+          const rect = customerServiceElement.getBoundingClientRect();
+          if (rect.height > 0) {
+            customerServiceElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+            return true;
+          }
         }
-      }, 1000); // 延迟1秒确保页面完全加载
+        return false;
+      };
+
+      // 立即尝试滚动
+      if (!scrollToCustomerService()) {
+        // 如果失败，使用递增延迟重试
+        let attempts = 0;
+        const maxAttempts = 10;
+        const tryScroll = () => {
+          attempts++;
+          if (scrollToCustomerService() || attempts >= maxAttempts) {
+            return;
+          }
+          // 递增延迟：100ms, 200ms, 300ms...最多1秒
+          setTimeout(tryScroll, Math.min(attempts * 100, 1000));
+        };
+        setTimeout(tryScroll, 100);
+      }
     })();
   }, []);
 
