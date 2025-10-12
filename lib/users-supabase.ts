@@ -155,18 +155,31 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   let isPaidUser = user.subscription_type !== 'free' &&
                    user.subscription_end ? new Date(user.subscription_end) > now : false;
 
-  // 检查激活码订阅
-  if (!isPaidUser) {
-    const { data: subscription } = await supabaseAdmin
-      .from('subscriptions')
-      .select('*')
-      .eq('user_phone', phone)
-      .eq('status', 'active')
-      .single();
+  // 检查激活码订阅（优先级更高）
+  const { data: subscription } = await supabaseAdmin
+    .from('subscriptions')
+    .select('*')
+    .eq('user_phone', phone)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
 
-    if (subscription && new Date(subscription.current_period_end) > now) {
-      isPaidUser = true;
-    }
+  if (subscription && new Date(subscription.current_period_end) > now) {
+    isPaidUser = true;
+    console.log('✅ 用户有有效的激活码订阅:', {
+      phone,
+      plan: subscription.plan,
+      endDate: subscription.current_period_end,
+      subscriptionType: subscription.subscription_type
+    });
+  } else if (subscription) {
+    console.log('⚠️ 用户有过期的订阅:', {
+      phone,
+      plan: subscription.plan,
+      endDate: subscription.current_period_end,
+      isExpired: new Date(subscription.current_period_end) <= now
+    });
   }
 
   // 检查是否需要重置每日聊天次数（仅对非试用期且非付费用户）

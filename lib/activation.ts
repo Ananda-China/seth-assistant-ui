@@ -189,8 +189,9 @@ export class ActivationManager {
         return { success: false, message: `创建订单失败: ${orderError.message}` };
       }
 
-      // 计算订阅结束时间
-      const subscriptionEnd = new Date();
+      // 计算订阅开始和结束时间
+      const subscriptionStart = new Date();
+      const subscriptionEnd = new Date(subscriptionStart);
       subscriptionEnd.setDate(subscriptionEnd.getDate() + activationCode.plan.duration_days);
 
       // 先取消现有的活跃订阅
@@ -207,7 +208,7 @@ export class ActivationManager {
           user_phone: user.phone,
           plan: activationCode.plan.name,
           status: 'active',
-          period_start: new Date().toISOString(),
+          period_start: subscriptionStart.toISOString(),
           current_period_end: subscriptionEnd.toISOString(),
           activation_code_id: activationCode.id,
           subscription_type: 'activation'
