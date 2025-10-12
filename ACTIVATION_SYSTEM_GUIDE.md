@@ -96,10 +96,9 @@ ActivationManager.getUserCommissionRecords(userId)
 ### 2. 返佣计算规则
 
 - **直接邀请（Level 0）：**
-  - 首次购买：40% 返佣
-  - 再次购买：30% 返佣
+  - 统一返佣：30% 返佣
 - **二级邀请（Level 1）：**
-  - 首次购买：10% 返佣
+  - 统一返佣：10% 返佣
 
 ### 3. 提现流程
 
@@ -122,8 +121,8 @@ ActivationManager.getUserCommissionRecords(userId)
 
 返佣比例在 `lib/activation.ts` 中配置：
 ```typescript
-const commissionRate = isFirstPurchase ? 0.4 : 0.3; // 40% 或 30%
-const level2CommissionAmount = Math.floor(plan.price * 0.1); // 10%
+const commissionRate = 0.3; // 一级返佣统一30%
+const level2CommissionAmount = Math.floor(plan.price * 0.1); // 二级返佣10%
 ```
 
 ### 3. 激活码设置

@@ -8,6 +8,7 @@ import Analytics from './Analytics';
 import ContentManagement from './ContentManagement';
 import PaymentManagement from './PaymentManagement';
 import ActivationManagement from './ActivationManagement';
+import QRCodeManagement from './QRCodeManagement';
 import AdminManagement from './AdminManagement';
 
 interface AdminUser {
@@ -45,6 +46,8 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
         return <PaymentManagement />;
       case 'activation':
         return <ActivationManagement />;
+      case 'qrcodes':
+        return <QRCodeManagement />;
       case 'admin':
         return <AdminManagement />;
       default:

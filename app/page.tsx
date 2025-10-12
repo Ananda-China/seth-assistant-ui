@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
+import UserGuide from '../components/UserGuide';
 
 type ChatMessage = {
   id: string;
@@ -28,6 +29,13 @@ export default function HomePage() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const creatingConversationRef = useRef<boolean>(false);
+
+  // 语音录制相关状态
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  // 用户引导相关状态
+  const [showUserGuide, setShowUserGuide] = useState(false);
 
   // 自动调整输入框高度
   const adjustTextareaHeight = () => {
@@ -133,6 +141,12 @@ export default function HomePage() {
         setMe(j.nickname || '');
         setMePhone(j.phone || '');
         setAuthed(true);
+
+        // 检查是否需要显示用户引导
+        const hasSeenGuide = localStorage.getItem(`user_guide_seen_${j.phone}`);
+        if (!hasSeenGuide) {
+          setShowUserGuide(true);
+        }
 
         // 获取用户权限信息
         console.log('🔍 开始获取用户权限...');
@@ -472,6 +486,72 @@ export default function HomePage() {
     }, 100);
   }
 
+  // 初始化语音识别
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'zh-CN';
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(prev => prev + transcript);
+          setTimeout(adjustTextareaHeight, 10);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('语音识别错误:', event.error);
+          setIsRecording(false);
+          if (event.error === 'not-allowed') {
+            alert('请允许麦克风权限以使用语音输入功能');
+          } else {
+            alert('语音识别失败，请重试');
+          }
+        };
+
+        setRecognition(recognition);
+      }
+    }
+  }, []);
+
+  // 语音录制功能
+  const startRecording = () => {
+    if (!recognition) {
+      alert('您的浏览器不支持语音识别功能');
+      return;
+    }
+
+    try {
+      recognition.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('启动语音识别失败:', error);
+      alert('启动语音识别失败，请重试');
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognition && isRecording) {
+      recognition.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // 关闭用户引导
+  const handleCloseUserGuide = () => {
+    setShowUserGuide(false);
+    if (mePhone) {
+      localStorage.setItem(`user_guide_seen_${mePhone}`, 'true');
+    }
+  };
+
   return (
     <main className="main-wrap">
       {/* 顶部标题栏 */}
@@ -772,21 +852,47 @@ export default function HomePage() {
                 onKeyUp={handleKeyDown}
                 onKeyDown={handleKeyDown}
               />
-              <button
-                className={`send-btn ${input.trim() ? 'active' : ''}`}
-                onClick={send}
-                disabled={loading}
-                title="发送"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
-                  <path d="M22 2L11 13"/>
-                  <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
-                </svg>
-              </button>
+              <div className="input-actions">
+                <button
+                  className={`voice-btn ${isRecording ? 'recording' : ''}`}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={loading}
+                  title={isRecording ? "停止录音" : "语音输入"}
+                >
+                  {isRecording ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                      <path d="M6 6h12v12H6z"/>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                      <path d="M12 19v4"/>
+                      <path d="M8 23h8"/>
+                    </svg>
+                  )}
+                </button>
+                <button
+                  className={`send-btn ${input.trim() ? 'active' : ''}`}
+                  onClick={send}
+                  disabled={loading}
+                  title="发送"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* 用户引导弹窗 */}
+      {showUserGuide && mePhone && (
+        <UserGuide phone={mePhone} onClose={handleCloseUserGuide} />
+      )}
     </main>
   );
 }

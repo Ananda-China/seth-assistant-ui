@@ -190,7 +190,7 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   if (isPaidUser) {
     chatLimit = 999999; // 付费用户有效期内不限制使用次数
   } else if (isTrialActive) {
-    chatLimit = 999999; // 试用期用户7天内不限制使用次数
+    chatLimit = 50; // 试用期用户7天内限制50条聊天
   } else {
     chatLimit = 0; // 试用期结束且未付费，无法聊天
   }
@@ -207,7 +207,7 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
       trialRemainingDays,
     chatLimit,
     usedChats,
-    resetTime: isPaidUser ? '有效期内不限制' : isTrialActive ? '试用期内不限制' : undefined
+    resetTime: isPaidUser ? '有效期内不限制' : isTrialActive ? '试用期内限制50条' : undefined
   };
 }
 

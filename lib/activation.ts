@@ -271,9 +271,8 @@ export class ActivationManager {
         return;
       }
 
-      // 计算返佣金额（首次购买40%，再次购买30%）
-      const isFirstPurchase = await this.isFirstPurchase(userId);
-      const commissionRate = isFirstPurchase ? 0.4 : 0.3;
+      // 计算返佣金额（一级奖励统一30%）
+      const commissionRate = 0.3;
       const commissionAmount = Math.floor(plan.price * commissionRate);
 
       // 记录佣金
