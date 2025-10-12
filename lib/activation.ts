@@ -189,10 +189,18 @@ export class ActivationManager {
         return { success: false, message: `创建订单失败: ${orderError.message}` };
       }
 
-      // 计算订阅开始和结束时间
-      const subscriptionStart = new Date();
-      const subscriptionEnd = new Date(subscriptionStart);
-      subscriptionEnd.setDate(subscriptionEnd.getDate() + activationCode.plan.duration_days);
+      // 计算订阅开始和结束时间（使用中国时区）
+      const now = new Date();
+      const subscriptionStart = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
+      const subscriptionEnd = new Date(subscriptionStart.getTime() + activationCode.plan.duration_days * 24 * 60 * 60 * 1000);
+
+      console.log('🕐 激活码订阅时间计算:', {
+        planName: activationCode.plan.name,
+        durationDays: activationCode.plan.duration_days,
+        subscriptionStart: subscriptionStart.toISOString(),
+        subscriptionEnd: subscriptionEnd.toISOString(),
+        durationHours: (subscriptionEnd.getTime() - subscriptionStart.getTime()) / (60 * 60 * 1000)
+      });
 
       // 先取消现有的活跃订阅
       await supabaseAdmin

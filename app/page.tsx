@@ -645,6 +645,67 @@ export default function HomePage() {
       return;
     }
 
+    // Edge浏览器特殊处理：如果recognition对象不存在，尝试重新初始化
+    if (!recognition && isEdge) {
+      console.log('🔧 Edge浏览器：尝试重新初始化语音识别...');
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const newRecognition = new SpeechRecognition();
+          newRecognition.continuous = false;
+          newRecognition.interimResults = false;
+          newRecognition.lang = 'zh-CN';
+          newRecognition.maxAlternatives = 1;
+
+          // 设置事件处理器
+          newRecognition.onstart = () => {
+            console.log('🎤 Edge: 语音识别已启动');
+            setIsRecording(true);
+          };
+
+          newRecognition.onresult = (event: any) => {
+            console.log('🎤 Edge: 语音识别结果:', event.results);
+            if (event.results && event.results.length > 0) {
+              const transcript = event.results[0][0].transcript;
+              console.log('📝 Edge: 识别文字:', transcript);
+              setInput(prev => prev + transcript);
+              setTimeout(adjustTextareaHeight, 10);
+            }
+          };
+
+          newRecognition.onend = () => {
+            console.log('🎤 Edge: 语音识别结束');
+            setIsRecording(false);
+          };
+
+          newRecognition.onerror = (event: any) => {
+            console.error('❌ Edge: 语音识别错误:', event.error);
+            setIsRecording(false);
+            if (event.error === 'not-allowed') {
+              alert('请在Edge浏览器中允许麦克风权限：\n1. 点击地址栏左侧的锁图标\n2. 将麦克风权限设置为"允许"\n3. 刷新页面后重试');
+            } else {
+              alert(`Edge浏览器语音识别错误: ${event.error}\n请尝试刷新页面`);
+            }
+          };
+
+          setRecognition(newRecognition);
+
+          // 立即启动
+          newRecognition.start();
+          console.log('✅ Edge: 重新初始化并启动成功');
+          return;
+        } catch (error) {
+          console.error('❌ Edge: 重新初始化失败:', error);
+          alert('Edge浏览器语音识别初始化失败，请刷新页面后重试');
+          return;
+        }
+      } else {
+        alert('您的Edge浏览器不支持语音识别功能，请更新到最新版本');
+        return;
+      }
+    }
+
     if (!recognition) {
       console.error('❌ 语音识别对象不存在');
       alert('您的浏览器不支持语音识别功能，请使用Chrome、Edge或Safari浏览器');

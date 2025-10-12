@@ -44,11 +44,13 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, message: '名称和URL不能为空' }, { status: 400 });
     }
 
-    // 验证URL格式
-    try {
-      new URL(url);
-    } catch {
-      return Response.json({ success: false, message: 'URL格式不正确' }, { status: 400 });
+    // 验证URL格式（支持base64图片数据）
+    if (!url.startsWith('data:image/') && !url.startsWith('http://') && !url.startsWith('https://')) {
+      try {
+        new URL(url);
+      } catch {
+        return Response.json({ success: false, message: 'URL格式不正确，请输入有效的URL或上传图片' }, { status: 400 });
+      }
     }
 
     const { data, error } = await supabaseAdmin
@@ -91,11 +93,13 @@ export async function PUT(req: NextRequest) {
       return Response.json({ success: false, message: 'ID、名称和URL不能为空' }, { status: 400 });
     }
 
-    // 验证URL格式
-    try {
-      new URL(url);
-    } catch {
-      return Response.json({ success: false, message: 'URL格式不正确' }, { status: 400 });
+    // 验证URL格式（支持base64图片数据）
+    if (!url.startsWith('data:image/') && !url.startsWith('http://') && !url.startsWith('https://')) {
+      try {
+        new URL(url);
+      } catch {
+        return Response.json({ success: false, message: 'URL格式不正确，请输入有效的URL或上传图片' }, { status: 400 });
+      }
     }
 
     const { data, error } = await supabaseAdmin

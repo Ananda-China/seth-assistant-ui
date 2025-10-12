@@ -244,29 +244,39 @@ export async function upgradeUserSubscription(
   phone: string,
   subscriptionType: 'monthly' | 'quarterly' | 'yearly'
 ): Promise<User | null> {
+  // 使用中国时区的当前时间
   const now = new Date();
+  const chinaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
   let subscriptionEnd: Date;
 
   switch (subscriptionType) {
     case 'monthly':
-      subscriptionEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      // 月套餐：从当前时间开始计算30天（720小时）
+      subscriptionEnd = new Date(chinaTime.getTime() + 30 * 24 * 60 * 60 * 1000);
       break;
     case 'quarterly':
-      subscriptionEnd = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      subscriptionEnd = new Date(chinaTime.getTime() + 90 * 24 * 60 * 60 * 1000);
       break;
     case 'yearly':
-      subscriptionEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      subscriptionEnd = new Date(chinaTime.getTime() + 365 * 24 * 60 * 60 * 1000);
       break;
   }
+
+  console.log('🕐 订阅时间计算:', {
+    subscriptionType,
+    chinaTime: chinaTime.toISOString(),
+    subscriptionEnd: subscriptionEnd.toISOString(),
+    durationHours: (subscriptionEnd.getTime() - chinaTime.getTime()) / (60 * 60 * 1000)
+  });
 
   const { data, error } = await supabaseAdmin
     .from('users')
     .update({
       subscription_type: subscriptionType,
-      subscription_start: now.toISOString(),
+      subscription_start: chinaTime.toISOString(),
       subscription_end: subscriptionEnd.toISOString(),
       chat_count: 0,
-      last_chat_date: now.toISOString().split('T')[0]
+      last_chat_date: chinaTime.toISOString().split('T')[0]
     })
     .eq('phone', phone)
     .select()
