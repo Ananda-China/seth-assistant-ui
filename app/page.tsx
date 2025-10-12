@@ -543,10 +543,17 @@ export default function HomePage() {
   // 语音录制功能
   const startRecording = () => {
     console.log('🎤 尝试启动语音识别...');
-    console.log('🔍 当前环境检查:');
-    console.log('- window.location.protocol:', window.location.protocol);
-    console.log('- navigator.mediaDevices:', !!navigator.mediaDevices);
+    console.log('🔍 当前状态检查:');
+    console.log('- isRecording:', isRecording);
     console.log('- recognition对象:', !!recognition);
+    console.log('- window.location.protocol:', window.location.protocol);
+
+    // 如果已经在录音，先停止
+    if (isRecording) {
+      console.log('⚠️ 语音识别已在运行，先停止...');
+      stopRecording();
+      return;
+    }
 
     // 检查HTTPS要求
     if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
@@ -560,19 +567,38 @@ export default function HomePage() {
       return;
     }
 
+    // 启动语音识别的内部函数
+    const doStartRecognition = () => {
+      try {
+        console.log('🎤 启动语音识别...');
+        // 确保状态正确
+        if (recognition.state && recognition.state !== 'inactive') {
+          console.log('⚠️ 语音识别状态异常，重置...');
+          recognition.abort();
+          setTimeout(() => {
+            recognition.start();
+          }, 100);
+        } else {
+          recognition.start();
+        }
+      } catch (error) {
+        console.error('❌ 启动语音识别失败:', error);
+        setIsRecording(false);
+        if (error.name === 'InvalidStateError') {
+          alert('语音识别状态异常，请刷新页面后重试');
+        } else {
+          alert(`启动语音识别失败: ${error.message}`);
+        }
+      }
+    };
+
     // 检查麦克风权限
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       console.log('🎤 请求麦克风权限...');
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(() => {
           console.log('✅ 麦克风权限已获取');
-          try {
-            console.log('🎤 启动语音识别...');
-            recognition.start();
-          } catch (error) {
-            console.error('❌ 启动语音识别失败:', error);
-            alert(`启动语音识别失败: ${error}`);
-          }
+          doStartRecognition();
         })
         .catch((error) => {
           console.error('❌ 麦克风权限被拒绝:', error);
@@ -586,20 +612,25 @@ export default function HomePage() {
         });
     } else {
       console.log('⚠️ 使用旧版API直接启动');
-      // 直接尝试启动（旧版浏览器）
-      try {
-        recognition.start();
-        console.log('🎤 语音识别启动中...');
-      } catch (error) {
-        console.error('❌ 启动语音识别失败:', error);
-        alert(`启动语音识别失败: ${error}`);
-      }
+      doStartRecognition();
     }
   };
 
   const stopRecording = () => {
-    if (recognition && isRecording) {
-      recognition.stop();
+    console.log('🛑 停止语音识别...');
+    console.log('- isRecording:', isRecording);
+    console.log('- recognition对象:', !!recognition);
+
+    if (recognition) {
+      try {
+        if (isRecording) {
+          recognition.stop();
+        } else {
+          recognition.abort(); // 强制停止
+        }
+      } catch (error) {
+        console.error('❌ 停止语音识别失败:', error);
+      }
       setIsRecording(false);
     }
   };

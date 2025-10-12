@@ -159,6 +159,18 @@ export async function getSubscription(userPhone: string): Promise<Subscription |
     if (error.code === 'PGRST116') return null;
     throw error;
   }
+
+  // 检查订阅是否已过期
+  if (data && new Date(data.current_period_end) <= new Date()) {
+    // 订阅已过期，更新状态
+    await supabaseAdmin
+      .from('subscriptions')
+      .update({ status: 'expired' })
+      .eq('id', data.id);
+
+    return null; // 返回null表示没有有效订阅
+  }
+
   return data;
 }
 
