@@ -489,51 +489,93 @@ export default function HomePage() {
   // 初始化语音识别
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      console.log('🎤 初始化语音识别...');
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
       if (SpeechRecognition) {
+        console.log('✅ 浏览器支持语音识别');
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
         recognition.lang = 'zh-CN';
 
+        recognition.onstart = () => {
+          console.log('🎤 语音识别已启动');
+          setIsRecording(true);
+        };
+
         recognition.onresult = (event: any) => {
+          console.log('🎤 语音识别结果:', event.results);
           const transcript = event.results[0][0].transcript;
-          setInput(prev => prev + transcript);
+          console.log('📝 识别文字:', transcript);
+          setInput(prev => {
+            const newValue = prev + transcript;
+            console.log('📝 更新输入框:', newValue);
+            return newValue;
+          });
           setTimeout(adjustTextareaHeight, 10);
         };
 
         recognition.onend = () => {
+          console.log('🎤 语音识别结束');
           setIsRecording(false);
         };
 
         recognition.onerror = (event: any) => {
-          console.error('语音识别错误:', event.error);
+          console.error('❌ 语音识别错误:', event.error);
           setIsRecording(false);
           if (event.error === 'not-allowed') {
             alert('请允许麦克风权限以使用语音输入功能');
+          } else if (event.error === 'no-speech') {
+            alert('未检测到语音，请重试');
           } else {
-            alert('语音识别失败，请重试');
+            alert(`语音识别失败: ${event.error}`);
           }
         };
 
         setRecognition(recognition);
+      } else {
+        console.error('❌ 浏览器不支持语音识别');
       }
     }
   }, []);
 
   // 语音录制功能
   const startRecording = () => {
+    console.log('🎤 尝试启动语音识别...');
+
     if (!recognition) {
+      console.error('❌ 语音识别对象不存在');
       alert('您的浏览器不支持语音识别功能');
       return;
     }
 
-    try {
-      recognition.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('启动语音识别失败:', error);
-      alert('启动语音识别失败，请重试');
+    // 检查麦克风权限
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          console.log('✅ 麦克风权限已获取');
+          try {
+            recognition.start();
+            console.log('🎤 语音识别启动中...');
+          } catch (error) {
+            console.error('❌ 启动语音识别失败:', error);
+            alert('启动语音识别失败，请重试');
+          }
+        })
+        .catch((error) => {
+          console.error('❌ 麦克风权限被拒绝:', error);
+          alert('请允许麦克风权限以使用语音输入功能');
+        });
+    } else {
+      // 直接尝试启动（旧版浏览器）
+      try {
+        recognition.start();
+        console.log('🎤 语音识别启动中...');
+      } catch (error) {
+        console.error('❌ 启动语音识别失败:', error);
+        alert('启动语音识别失败，请重试');
+      }
     }
   };
 
@@ -753,32 +795,57 @@ export default function HomePage() {
                     今日聊天：{permission.usedChats}/{permission.chatLimit}
                   </div>
 
-                  {/* 升级按钮 */}
+                  {/* 升级按钮和客服提示 */}
                   {(!permission.isPaidUser && (!permission.isTrialActive || permission.usedChats >= permission.chatLimit)) && (
-                    <a
-                      href="/pricing"
-                      style={{
-                        display: 'block',
-                        marginTop: '8px',
-                        padding: '8px 12px',
-                        background: 'linear-gradient(135deg, #C8B6E2 0%, #8A94B3 100%)',
-                        color: '#1A1D33',
-                        textDecoration: 'none',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      {!permission.isTrialActive ? '试用已结束，立即升级' : '今日次数已用完，升级无限制'}
-                    </a>
+                    <div style={{ marginTop: '8px' }}>
+                      <a
+                        href="/pricing"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          background: 'linear-gradient(135deg, #C8B6E2 0%, #8A94B3 100%)',
+                          color: '#1A1D33',
+                          textDecoration: 'none',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                          transition: 'all 0.3s ease',
+                          marginBottom: '8px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        {!permission.isTrialActive ? '试用已结束，立即升级' : '今日次数已用完，升级无限制'}
+                      </a>
+
+                      {/* 客服联系提示 */}
+                      {!permission.isTrialActive && (
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#8A94B3',
+                          textAlign: 'center',
+                          lineHeight: '1.4'
+                        }}>
+                          请进入
+                          <a
+                            href="/profile"
+                            style={{
+                              color: '#C8B6E2',
+                              textDecoration: 'underline',
+                              margin: '0 2px'
+                            }}
+                          >
+                            个人中心
+                          </a>
+                          联系客服购买激活码激活套餐
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

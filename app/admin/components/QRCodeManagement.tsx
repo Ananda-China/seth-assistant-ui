@@ -18,6 +18,7 @@ export default function QRCodeManagement() {
   const [msg, setMsg] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingQR, setEditingQR] = useState<QRCodeConfig | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   // 表单状态
   const [formData, setFormData] = useState({
@@ -115,6 +116,47 @@ export default function QRCodeManagement() {
     setMsg('');
   };
 
+  // 图片上传处理
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      setMsg('请选择图片文件');
+      return;
+    }
+
+    // 检查文件大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMsg('图片文件不能超过5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    setMsg('');
+
+    try {
+      // 转换为base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        setFormData(prev => ({ ...prev, url: base64 }));
+        setUploadingImage(false);
+        setMsg('图片上传成功');
+      };
+      reader.onerror = () => {
+        setUploadingImage(false);
+        setMsg('图片读取失败');
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('图片上传失败:', error);
+      setUploadingImage(false);
+      setMsg('图片上传失败');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
@@ -160,14 +202,50 @@ export default function QRCodeManagement() {
             
             <div>
               <label className="block text-sm font-medium text-[#EAEBF0] mb-2">二维码URL</label>
-              <input
-                type="url"
-                value={formData.url}
-                onChange={e => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                className="w-full px-4 py-2 bg-[#2E335B] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
-                placeholder="https://example.com/qr-code.jpg"
-                required
-              />
+              <div className="space-y-3">
+                <input
+                  type="url"
+                  value={formData.url}
+                  onChange={e => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                  className="w-full px-4 py-2 bg-[#2E335B] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+                  placeholder="https://example.com/qr-code.jpg"
+                  required
+                />
+
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-[#8A94B3]">或</span>
+                  <label className="flex items-center gap-2 px-4 py-2 bg-[#4A5568] hover:bg-[#5A6578] rounded-lg cursor-pointer transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span className="text-sm text-[#EAEBF0]">
+                      {uploadingImage ? '上传中...' : '上传图片'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                </div>
+
+                {/* 图片预览 */}
+                {formData.url && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-[#EAEBF0] mb-2">预览</label>
+                    <img
+                      src={formData.url}
+                      alt="二维码预览"
+                      className="w-32 h-32 object-cover rounded-lg border border-[#4A5568]"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
             
             <div>
