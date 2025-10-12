@@ -189,9 +189,8 @@ export class ActivationManager {
         return { success: false, message: `创建订单失败: ${orderError.message}` };
       }
 
-      // 计算订阅开始和结束时间（使用中国时区）
-      const currentTime = new Date();
-      const subscriptionStart = new Date(currentTime.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
+      // 计算订阅开始和结束时间（使用UTC时间）
+      const subscriptionStart = new Date();
       const subscriptionEnd = new Date(subscriptionStart.getTime() + activationCode.plan.duration_days * 24 * 60 * 60 * 1000);
 
       console.log('🕐 激活码订阅时间计算:', {
@@ -199,7 +198,7 @@ export class ActivationManager {
         durationDays: activationCode.plan.duration_days,
         subscriptionStart: subscriptionStart.toISOString(),
         subscriptionEnd: subscriptionEnd.toISOString(),
-        durationHours: (subscriptionEnd.getTime() - subscriptionStart.getTime()) / (60 * 60 * 1000)
+        durationDays_calculated: (subscriptionEnd.getTime() - subscriptionStart.getTime()) / (24 * 60 * 60 * 1000)
       });
 
       // 先取消现有的活跃订阅

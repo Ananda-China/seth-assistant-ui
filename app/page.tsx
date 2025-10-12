@@ -611,8 +611,11 @@ export default function HomePage() {
           };
 
           setRecognition(recognition);
+          console.log('✅ 语音识别初始化成功');
         } catch (error) {
           console.error('❌ 语音识别初始化失败:', error);
+          // Edge浏览器初始化失败时，不设置recognition对象
+          // 这样在startRecording时会触发重新初始化
         }
       } else {
         console.error('❌ 浏览器不支持语音识别');

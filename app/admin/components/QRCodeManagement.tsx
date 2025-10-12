@@ -65,13 +65,15 @@ export default function QRCodeManagement() {
         return;
       }
 
-      // 验证URL格式
-      try {
-        new URL(formData.url);
-      } catch {
-        setMsg('请输入有效的URL格式');
-        setLoading(false);
-        return;
+      // 验证URL格式（支持base64图片数据）
+      if (!formData.url.startsWith('data:image/')) {
+        try {
+          new URL(formData.url);
+        } catch {
+          setMsg('请输入有效的URL格式或上传图片');
+          setLoading(false);
+          return;
+        }
       }
 
       const url = '/api/admin/qr-codes';
