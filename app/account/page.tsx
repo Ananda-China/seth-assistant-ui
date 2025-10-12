@@ -569,17 +569,17 @@ export default function AccountPage() {
                               src={qr.url}
                               alt={qr.name}
                               style={{
-                                width: '160px',
-                                height: '160px',
+                                width: '120px',
+                                height: '120px',
                                 objectFit: 'contain',
-                                borderRadius: '8px',
+                                borderRadius: '6px',
                                 border: '1px solid #4A5568'
                               }}
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                                 const parent = (e.target as HTMLImageElement).parentElement;
                                 if (parent) {
-                                  parent.innerHTML = '<div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:12px;">图片加载失败</div>';
+                                  parent.innerHTML = '<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:6px;color:#8A94B3;font-size:11px;">图片加载失败</div>';
                                 }
                               }}
                             />
@@ -593,20 +593,20 @@ export default function AccountPage() {
                   ) : (
                     <div className="qr-placeholder">
                       <div style={{
-                        width: '160px',
-                        height: '160px',
+                        width: '120px',
+                        height: '120px',
                         background: '#2E335B',
-                        borderRadius: '8px',
+                        borderRadius: '6px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexDirection: 'column',
                         margin: '0 auto',
                         color: '#8A94B3',
-                        fontSize: '14px',
+                        fontSize: '12px',
                         textAlign: 'center'
                       }}>
-                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
+                        <div style={{ fontSize: '20px', marginBottom: '6px' }}>📱</div>
                         <div>客服二维码配置中...</div>
                       </div>
                     </div>

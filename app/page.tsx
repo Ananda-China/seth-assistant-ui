@@ -543,38 +543,56 @@ export default function HomePage() {
   // 语音录制功能
   const startRecording = () => {
     console.log('🎤 尝试启动语音识别...');
+    console.log('🔍 当前环境检查:');
+    console.log('- window.location.protocol:', window.location.protocol);
+    console.log('- navigator.mediaDevices:', !!navigator.mediaDevices);
+    console.log('- recognition对象:', !!recognition);
+
+    // 检查HTTPS要求
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      alert('语音识别功能需要在HTTPS环境下使用，请使用HTTPS访问或在localhost测试');
+      return;
+    }
 
     if (!recognition) {
       console.error('❌ 语音识别对象不存在');
-      alert('您的浏览器不支持语音识别功能');
+      alert('您的浏览器不支持语音识别功能，请使用Chrome、Edge或Safari浏览器');
       return;
     }
 
     // 检查麦克风权限
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      console.log('🎤 请求麦克风权限...');
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(() => {
           console.log('✅ 麦克风权限已获取');
           try {
+            console.log('🎤 启动语音识别...');
             recognition.start();
-            console.log('🎤 语音识别启动中...');
           } catch (error) {
             console.error('❌ 启动语音识别失败:', error);
-            alert('启动语音识别失败，请重试');
+            alert(`启动语音识别失败: ${error}`);
           }
         })
         .catch((error) => {
           console.error('❌ 麦克风权限被拒绝:', error);
-          alert('请允许麦克风权限以使用语音输入功能');
+          if (error.name === 'NotAllowedError') {
+            alert('请点击地址栏的麦克风图标，允许麦克风权限后重试');
+          } else if (error.name === 'NotFoundError') {
+            alert('未找到麦克风设备，请检查您的麦克风是否正常连接');
+          } else {
+            alert(`麦克风权限错误: ${error.message}`);
+          }
         });
     } else {
+      console.log('⚠️ 使用旧版API直接启动');
       // 直接尝试启动（旧版浏览器）
       try {
         recognition.start();
         console.log('🎤 语音识别启动中...');
       } catch (error) {
         console.error('❌ 启动语音识别失败:', error);
-        alert('启动语音识别失败，请重试');
+        alert(`启动语音识别失败: ${error}`);
       }
     }
   };
