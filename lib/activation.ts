@@ -190,8 +190,8 @@ export class ActivationManager {
       }
 
       // 计算订阅开始和结束时间（使用中国时区）
-      const now = new Date();
-      const subscriptionStart = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
+      const currentTime = new Date();
+      const subscriptionStart = new Date(currentTime.getTime() + (8 * 60 * 60 * 1000)); // UTC+8
       const subscriptionEnd = new Date(subscriptionStart.getTime() + activationCode.plan.duration_days * 24 * 60 * 60 * 1000);
 
       console.log('🕐 激活码订阅时间计算:', {
