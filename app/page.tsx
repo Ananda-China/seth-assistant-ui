@@ -833,7 +833,7 @@ export default function HomePage() {
                         }}>
                           请进入
                           <a
-                            href="/profile"
+                            href="/account"
                             style={{
                               color: '#C8B6E2',
                               textDecoration: 'underline',

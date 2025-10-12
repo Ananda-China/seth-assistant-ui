@@ -39,6 +39,9 @@ export default function AccountPage() {
   const [passMsg, setPassMsg] = useState('');
   const [passLoading, setPassLoading] = useState(false);
 
+  // 客服二维码
+  const [qrCodes, setQRCodes] = useState<any[]>([]);
+
   useEffect(() => {
     (async () => {
       const r = await fetch('/api/me');
@@ -63,6 +66,9 @@ export default function AccountPage() {
 
       // 加载激活码相关数据
       await loadActivationData();
+
+      // 加载客服二维码
+      await loadQRCodes();
     })();
   }, []);
 
@@ -97,6 +103,19 @@ export default function AccountPage() {
       }
     } catch (error) {
       console.error('加载激活码数据失败:', error);
+    }
+  };
+
+  // 加载客服二维码
+  const loadQRCodes = async () => {
+    try {
+      const response = await fetch('/api/qr-codes');
+      if (response.ok) {
+        const data = await response.json();
+        setQRCodes(data.qrCodes || []);
+      }
+    } catch (error) {
+      console.error('加载二维码失败:', error);
     }
   };
 
@@ -522,6 +541,114 @@ export default function AccountPage() {
                     ) : (
                       <div className="empty-text">暂无</div>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 客服联系区域 */}
+          <div className="account-section">
+            <h2 className="section-title">客服联系</h2>
+            <div className="section-cards">
+              {/* 客服二维码卡 */}
+              <div className="account-card">
+                <h3 className="card-title">联系客服</h3>
+                <div className="qr-section">
+                  <div className="qr-description">
+                    <p>购买激活码、技术支持、意见反馈</p>
+                  </div>
+
+                  {qrCodes.length > 0 ? (
+                    <div className="qr-codes-grid">
+                      {qrCodes.filter(qr => qr.is_active).map((qr) => (
+                        <div key={qr.id} className="qr-code-item">
+                          <div className="qr-code-name">{qr.name}</div>
+                          <div className="qr-code-image">
+                            <img
+                              src={qr.url}
+                              alt={qr.name}
+                              style={{
+                                width: '160px',
+                                height: '160px',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                border: '1px solid #4A5568'
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                const parent = (e.target as HTMLImageElement).parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:12px;">图片加载失败</div>';
+                                }
+                              }}
+                            />
+                          </div>
+                          {qr.description && (
+                            <div className="qr-code-desc">{qr.description}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="qr-placeholder">
+                      <div style={{
+                        width: '160px',
+                        height: '160px',
+                        background: '#2E335B',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        margin: '0 auto',
+                        color: '#8A94B3',
+                        fontSize: '14px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
+                        <div>客服二维码配置中...</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 购买指引卡 */}
+              <div className="account-card">
+                <h3 className="card-title">购买指引</h3>
+                <div className="guide-section">
+                  <div className="guide-steps">
+                    <div className="guide-step">
+                      <span className="step-number">1.</span>
+                      <span className="step-text">扫描客服二维码，添加客服微信</span>
+                    </div>
+                    <div className="guide-step">
+                      <span className="step-number">2.</span>
+                      <span className="step-text">告知客服您需要购买的套餐类型</span>
+                    </div>
+                    <div className="guide-step">
+                      <span className="step-number">3.</span>
+                      <span className="step-text">完成付款后，客服会提供激活码</span>
+                    </div>
+                    <div className="guide-step">
+                      <span className="step-number">4.</span>
+                      <span className="step-text">在下方激活码区域输入激活码即可激活套餐</span>
+                    </div>
+                  </div>
+
+                  <div className="pricing-info">
+                    <div className="pricing-title">套餐价格</div>
+                    <div className="pricing-items">
+                      <div className="pricing-item">
+                        <span className="pricing-name">月套餐</span>
+                        <span className="pricing-price">¥999</span>
+                      </div>
+                      <div className="pricing-item">
+                        <span className="pricing-name">年套餐</span>
+                        <span className="pricing-price">¥3999</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

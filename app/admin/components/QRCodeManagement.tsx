@@ -235,14 +235,25 @@ export default function QRCodeManagement() {
                 {formData.url && (
                   <div className="mt-3">
                     <label className="block text-sm font-medium text-[#EAEBF0] mb-2">预览</label>
-                    <img
-                      src={formData.url}
-                      alt="二维码预览"
-                      className="w-32 h-32 object-cover rounded-lg border border-[#4A5568]"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                    <div className="w-32 h-32 border border-[#4A5568] rounded-lg overflow-hidden bg-[#2E335B] flex items-center justify-center">
+                      <img
+                        src={formData.url}
+                        alt="二维码预览"
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div class="text-[#8A94B3] text-xs text-center">图片加载失败</div>';
+                          }
+                        }}
+                        onLoad={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'block';
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
