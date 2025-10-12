@@ -146,13 +146,15 @@ export async function upsertSubscription(userPhone: string, plan: string): Promi
   if (error) throw error;
 }
 
-// 获取用户订阅
+// 获取用户订阅（包括过期订阅）
 export async function getSubscription(userPhone: string): Promise<Subscription | null> {
+  // 首先获取最新的订阅记录（不限制状态）
   const { data, error } = await supabaseAdmin
     .from('subscriptions')
     .select('*')
     .eq('user_phone', userPhone)
-    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
     .single();
 
   if (error) {
@@ -162,13 +164,16 @@ export async function getSubscription(userPhone: string): Promise<Subscription |
 
   // 检查订阅是否已过期
   if (data && new Date(data.current_period_end) <= new Date()) {
-    // 订阅已过期，更新状态
-    await supabaseAdmin
-      .from('subscriptions')
-      .update({ status: 'expired' })
-      .eq('id', data.id);
+    // 订阅已过期，更新状态为expired
+    if (data.status === 'active') {
+      await supabaseAdmin
+        .from('subscriptions')
+        .update({ status: 'expired' })
+        .eq('id', data.id);
 
-    return null; // 返回null表示没有有效订阅
+      // 更新返回数据的状态
+      data.status = 'expired';
+    }
   }
 
   return data;

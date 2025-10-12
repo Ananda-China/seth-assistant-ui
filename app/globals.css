@@ -1257,9 +1257,48 @@ body {
   font-weight: 500;
 }
 
+.subscription-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.subscription-status.active {
+  background: rgba(72, 187, 120, 0.2);
+  border: 1px solid rgba(72, 187, 120, 0.3);
+  color: #48BB78;
+}
+
+.subscription-status.expired {
+  background: rgba(245, 101, 101, 0.2);
+  border: 1px solid rgba(245, 101, 101, 0.3);
+  color: #F56565;
+}
+
+.subscription-status.inactive {
+  background: rgba(113, 128, 150, 0.2);
+  border: 1px solid rgba(113, 128, 150, 0.3);
+  color: #718096;
+}
+
 .subscription-actions {
   display: flex;
   gap: 16px;
+}
+
+.expired-notice {
+  background: rgba(245, 101, 101, 0.1);
+  border: 1px solid rgba(245, 101, 101, 0.3);
+  color: #F56565;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.expired-notice p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
 }
 
 .subscription-empty {
