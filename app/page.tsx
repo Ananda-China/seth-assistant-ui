@@ -33,6 +33,7 @@ export default function HomePage() {
   // 语音录制相关状态
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const isRecordingRef = useRef(false); // 使用ref跟踪实时录音状态
 
   // 用户引导相关状态
   const [showUserGuide, setShowUserGuide] = useState(false);
@@ -523,6 +524,7 @@ export default function HomePage() {
 
           recognition.onstart = () => {
             console.log('🎤 语音识别已启动');
+            isRecordingRef.current = true;
             setIsRecording(true);
           };
 
@@ -579,18 +581,19 @@ export default function HomePage() {
 
           recognition.onend = () => {
             console.log('🎤 语音识别结束');
-            console.log('🎤 当前isRecording状态:', isRecording);
+            console.log('🎤 当前isRecording状态:', isRecordingRef.current);
             console.log('🎤 当前浏览器是Edge:', isEdge);
 
             // Edge浏览器在非持续模式下，识别结束后自动停止
             if (isEdge) {
               console.log('✅ Edge浏览器：识别结束，自动停止录音');
+              isRecordingRef.current = false;
               setIsRecording(false);
               return;
             }
 
             // 只有在用户主动停止时才设置为false，否则自动重启
-            if (!isRecording) {
+            if (!isRecordingRef.current) {
               console.log('🎤 用户主动停止，不重启');
               return;
             }
@@ -598,12 +601,13 @@ export default function HomePage() {
             // 如果是意外结束，尝试重启（但有限制）
             console.log('🎤 意外结束，尝试重启...');
             setTimeout(() => {
-              if (isRecording && recognition) {
+              if (isRecordingRef.current && recognition) {
                 try {
                   recognition.start();
                   console.log('🎤 语音识别重启成功');
                 } catch (error) {
                   console.error('❌ 语音识别重启失败:', error);
+                  isRecordingRef.current = false;
                   setIsRecording(false);
                 }
               }
@@ -613,6 +617,7 @@ export default function HomePage() {
           recognition.onerror = (event: any) => {
             console.error('❌ 语音识别错误:', event.error);
             console.error('❌ 错误详情:', event);
+            isRecordingRef.current = false;
             setIsRecording(false);
 
             // Edge浏览器特殊错误处理
@@ -654,7 +659,8 @@ export default function HomePage() {
   const startRecording = () => {
     console.log('🎤 尝试启动语音识别...');
     console.log('🔍 当前状态检查:');
-    console.log('- isRecording:', isRecording);
+    console.log('- isRecording (state):', isRecording);
+    console.log('- isRecording (ref):', isRecordingRef.current);
     console.log('- recognition对象:', !!recognition);
     console.log('- window.location.protocol:', window.location.protocol);
 
@@ -662,8 +668,8 @@ export default function HomePage() {
     const isEdge = navigator.userAgent.includes('Edg/');
     console.log('🌐 当前浏览器是Edge:', isEdge);
 
-    // 如果已经在录音，先停止
-    if (isRecording) {
+    // 使用ref检查录音状态，避免闭包问题
+    if (isRecordingRef.current) {
       console.log('⚠️ 语音识别已在运行，先停止...');
       stopRecording();
       return;
@@ -686,6 +692,7 @@ export default function HomePage() {
       console.log('🎤 启动语音识别...');
 
       // 先设置UI状态为录音中
+      isRecordingRef.current = true;
       setIsRecording(true);
 
       // Edge浏览器特殊处理
@@ -711,6 +718,7 @@ export default function HomePage() {
               console.log('✅ Edge: 语音识别重新启动成功');
             } catch (retryError) {
               console.error('❌ Edge: 重新启动失败:', retryError);
+              isRecordingRef.current = false;
               setIsRecording(false);
               alert('Edge浏览器语音识别启动失败，请刷新页面后重试');
             }
@@ -724,6 +732,7 @@ export default function HomePage() {
           console.log('✅ Edge: 语音识别启动成功');
         } catch (edgeError: any) {
           console.error('❌ Edge: 启动失败:', edgeError);
+          isRecordingRef.current = false;
           setIsRecording(false);
 
           if (edgeError.name === 'InvalidStateError') {
@@ -734,6 +743,7 @@ export default function HomePage() {
               setTimeout(() => {
                 try {
                   recognition.start();
+                  isRecordingRef.current = true;
                   setIsRecording(true);
                   console.log('✅ Edge: 重置后启动成功');
                 } catch (retryError) {
@@ -765,6 +775,7 @@ export default function HomePage() {
       }
     } catch (error: any) {
       console.error('❌ 启动语音识别失败:', error);
+      isRecordingRef.current = false;
       setIsRecording(false);
 
       if (isEdge) {
@@ -791,10 +802,12 @@ export default function HomePage() {
 
   const stopRecording = () => {
     console.log('🛑 用户主动停止语音识别...');
-    console.log('- isRecording:', isRecording);
+    console.log('- isRecording (state):', isRecording);
+    console.log('- isRecording (ref):', isRecordingRef.current);
     console.log('- recognition对象:', !!recognition);
 
     // 先设置状态，防止onend事件重启
+    isRecordingRef.current = false;
     setIsRecording(false);
 
     if (recognition) {
