@@ -190,12 +190,25 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
                 <div className="grid grid-cols-1 gap-4">
                   {wechatQRCodes.map((qr) => (
                     <div key={qr.id} className="text-center">
-                      <img 
-                        src={qr.url} 
+                      <img
+                        src={qr.url}
                         alt={qr.name}
-                        className="w-32 h-32 mx-auto rounded-lg"
+                        crossOrigin="anonymous"
+                        className="w-32 h-32 mx-auto rounded-lg bg-white"
+                        onLoad={() => {
+                          console.log('✅ UserGuide二维码加载成功:', qr.name);
+                        }}
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          console.error('❌ UserGuide二维码加载失败:', qr.name, qr.url.substring(0, 100));
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'w-32 h-32 mx-auto rounded-lg bg-[#2E335B] flex items-center justify-center text-[#8A94B3] text-xs text-center p-2';
+                            errorDiv.textContent = '图片加载失败';
+                            parent.appendChild(errorDiv);
+                          }
                         }}
                       />
                       <p className="text-sm text-[#EAEBF0] mt-2">{qr.name}</p>

@@ -665,18 +665,25 @@ export default function AccountPage() {
                             <img
                               src={qr.url}
                               alt={qr.name}
+                              crossOrigin="anonymous"
                               style={{
                                 width: '120px',
                                 height: '120px',
                                 objectFit: 'contain',
                                 borderRadius: '6px',
-                                border: '1px solid #4A5568'
+                                border: '1px solid #4A5568',
+                                backgroundColor: '#FFFFFF'
+                              }}
+                              onLoad={(e) => {
+                                console.log('✅ 二维码加载成功:', qr.name, qr.url.substring(0, 50));
                               }}
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                const parent = (e.target as HTMLImageElement).parentElement;
+                                console.error('❌ 二维码加载失败:', qr.name, qr.url.substring(0, 100));
+                                const img = e.target as HTMLImageElement;
+                                img.style.display = 'none';
+                                const parent = img.parentElement;
                                 if (parent) {
-                                  parent.innerHTML = '<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:6px;color:#8A94B3;font-size:11px;">图片加载失败</div>';
+                                  parent.innerHTML = '<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:6px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
                                 }
                               }}
                             />
