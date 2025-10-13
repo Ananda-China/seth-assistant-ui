@@ -528,6 +528,8 @@ export default function HomePage() {
 
           recognition.onresult = (event: any) => {
             console.log('🎤 语音识别结果:', event.results);
+            console.log('🎤 结果数量:', event.results.length);
+
             if (event.results && event.results.length > 0) {
               let finalTranscript = '';
               let interimTranscript = '';
@@ -535,6 +537,12 @@ export default function HomePage() {
               // 处理所有结果
               for (let i = 0; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
+                console.log(`🎤 结果[${i}]:`, {
+                  transcript,
+                  isFinal: event.results[i].isFinal,
+                  confidence: event.results[i][0].confidence
+                });
+
                 if (event.results[i].isFinal) {
                   finalTranscript += transcript;
                 } else {
@@ -542,26 +550,45 @@ export default function HomePage() {
                 }
               }
 
-              // 只有最终结果才添加到输入框
+              console.log('📝 最终文字:', finalTranscript);
+              console.log('📝 中间文字:', interimTranscript);
+
+              // Edge浏览器在非持续模式下，可能所有结果都不是isFinal
+              // 所以我们需要在识别结束时获取最后的结果
+              // 这里先处理最终结果
               if (finalTranscript) {
-                console.log('📝 最终识别文字:', finalTranscript);
+                console.log('✅ 添加最终识别文字到输入框:', finalTranscript);
                 setInput(prev => {
                   const newValue = prev + finalTranscript;
-                  console.log('📝 更新输入框:', newValue);
+                  console.log('📝 更新后的输入框内容:', newValue);
                   return newValue;
                 });
                 setTimeout(adjustTextareaHeight, 10);
-              }
-
-              // 显示中间结果（可选，用于用户反馈）
-              if (interimTranscript) {
-                console.log('📝 中间识别文字:', interimTranscript);
+              } else if (isEdge && interimTranscript) {
+                // Edge浏览器特殊处理：如果没有最终结果但有中间结果，也添加到输入框
+                console.log('⚠️ Edge浏览器：使用中间结果作为最终结果');
+                setInput(prev => {
+                  const newValue = prev + interimTranscript;
+                  console.log('📝 更新后的输入框内容:', newValue);
+                  return newValue;
+                });
+                setTimeout(adjustTextareaHeight, 10);
               }
             }
           };
 
           recognition.onend = () => {
             console.log('🎤 语音识别结束');
+            console.log('🎤 当前isRecording状态:', isRecording);
+            console.log('🎤 当前浏览器是Edge:', isEdge);
+
+            // Edge浏览器在非持续模式下，识别结束后自动停止
+            if (isEdge) {
+              console.log('✅ Edge浏览器：识别结束，自动停止录音');
+              setIsRecording(false);
+              return;
+            }
+
             // 只有在用户主动停止时才设置为false，否则自动重启
             if (!isRecording) {
               console.log('🎤 用户主动停止，不重启');
