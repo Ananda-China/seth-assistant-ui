@@ -692,14 +692,51 @@ export default function HomePage() {
             }
           };
 
+          // 先保存到state，再启动
           setRecognition(newRecognition);
 
-          // 立即启动
-          newRecognition.start();
-          console.log('✅ Edge: 重新初始化并启动成功');
+          // Edge浏览器需要先请求麦克风权限
+          console.log('🎤 Edge: 请求麦克风权限...');
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(() => {
+                console.log('✅ Edge: 麦克风权限已获取，启动语音识别...');
+                try {
+                  newRecognition.start();
+                  console.log('✅ Edge: 语音识别启动成功');
+                } catch (startError) {
+                  console.error('❌ Edge: 启动失败:', startError);
+                  setIsRecording(false);
+                  alert('Edge浏览器语音识别启动失败，请刷新页面后重试');
+                }
+              })
+              .catch((error) => {
+                console.error('❌ Edge: 麦克风权限被拒绝:', error);
+                setIsRecording(false);
+                if (error.name === 'NotAllowedError') {
+                  alert('请点击地址栏的麦克风图标，允许麦克风权限后重试');
+                } else if (error.name === 'NotFoundError') {
+                  alert('未找到麦克风设备，请检查您的麦克风是否正常连接');
+                } else {
+                  alert(`麦克风权限错误: ${error.message}`);
+                }
+              });
+          } else {
+            // 旧版API，直接启动
+            console.log('⚠️ Edge: 使用旧版API直接启动');
+            try {
+              newRecognition.start();
+              console.log('✅ Edge: 语音识别启动成功');
+            } catch (startError) {
+              console.error('❌ Edge: 启动失败:', startError);
+              setIsRecording(false);
+              alert('Edge浏览器语音识别启动失败，请刷新页面后重试');
+            }
+          }
           return;
         } catch (error) {
           console.error('❌ Edge: 重新初始化失败:', error);
+          setIsRecording(false);
           alert('Edge浏览器语音识别初始化失败，请刷新页面后重试');
           return;
         }

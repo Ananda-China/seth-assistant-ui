@@ -247,11 +247,11 @@ export default function QRCodeManagement() {
               <label className="block text-sm font-medium text-[#EAEBF0] mb-2">二维码URL</label>
               <div className="space-y-3">
                 <input
-                  type="url"
+                  type="text"
                   value={formData.url}
                   onChange={e => setFormData(prev => ({ ...prev, url: e.target.value }))}
                   className="w-full px-4 py-2 bg-[#2E335B] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
-                  placeholder="https://example.com/qr-code.jpg"
+                  placeholder="https://example.com/qr-code.jpg 或上传图片"
                   required
                 />
 
