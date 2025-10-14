@@ -292,8 +292,8 @@ export default function AccountPage() {
       <div className="account-container">
         <div className="account-header">
           <div className="account-logo">
-            <div className="account-logo-icon">心</div>
-            <div className="account-logo-title">听心如意</div>
+            <div className="account-logo-icon">S</div>
+            <div className="account-logo-title">赛斯AI小助手</div>
           </div>
         </div>
 

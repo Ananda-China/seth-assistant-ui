@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
   if (!permission.canChat) {
     let message = '';
     if (!permission.isTrialActive && !permission.isPaidUser) {
-      message = `您的7天免费试用已结束，请升级到付费版本继续使用。`;
+      message = `您的15次免费使用已用完，请升级到付费版本继续使用。`;
     } else if (permission.usedChats >= permission.chatLimit) {
-      message = `今日聊天次数已用完（${permission.usedChats}/${permission.chatLimit}），${permission.resetTime || '明日'}可继续使用。`;
+      message = `免费次数已用完（${permission.usedChats}/${permission.chatLimit}），请升级继续使用。`;
     } else {
       message = '暂时无法使用聊天功能，请联系客服。';
     }

@@ -350,9 +350,9 @@ export default function HomePage() {
             role: 'system',
             content: `⚠️ ${errorData.error || '权限不足'}\n\n${
               !errorData.permission?.isPaidUser && !errorData.permission?.isTrialActive
-                ? '您的7天免费试用已结束，请升级到付费版本继续使用。'
+                ? '您的15次免费使用已用完，请升级到付费版本继续使用。'
                 : errorData.permission?.usedChats >= errorData.permission?.chatLimit
-                ? `今日聊天次数已用完，明日可继续使用。`
+                ? `免费次数已用完，请升级继续使用。`
                 : ''
             }`
           }]);
@@ -864,7 +864,7 @@ export default function HomePage() {
               <div className="logo-icon">
                 <span className="logo-text">S</span>
               </div>
-              <div className="brand-title">听心如意</div>
+              <div className="brand-title">赛斯AI小助手</div>
             </div>
             <button
               className="sidebar-toggle"
@@ -1023,16 +1023,20 @@ export default function HomePage() {
                     {permission.isPaidUser ? (
                       <span style={{ color: '#10B981' }}>付费用户</span>
                     ) : permission.isTrialActive ? (
-                      <span style={{ color: '#F59E0B' }}>试用期 ({permission.remainingDays}天)</span>
+                      <span style={{ color: '#F59E0B' }}>免费用户</span>
                     ) : (
-                      <span style={{ color: '#EF4444' }}>试用已结束</span>
+                      <span style={{ color: '#EF4444' }}>免费次数已用完</span>
                     )}
                   </div>
                   <div style={{
                     fontSize: '12px',
                     color: '#8A94B3'
                   }}>
-                    今日聊天：{permission.usedChats}/{permission.chatLimit}
+                    {permission.isPaidUser ? (
+                      `今日聊天：${permission.usedChats}次`
+                    ) : (
+                      `已使用：${permission.usedChats}/${permission.chatLimit}次`
+                    )}
                   </div>
 
                   {/* 升级按钮和客服提示 */}
@@ -1060,7 +1064,7 @@ export default function HomePage() {
                           e.currentTarget.style.transform = 'scale(1)';
                         }}
                       >
-                        {!permission.isTrialActive ? '试用已结束，立即升级' : '今日次数已用完，升级无限制'}
+                        {!permission.isTrialActive ? '免费次数已用完，立即升级' : '次数已用完，升级无限制'}
                       </a>
 
                       {/* 客服联系提示 */}
@@ -1160,25 +1164,6 @@ export default function HomePage() {
                 onKeyDown={handleKeyDown}
               />
               <div className="input-actions">
-                <button
-                  className={`voice-btn ${isRecording ? 'recording' : ''}`}
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={loading}
-                  title={isRecording ? "停止录音" : "语音输入"}
-                >
-                  {isRecording ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                      <path d="M6 6h12v12H6z"/>
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                      <path d="M12 19v4"/>
-                      <path d="M8 23h8"/>
-                    </svg>
-                  )}
-                </button>
                 <button
                   className={`send-btn ${input.trim() ? 'active' : ''}`}
                   onClick={send}

@@ -57,7 +57,8 @@ export async function getOrCreateUser(phone: string): Promise<User> {
 
   if (!user) {
     const now = new Date().toISOString();
-    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    // 不再设置试用期结束时间，改为使用次数限制
+    // trial_end 设置为 null，表示不限制时间
 
     const { data, error } = await supabaseAdmin
       .from('users')
@@ -66,7 +67,7 @@ export async function getOrCreateUser(phone: string): Promise<User> {
         nickname: '',
         invite_code: generateInviteCode(phone),
         trial_start: now,
-        trial_end: trialEnd,
+        trial_end: null, // 不限制时间
         subscription_type: 'free',
         chat_count: 0,
         last_chat_date: new Date().toISOString().split('T')[0]
@@ -148,8 +149,9 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   const now = new Date();
   const today = now.toISOString().split('T')[0];
 
-  // 检查试用期状态
-  const isTrialActive = user.trial_end ? new Date(user.trial_end) > now : false;
+  // 检查试用期状态：改为基于次数而不是时间
+  // 如果用户的 chat_count < 15，则认为试用期有效
+  const isTrialActive = user.subscription_type === 'free' && user.chat_count < 15;
 
   // 检查付费订阅状态（包括激活码订阅）
   let isPaidUser = user.subscription_type !== 'free' &&
@@ -182,30 +184,19 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
     });
   }
 
-  // 检查是否需要重置每日聊天次数（仅对非试用期且非付费用户）
-  if (!isTrialActive && !isPaidUser && user.last_chat_date !== today) {
-    await supabaseAdmin
-      .from('users')
-      .update({
-        chat_count: 0,
-        last_chat_date: today
-      })
-      .eq('phone', phone);
+  // 不再需要每日重置聊天次数，因为试用期改为总次数限制
+  // 付费用户仍然不限制次数
 
-    user.chat_count = 0;
-    user.last_chat_date = today;
-  }
-  const trialRemainingDays = user.trial_end ?
-    Math.max(0, Math.ceil((new Date(user.trial_end).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0;
+  const trialRemainingChats = isTrialActive ? Math.max(0, 15 - user.chat_count) : 0;
 
   // 确定聊天限制
   let chatLimit = 0;
   if (isPaidUser) {
     chatLimit = 999999; // 付费用户有效期内不限制使用次数
   } else if (isTrialActive) {
-    chatLimit = 50; // 试用期用户7天内限制50条聊天
+    chatLimit = 15; // 免费用户限制15次聊天，不限制时间
   } else {
-    chatLimit = 0; // 试用期结束且未付费，无法聊天
+    chatLimit = 0; // 试用次数用完且未付费，无法聊天
   }
 
   const usedChats = user.chat_count || 0;
@@ -217,10 +208,10 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
     isPaidUser,
     remainingDays: isPaidUser ?
       Math.ceil((new Date(user.subscription_end!).getTime() - now.getTime()) / (24 * 60 * 60 * 1000)) :
-      trialRemainingDays,
+      0, // 免费用户不显示剩余天数
     chatLimit,
     usedChats,
-    resetTime: isPaidUser ? '有效期内不限制' : isTrialActive ? '试用期内限制50条' : undefined
+    resetTime: isPaidUser ? '有效期内不限制' : isTrialActive ? `剩余${trialRemainingChats}次免费使用` : undefined
   };
 }
 

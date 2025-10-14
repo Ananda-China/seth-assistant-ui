@@ -150,7 +150,7 @@ function LoginForm() {
         <div className="login-header">
           <div className="login-logo">
             <div className="login-logo-icon">S</div>
-            <div className="login-logo-title">听心如意</div>
+            <div className="login-logo-title">赛斯AI小助手</div>
           </div>
         </div>
 
