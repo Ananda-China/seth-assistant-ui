@@ -319,9 +319,28 @@ export default function AccountPage() {
                     <input className="form-input" value={nickname} onChange={e=>setNickname(e.target.value)} placeholder="填写昵称" />
                   </div>
                 </div>
-                <div className="card-actions">
-                  <button onClick={save} disabled={loading} className="btn-outline">保存</button>
-                  {msg && <span className="card-message">{msg}</span>}
+                <div className="card-actions" style={{ flexWrap: 'wrap' }}>
+                  <button onClick={save} disabled={loading} className="btn-outline">
+                    保存信息
+                  </button>
+                  <button
+                    onClick={() => {
+                      // 清除新手引导记录
+                      if (phone) {
+                        localStorage.removeItem(`user_guide_seen_${phone}`);
+                        setMsg('✅ 已重置新手引导，2秒后跳转到首页...');
+                        // 2秒后跳转到首页
+                        setTimeout(() => {
+                          router.push('/');
+                        }, 2000);
+                      }
+                    }}
+                    className="btn-outline"
+                    title="清除新手引导记录，返回首页重新查看"
+                  >
+                    🎯 重新查看新手引导
+                  </button>
+                  {msg && <span className="card-message" style={{ width: '100%', marginTop: '8px' }}>{msg}</span>}
                 </div>
               </div>
 
