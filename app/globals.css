@@ -122,8 +122,9 @@ body {
 .brand-title {
   font-weight: 500;
   color: #EAEBF0; /* 意识白 */
-  font-size: 22px; /* 调大2px */
-  letter-spacing: 0.5px;
+  font-size: 18px; /* 调整为18px，确保在一行显示 */
+  letter-spacing: 0.3px;
+  white-space: nowrap; /* 防止换行 */
 }
 
 .new-chat-btn {

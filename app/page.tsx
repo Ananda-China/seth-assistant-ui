@@ -193,11 +193,22 @@ export default function HomePage() {
 
   useEffect(() => {
     (async () => {
+      console.log('🔄 [页面加载] 开始获取对话列表...');
       const r = await fetch('/api/conversations');
+      console.log('📡 [页面加载] API响应状态:', r.status, r.ok);
       if (r.ok) {
         const data = await r.json();
+        console.log('📦 [页面加载] 获取到的对话列表:', {
+          count: data.list?.length || 0,
+          conversations: data.list?.map((c: any) => ({ id: c.id, title: c.title })) || []
+        });
         setConversations(data.list || []);
-        if (!activeConv && data.list?.[0]) setActiveConv(data.list[0].id);
+        if (!activeConv && data.list?.[0]) {
+          console.log('✅ [页面加载] 自动选择第一个对话:', data.list[0].id);
+          setActiveConv(data.list[0].id);
+        }
+      } else {
+        console.error('❌ [页面加载] 获取对话列表失败:', r.status);
       }
       await fetchUserInfo();
     })();
