@@ -154,8 +154,16 @@ export default function HomePage() {
 
         // 检查是否需要显示用户引导
         const hasSeenGuide = localStorage.getItem(`user_guide_seen_${j.phone}`);
+        console.log('🎯 新手引导检查:', {
+          phone: j.phone,
+          hasSeenGuide: hasSeenGuide,
+          willShowGuide: !hasSeenGuide
+        });
         if (!hasSeenGuide) {
+          console.log('✅ 显示新手引导');
           setShowUserGuide(true);
+        } else {
+          console.log('⏭️ 跳过新手引导（已看过）');
         }
 
         // 获取用户权限信息
