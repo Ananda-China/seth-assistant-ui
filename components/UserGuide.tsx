@@ -212,12 +212,12 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
                 <div className="bg-[#1A1D33] p-3 rounded-lg text-center">
                   <div className="text-[#C8B6E2] font-semibold">月套餐</div>
                   <div className="text-2xl font-bold text-[#EAEBF0]">¥899</div>
-                  <div className="text-xs text-[#8A94B3]">30天无限对话</div>
+                  <div className="text-xs text-[#8A94B3]">30天自在对谈</div>
                 </div>
                 <div className="bg-[#1A1D33] p-3 rounded-lg text-center border border-[#C8B6E2]/30">
                   <div className="text-[#C8B6E2] font-semibold">年套餐</div>
                   <div className="text-2xl font-bold text-[#EAEBF0]">¥3999</div>
-                  <div className="text-xs text-[#8A94B3]">365天无限对话</div>
+                  <div className="text-xs text-[#8A94B3]">365天自在对谈</div>
                 </div>
               </div>
             </div>

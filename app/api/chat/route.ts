@@ -133,7 +133,11 @@ export async function POST(req: NextRequest) {
       response_mode: 'streaming',
       user: 'anonymous',
       conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
+      // 添加更多配置以确保完整回复
+      auto_generate_name: false, // 不自动生成对话名称
     }),
+    // 增加超时时间，避免长回复被截断
+    signal: AbortSignal.timeout(120000), // 120秒超时
   });
 
   if (!difyRes.ok || !difyRes.body) {
@@ -154,12 +158,27 @@ export async function POST(req: NextRequest) {
       let firstEventSent = false;
       const decoder = new TextDecoder();
       let buffer = '';
+      let chunkCount = 0;
+      const startTime = Date.now();
+
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        if (done) {
+          const duration = Date.now() - startTime;
+          console.log('✅ Dify流式响应完成:', {
+            duration: `${duration}ms`,
+            chunks: chunkCount,
+            totalLength: assistantFull.length,
+            avgSpeed: `${(assistantFull.length / (duration / 1000)).toFixed(2)} chars/s`
+          });
+          break;
+        }
+
+        chunkCount++;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split(/\n/);
         buffer = lines.pop() || '';
+
         for (const line of lines) {
           const dataPrefix = 'data: ';
           if (!line.startsWith(dataPrefix)) continue;

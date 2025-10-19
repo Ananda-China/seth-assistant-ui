@@ -89,7 +89,7 @@ body {
 .sidebar.collapsed .brand-title,
 .sidebar.collapsed .chat-history-label,
 .sidebar.collapsed .conversation-list,
-.sidebar.collapsed .new-chat-btn {
+.sidebar.collapsed .new-conversation-btn {
   display: none;
 }
 .sidebar.collapsed .brand-logo { justify-content: center; }
@@ -151,9 +151,41 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding: 12px 0;
   border-bottom: 1px solid rgba(200, 182, 226, 0.05);
+}
+
+/* 发起新对话按钮 */
+.new-conversation-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(200, 182, 226, 0.15) 0%, rgba(138, 148, 179, 0.15) 100%);
+  border: 1px solid rgba(200, 182, 226, 0.3);
+  border-radius: 12px;
+  color: #C8B6E2;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.new-conversation-btn:hover {
+  background: linear-gradient(135deg, rgba(200, 182, 226, 0.25) 0%, rgba(138, 148, 179, 0.25) 100%);
+  border-color: rgba(200, 182, 226, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200, 182, 226, 0.2);
+}
+
+.new-conversation-btn .chat-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 /* 聊天记录标签 */

@@ -965,35 +965,37 @@ export default function HomePage() {
 
           </div>
 
-          {/* 聊天记录标签和新建按钮 */}
+          {/* 聊天记录标签 */}
           <div className="chat-history-header">
             <div className="chat-history-label">聊天记录</div>
-            <button
-              className="new-chat-btn"
-              title="新建会话"
-              onClick={async () => {
-                // 如果当前对话是空的，直接切换到它
-                if (activeConv && messages.length === 0) {
-                  console.log('✅ 当前对话为空，直接使用');
-                  return;
-                }
-
-                // 创建新对话
-                const res = await fetch('/api/conversations', { method: 'POST' });
-                const data = await res.json();
-                const conv = data.conversation;
-                setConversations(prev => [conv, ...prev]);
-                setActiveConv(conv.id);
-                conversationIdRef.current = null;
-                try { localStorage.removeItem('cid'); } catch {}
-                setMessages([]);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-            </button>
           </div>
+
+          {/* 发起新对话按钮 */}
+          <button
+            className="new-conversation-btn"
+            onClick={async () => {
+              // 如果当前对话是空的，直接切换到它
+              if (activeConv && messages.length === 0) {
+                console.log('✅ 当前对话为空，直接使用');
+                return;
+              }
+
+              // 创建新对话
+              const res = await fetch('/api/conversations', { method: 'POST' });
+              const data = await res.json();
+              const conv = data.conversation;
+              setConversations(prev => [conv, ...prev]);
+              setActiveConv(conv.id);
+              conversationIdRef.current = null;
+              try { localStorage.removeItem('cid'); } catch {}
+              setMessages([]);
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="chat-icon">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>发起新对话</span>
+          </button>
 
           {/* 聊天记录列表 */}
           <ul className="conversation-list">
