@@ -62,7 +62,10 @@ export default function HomePage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      send();
+      // 防止在加载中重复发送
+      if (!loading) {
+        send();
+      }
     }
     adjustTextareaHeight();
   };

@@ -198,7 +198,7 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
             <div className="text-center">
               <div className="text-4xl mb-4">💳</div>
               <h3 className="text-xl font-semibold text-[#C8B6E2] mb-2">购买激活码</h3>
-              <p className="text-[#8A94B3]">联系客服购买激活码，享受无限制对话</p>
+              <p className="text-[#8A94B3]">联系客服购买激活码，享受自在对谈</p>
             </div>
 
             <div className="bg-[#2E335B] p-4 rounded-lg">
