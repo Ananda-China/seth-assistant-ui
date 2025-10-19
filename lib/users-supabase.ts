@@ -10,7 +10,7 @@ export type User = {
   created_at: string;
   trial_start?: string;
   trial_end?: string;
-  subscription_type: 'free' | 'monthly' | 'quarterly' | 'yearly';
+  subscription_type: 'free' | 'monthly' | 'quarterly' | 'yearly' | 'times';
   subscription_start?: string;
   subscription_end?: string;
   chat_count: number;
@@ -150,8 +150,8 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   const today = now.toISOString().split('T')[0];
 
   // 检查试用期状态：改为基于次数而不是时间
-  // 如果用户的 chat_count < 15，则认为试用期有效
-  const isTrialActive = user.subscription_type === 'free' && user.chat_count < 15;
+  // 如果用户的 chat_count < 5，则认为试用期有效
+  const isTrialActive = user.subscription_type === 'free' && user.chat_count < 5;
 
   // 检查付费订阅状态（包括激活码订阅）
   let isPaidUser = user.subscription_type !== 'free' &&
@@ -167,34 +167,55 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
     .limit(1)
     .single();
 
-  if (subscription && new Date(subscription.current_period_end) > now) {
-    isPaidUser = true;
-    console.log('✅ 用户有有效的激活码订阅:', {
-      phone,
-      plan: subscription.plan,
-      endDate: subscription.current_period_end,
-      subscriptionType: subscription.subscription_type
-    });
-  } else if (subscription) {
-    console.log('⚠️ 用户有过期的订阅:', {
-      phone,
-      plan: subscription.plan,
-      endDate: subscription.current_period_end,
-      isExpired: new Date(subscription.current_period_end) <= now
-    });
+  // 判断是否是次卡
+  const isTimesCard = subscription?.plan === '次卡';
+
+  if (subscription) {
+    if (isTimesCard) {
+      // 次卡：不限制时间，只限制次数（50次）
+      isPaidUser = true;
+      console.log('✅ 用户有次卡订阅:', {
+        phone,
+        plan: subscription.plan,
+        chatCount: user.chat_count,
+        chatLimit: 50
+      });
+    } else if (new Date(subscription.current_period_end) > now) {
+      // 月卡/年卡：限制时间，不限制次数
+      isPaidUser = true;
+      console.log('✅ 用户有有效的激活码订阅:', {
+        phone,
+        plan: subscription.plan,
+        endDate: subscription.current_period_end,
+        subscriptionType: subscription.subscription_type
+      });
+    } else {
+      console.log('⚠️ 用户有过期的订阅:', {
+        phone,
+        plan: subscription.plan,
+        endDate: subscription.current_period_end,
+        isExpired: new Date(subscription.current_period_end) <= now
+      });
+    }
   }
 
   // 不再需要每日重置聊天次数，因为试用期改为总次数限制
   // 付费用户仍然不限制次数
 
-  const trialRemainingChats = isTrialActive ? Math.max(0, 15 - user.chat_count) : 0;
+  const trialRemainingChats = isTrialActive ? Math.max(0, 5 - user.chat_count) : 0;
 
   // 确定聊天限制
   let chatLimit = 0;
   if (isPaidUser) {
-    chatLimit = 999999; // 付费用户有效期内不限制使用次数
+    if (isTimesCard) {
+      // 次卡：限制50次
+      chatLimit = 50;
+    } else {
+      // 月卡/年卡：有效期内不限制使用次数
+      chatLimit = 999999;
+    }
   } else if (isTrialActive) {
-    chatLimit = 15; // 免费用户限制15次聊天，不限制时间
+    chatLimit = 5; // 免费用户限制5次聊天，不限制时间
   } else {
     chatLimit = 0; // 试用次数用完且未付费，无法聊天
   }

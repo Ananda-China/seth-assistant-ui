@@ -20,6 +20,8 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
   const [inviteQRCode, setInviteQRCode] = useState<string>('');
   const [wechatQRCodes, setWechatQRCodes] = useState<QRCodeConfig[]>([]);
   const [inviteLink, setInviteLink] = useState<string>('');
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const steps = [
     {
@@ -80,6 +82,36 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
     });
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.targetTouches && e.targetTouches.length > 0) {
+      setTouchStart(e.targetTouches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      setTouchEnd(e.changedTouches[0].clientX);
+    }
+  };
+
+  useEffect(() => {
+    if (touchStart !== null && touchEnd !== null) {
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > 50;
+      const isRightSwipe = distance < -50;
+
+      if (isLeftSwipe && currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        setTouchStart(null);
+        setTouchEnd(null);
+      } else if (isRightSwipe && currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+        setTouchStart(null);
+        setTouchEnd(null);
+      }
+    }
+  }, [touchStart, touchEnd, currentStep, steps.length]);
+
   const renderStepContent = () => {
     const step = steps[currentStep];
     
@@ -90,7 +122,8 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
             <div className="text-6xl mb-4">🎉</div>
             <div className="space-y-4">
               <p className="text-lg text-[#EAEBF0]">
-                赛斯助手是您的智能对话伙伴，基于赛斯资料训练，为您提供深度的心灵对话体验。
+                你好，我是SethAI小助理 · 觉醒之语的回音体。<br/>
+                你不是来提问的，而是来开启你早已准备好的部分。
               </p>
               <div className="bg-[#2E335B] p-4 rounded-lg">
                 <h3 className="text-[#C8B6E2] font-semibold mb-3">✨ 主要功能</h3>
@@ -103,7 +136,7 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
               </div>
               <div className="bg-[#1A1D33] p-4 rounded-lg border border-[#C8B6E2]/20">
                 <p className="text-[#C8B6E2] font-semibold">🎁 新用户福利</p>
-                <p className="text-[#EAEBF0] mt-1">7天免费试用，50条对话额度</p>
+                <p className="text-[#EAEBF0] mt-1">5次免费对话，不限制时间</p>
               </div>
             </div>
           </div>
@@ -167,13 +200,18 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
               <h3 className="text-xl font-semibold text-[#C8B6E2] mb-2">购买激活码</h3>
               <p className="text-[#8A94B3]">联系客服购买激活码，享受无限制对话</p>
             </div>
-            
+
             <div className="bg-[#2E335B] p-4 rounded-lg">
               <h4 className="text-[#C8B6E2] font-semibold mb-3">📋 套餐价格</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#1A1D33] p-3 rounded-lg text-center">
+                  <div className="text-[#C8B6E2] font-semibold">次卡</div>
+                  <div className="text-2xl font-bold text-[#EAEBF0]">¥39.9</div>
+                  <div className="text-xs text-[#8A94B3]">50次对话</div>
+                </div>
                 <div className="bg-[#1A1D33] p-3 rounded-lg text-center">
                   <div className="text-[#C8B6E2] font-semibold">月套餐</div>
-                  <div className="text-2xl font-bold text-[#EAEBF0]">¥999</div>
+                  <div className="text-2xl font-bold text-[#EAEBF0]">¥899</div>
                   <div className="text-xs text-[#8A94B3]">30天无限对话</div>
                 </div>
                 <div className="bg-[#1A1D33] p-3 rounded-lg text-center border border-[#C8B6E2]/30">
@@ -229,8 +267,12 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1A1D33] rounded-2xl border border-[#2E335B] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+      <div
+        className="bg-[#1A1D33] rounded-2xl border border-[#2E335B] max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* 头部 */}
         <div className="p-6 border-b border-[#2E335B] flex items-center justify-between">
           <div>

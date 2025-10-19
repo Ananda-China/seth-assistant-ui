@@ -22,9 +22,25 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const user = requireUser(req);
   if (!user) return new Response('unauthorized', { status: 401 });
+
+  console.log('🔍 [API] 获取消息列表:', {
+    conversationId: params.id,
+    userPhone: user.phone
+  });
+
   const storeModule = await getStoreModule();
-  const list = await storeModule.listMessages(user.phone, params.id);
-  return Response.json({ list });
+
+  try {
+    const list = await storeModule.listMessages(user.phone, params.id);
+    console.log('✅ [API] 成功获取消息:', {
+      count: list.length,
+      sample: list.slice(0, 3).map((m: any) => ({ role: m.role, contentLength: m.content?.length }))
+    });
+    return Response.json({ list });
+  } catch (error) {
+    console.error('❌ [API] 获取消息失败:', error);
+    return Response.json({ list: [], error: error instanceof Error ? error.message : 'Unknown error' });
+  }
 }
 
 

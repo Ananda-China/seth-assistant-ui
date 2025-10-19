@@ -101,8 +101,10 @@ CREATE TRIGGER update_withdrawal_requests_updated_at BEFORE UPDATE ON withdrawal
 
 -- 插入默认套餐数据
 INSERT INTO plans (name, price, duration_days, description) VALUES
-('月套餐', 99900, 30, '月度会员，享受30天无限制AI助手服务'),
-('年套餐', 399900, 365, '年度会员，享受365天无限制AI助手服务');
+('次卡', 3990, NULL, '次卡，享受50次AI助手服务，不限制时间'),
+('月套餐', 89900, 30, '月度会员，享受30天无限制AI助手服务'),
+('年套餐', 399900, 365, '年度会员，享受365天无限制AI助手服务')
+ON CONFLICT (name) DO NOTHING;
 
 -- 创建 RLS 策略
 ALTER TABLE plans ENABLE ROW LEVEL SECURITY;

@@ -38,6 +38,8 @@ export default function AccountPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passMsg, setPassMsg] = useState('');
   const [passLoading, setPassLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 客服二维码
   const [qrCodes, setQRCodes] = useState<any[]>([]);
@@ -329,23 +331,69 @@ export default function AccountPage() {
                 <div className="card-grid">
                   <div className="form-group">
                     <label className="form-label">输入密码</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="至少6位"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        className="form-input"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="至少6位"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showNewPassword ? '隐藏密码' : '显示密码'}
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        title={showNewPassword ? '隐藏' : '显示'}
+                        style={{
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#8A94B3',
+                          cursor: 'pointer',
+                          fontSize: 16,
+                          lineHeight: 1,
+                          padding: 4,
+                        }}
+                      >
+                        {showNewPassword ? '🙈' : '👁️'}
+                      </button>
+                    </div>
                   </div>
                   <div className="form-group">
                     <label className="form-label">确认密码</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="再次输入密码"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="form-input"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="再次输入密码"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showConfirmPassword ? '隐藏密码' : '显示密码'}
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        title={showConfirmPassword ? '隐藏' : '显示'}
+                        style={{
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#8A94B3',
+                          cursor: 'pointer',
+                          fontSize: 16,
+                          lineHeight: 1,
+                          padding: 4,
+                        }}
+                      >
+                        {showConfirmPassword ? '🙈' : '👁️'}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="card-actions">
@@ -452,12 +500,18 @@ export default function AccountPage() {
 
                   <div className="plans-info">
                     <div className="plans-title">可用套餐</div>
-                    {plans.map(plan => (
-                      <div key={plan.id} className="plan-item">
-                        <span className="plan-name">{plan.name}</span>
-                        <span className="plan-price">¥{(plan.price / 100).toFixed(2)}</span>
-                      </div>
-                    ))}
+                    <div className="plan-item">
+                      <span className="plan-name">月卡</span>
+                      <span className="plan-price">¥899</span>
+                    </div>
+                    <div className="plan-item">
+                      <span className="plan-name">年卡</span>
+                      <span className="plan-price">¥3999</span>
+                    </div>
+                    <div className="plan-item">
+                      <span className="plan-name">次卡</span>
+                      <span className="plan-price">¥39.9</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -667,10 +721,10 @@ export default function AccountPage() {
                               alt={qr.name}
                               crossOrigin="anonymous"
                               style={{
-                                width: '120px',
-                                height: '120px',
+                                width: '280px',
+                                height: '280px',
                                 objectFit: 'contain',
-                                borderRadius: '6px',
+                                borderRadius: '8px',
                                 border: '1px solid #4A5568',
                                 backgroundColor: '#FFFFFF'
                               }}
@@ -683,7 +737,7 @@ export default function AccountPage() {
                                 img.style.display = 'none';
                                 const parent = img.parentElement;
                                 if (parent) {
-                                  parent.innerHTML = '<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:6px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
+                                  parent.innerHTML = '<div style="width:280px;height:280px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
                                 }
                               }}
                             />
@@ -697,10 +751,10 @@ export default function AccountPage() {
                   ) : (
                     <div className="qr-placeholder">
                       <div style={{
-                        width: '120px',
-                        height: '120px',
+                        width: '200px',
+                        height: '200px',
                         background: '#2E335B',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -746,11 +800,15 @@ export default function AccountPage() {
                     <div className="pricing-items">
                       <div className="pricing-item">
                         <span className="pricing-name">月套餐</span>
-                        <span className="pricing-price">¥999</span>
+                        <span className="pricing-price">¥899</span>
                       </div>
                       <div className="pricing-item">
                         <span className="pricing-name">年套餐</span>
                         <span className="pricing-price">¥3999</span>
+                      </div>
+                      <div className="pricing-item">
+                        <span className="pricing-name">次卡</span>
+                        <span className="pricing-price">¥39.9</span>
                       </div>
                     </div>
                   </div>

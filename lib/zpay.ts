@@ -137,20 +137,29 @@ export function verifyZPayNotify(params: Record<string, any>, signature: string)
 
 // 支付套餐配置
 export const ZPAY_PLANS = {
+  times: {
+    id: 'times',
+    name: '次卡',
+    price: 3990, // 39.9元，单位：分
+    duration: null, // 不限制时间
+    chatLimit: 50, // 50次聊天
+    description: '次卡，享受50次聊天',
+    features: ['50次聊天', '不限制时间', '专属客服']
+  },
   monthly: {
     id: 'monthly',
-    name: '月套餐',
-    price: 99900, // 999元，单位：分
+    name: '月卡',
+    price: 89900, // 899元，单位：分
     duration: 30, // 天数
-    description: '月套餐，享受无限聊天',
+    description: '月卡，享受无限聊天',
     features: ['无限聊天次数', '优先响应', '专属客服']
   },
   yearly: {
     id: 'yearly',
-    name: '年套餐',
+    name: '年卡',
     price: 399900, // 3999元，单位：分
     duration: 365, // 天数
-    description: '年套餐，最超值的选择',
+    description: '年卡，最超值的选择',
     features: ['无限聊天次数', '优先响应', '专属客服', '年度超值', '专属徽章']
   }
 };

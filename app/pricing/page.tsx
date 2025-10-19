@@ -4,10 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const PLANS = {
+  times: {
+    id: 'times',
+    name: '次卡',
+    price: 39.9,
+    originalPrice: 99,
+    duration: '50次对话',
+    description: '适合偶尔使用用户',
+    features: [
+      '50次聊天机会',
+      '不限制时间',
+      '专属客服支持',
+      '历史记录保存'
+    ],
+    popular: false
+  },
   monthly: {
     id: 'monthly',
-    name: '月套餐',
-    price: 999,
+    name: '月卡',
+    price: 899,
     originalPrice: 1299,
     duration: '1个月',
     description: '适合轻度使用用户',
@@ -21,9 +36,9 @@ const PLANS = {
   },
   yearly: {
     id: 'yearly',
-    name: '年套餐',
+    name: '年卡',
     price: 3999,
-    originalPrice: 11988,
+    originalPrice: 12000,
     duration: '12个月',
     description: '最超值的长期选择',
     features: [

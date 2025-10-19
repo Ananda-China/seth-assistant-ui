@@ -191,11 +191,15 @@ export class ActivationManager {
 
       // 计算订阅开始和结束时间（使用UTC时间）
       const subscriptionStart = new Date();
-      const subscriptionEnd = new Date(subscriptionStart.getTime() + activationCode.plan.duration_days * 24 * 60 * 60 * 1000);
+      // 次卡没有时间限制，设置为100年后
+      const durationDays = activationCode.plan.duration_days || 36500; // 如果是次卡(duration_days为null)，设置为100年
+      const subscriptionEnd = new Date(subscriptionStart.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
       console.log('🕐 激活码订阅时间计算:', {
         planName: activationCode.plan.name,
         durationDays: activationCode.plan.duration_days,
+        actualDurationDays: durationDays,
+        isTimesCard: !activationCode.plan.duration_days,
         subscriptionStart: subscriptionStart.toISOString(),
         subscriptionEnd: subscriptionEnd.toISOString(),
         durationDays_calculated: (subscriptionEnd.getTime() - subscriptionStart.getTime()) / (24 * 60 * 60 * 1000)
