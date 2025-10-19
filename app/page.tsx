@@ -38,6 +38,15 @@ export default function HomePage() {
   // 用户引导相关状态
   const [showUserGuide, setShowUserGuide] = useState(false);
 
+  // 聊天次数限制相关状态
+  const [chatCountInConversation, setChatCountInConversation] = useState(0);
+  const [showChatLimitWarning, setShowChatLimitWarning] = useState(false);
+  const MAX_CHATS_PER_CONVERSATION = 50;
+  const WARNING_THRESHOLD = 45;
+
+  // 输入字数限制
+  const MAX_INPUT_LENGTH = 1500;
+
   // 自动调整输入框高度
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -212,15 +221,44 @@ export default function HomePage() {
     if (!activeConv) return;
     (async () => {
       try {
+        console.log('🔄 开始加载对话消息:', activeConv);
         const r = await fetch(`/api/conversations/${activeConv}`);
+        console.log('📡 API响应状态:', r.status, r.ok);
         if (r.ok) {
           const data = await r.json();
+          console.log('📦 API返回的原始数据:', data);
           const list = (data.list || []) as { id:string; role:'user'|'assistant'|'system'; content:string }[];
+          console.log('📋 解析后的消息列表:', {
+            length: list.length,
+            sample: list.slice(0, 3),
+            roles: list.map(m => m.role)
+          });
           if (list && list.length > 0) {
             setMessages(list.map(m => ({ id: m.id, role: m.role, content: m.content })));
+            // 计算当前对话中的用户消息数（聊天次数）
+            const userMessageCount = list.filter(m => m.role === 'user').length;
+            console.log('📊 聊天次数统计:', {
+              conversationId: activeConv,
+              totalMessages: list.length,
+              userMessages: userMessageCount,
+              warningThreshold: WARNING_THRESHOLD,
+              maxChats: MAX_CHATS_PER_CONVERSATION,
+              shouldShowWarning: userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION
+            });
+            setChatCountInConversation(userMessageCount);
+            // 检查是否需要显示警告
+            if (userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION) {
+              console.log('⚠️ 显示聊天次数警告');
+              setShowChatLimitWarning(true);
+            } else {
+              console.log('✅ 不显示警告');
+              setShowChatLimitWarning(false);
+            }
           } else {
             // 如果没有消息，保持当前消息列表，不要清空
             console.log('⚠️ 对话中没有消息，保持当前状态');
+            setChatCountInConversation(0);
+            setShowChatLimitWarning(false);
           }
         } else {
           console.error('❌ 获取对话消息失败:', r.status);
@@ -257,6 +295,12 @@ export default function HomePage() {
   async function send() {
     if (!input.trim()) return;
 
+    // 检查聊天次数限制
+    if (chatCountInConversation >= MAX_CHATS_PER_CONVERSATION) {
+      alert(`当前对话已达到${MAX_CHATS_PER_CONVERSATION}次聊天上限，请创建新的聊天来继续。`);
+      return;
+    }
+
     console.log('🚀 开始发送消息:', input.trim());
 
     // 确保有聊天记录，并等待创建完成
@@ -274,6 +318,15 @@ export default function HomePage() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+
+    // 更新聊天计数
+    const newChatCount = chatCountInConversation + 1;
+    setChatCountInConversation(newChatCount);
+
+    // 检查是否需要显示警告
+    if (newChatCount >= WARNING_THRESHOLD && newChatCount < MAX_CHATS_PER_CONVERSATION) {
+      setShowChatLimitWarning(true);
+    }
 
     // 确保有活跃的对话ID，优先使用新创建的对话ID
     const currentConvId = convId || activeConv;
@@ -350,7 +403,7 @@ export default function HomePage() {
             role: 'system',
             content: `⚠️ ${errorData.error || '权限不足'}\n\n${
               !errorData.permission?.isPaidUser && !errorData.permission?.isTrialActive
-                ? '您的15次免费使用已用完，请升级到付费版本继续使用。'
+                ? '您的5次免费使用已用完，请升级到付费版本继续使用。'
                 : errorData.permission?.usedChats >= errorData.permission?.chatLimit
                 ? `免费次数已用完，请升级继续使用。`
                 : ''
@@ -417,54 +470,66 @@ export default function HomePage() {
 
     while (true) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done) {
+        console.log('✅ 流式响应完成，最终内容:', {
+          length: assistantText.length,
+          preview: assistantText.substring(0, 100) + '...',
+          end: '...' + assistantText.substring(assistantText.length - 100),
+          hasNewlines: assistantText.includes('\n'),
+          newlineCount: (assistantText.match(/\n/g) || []).length
+        });
+        break;
+      }
       const chunk = decoder.decode(value, { stream: true });
-      // 可能一次读到多行，逐行处理
-      const parts = chunk.split('\n');
-      for (const part of parts) {
-        if (!part) continue;
-        if (part.startsWith('CID:')) {
-          const cid = part.slice(4).trim();
-          if (cid) {
-            conversationIdRef.current = cid;
-            try { localStorage.setItem('cid', cid); } catch {}
-          }
-          continue;
-        }
 
-        // 过滤掉可能的 [object Object] 内容
-        if (part.includes('[object Object]') || part.includes('[Object object]')) {
-          console.log('⚠️ 过滤掉 [object Object]:', part);
-          continue;
-        }
-
-        // 过滤掉其他可能的无效内容
-        if (part.trim() === '' || part.trim() === 'null' || part.trim() === 'undefined') {
-          continue;
-        }
-
-        assistantText += part;
-
-        // 只在第一次创建消息，后续只更新内容
-        if (isFirstChunk) {
-          const assistantMessage = {
-            id: crypto.randomUUID(),
-            role: 'assistant' as const,
-            content: assistantText
-          };
-          setMessages(prev => [...prev, assistantMessage]);
-          assistantMessageId = assistantMessage.id;
-          isFirstChunk = false;
-        } else {
-          // 后续更新只修改最后一条消息的内容
-          setMessages(prev => {
-            const updated = [...prev];
-            if (updated.length > 0 && updated[updated.length - 1].role === 'assistant') {
-              updated[updated.length - 1] = { ...updated[updated.length - 1], content: assistantText };
+      // 检查是否包含 CID: 标记
+      if (chunk.includes('CID:')) {
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('CID:')) {
+            const cid = line.slice(4).trim();
+            if (cid) {
+              conversationIdRef.current = cid;
+              try { localStorage.setItem('cid', cid); } catch {}
             }
-            return updated;
-          });
+          } else if (line) {
+            // 过滤掉可能的 [object Object] 内容
+            if (line.includes('[object Object]') || line.includes('[Object object]')) {
+              console.log('⚠️ 过滤掉 [object Object]:', line);
+              continue;
+            }
+            assistantText += line;
+          }
         }
+      } else {
+        // 过滤掉可能的 [object Object] 内容
+        if (chunk.includes('[object Object]') || chunk.includes('[Object object]')) {
+          console.log('⚠️ 过滤掉 [object Object]:', chunk);
+          continue;
+        }
+        // 直接追加内容，保留所有格式（包括换行符）
+        assistantText += chunk;
+      }
+
+      // 只在第一次创建消息，后续只更新内容
+      if (isFirstChunk && assistantText) {
+        const assistantMessage = {
+          id: crypto.randomUUID(),
+          role: 'assistant' as const,
+          content: assistantText
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        assistantMessageId = assistantMessage.id;
+        isFirstChunk = false;
+      } else if (assistantText) {
+        // 后续更新只修改最后一条消息的内容
+        setMessages(prev => {
+          const updated = [...prev];
+          if (updated.length > 0 && updated[updated.length - 1].role === 'assistant') {
+            updated[updated.length - 1] = { ...updated[updated.length - 1], content: assistantText };
+          }
+          return updated;
+        });
       }
     }
     setLoading(false);
@@ -1142,14 +1207,39 @@ export default function HomePage() {
 
           {/* 输入区域 */}
           <div className="input-area">
+            {/* 聊天次数限制警告 */}
+            {(() => {
+              const shouldShow = showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION;
+              console.log('🔍 警告框渲染检查:', {
+                showChatLimitWarning,
+                chatCountInConversation,
+                WARNING_THRESHOLD,
+                MAX_CHATS_PER_CONVERSATION,
+                shouldShow
+              });
+              return shouldShow ? (
+                <div className="chat-limit-warning">
+                  <div className="warning-content">
+                    <span className="warning-icon">⚠️</span>
+                    <span className="warning-text">
+                      已聊天 {chatCountInConversation}/{MAX_CHATS_PER_CONVERSATION} 次，建议做聊天小结后创建新的聊天
+                    </span>
+                  </div>
+                </div>
+              ) : null;
+            })()}
             <div className="composer">
               <textarea
                 rows={1}
                 className="message-input"
                 value={input}
                 onChange={e => {
-                  setInput(e.target.value);
-                  adjustTextareaHeight();
+                  const newValue = e.target.value;
+                  // 限制输入字数
+                  if (newValue.length <= MAX_INPUT_LENGTH) {
+                    setInput(newValue);
+                    adjustTextareaHeight();
+                  }
                 }}
                 placeholder="问问赛斯"
                 style={{
@@ -1163,6 +1253,17 @@ export default function HomePage() {
                 onKeyUp={handleKeyDown}
                 onKeyDown={handleKeyDown}
               />
+              {/* 字数统计 */}
+              <div style={{
+                position: 'absolute',
+                bottom: '60px',
+                right: '20px',
+                fontSize: '12px',
+                color: input.length > MAX_INPUT_LENGTH * 0.9 ? '#ff6b6b' : '#8A94B3',
+                pointerEvents: 'none'
+              }}>
+                {input.length}/{MAX_INPUT_LENGTH}
+              </div>
               <div className="input-actions">
                 <button
                   className={`send-btn ${input.trim() ? 'active' : ''}`}

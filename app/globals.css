@@ -420,6 +420,7 @@ body {
   font-size: 16px; /* 严格按照规范 */
   line-height: 1.8; /* 严格按照规范 */
   word-wrap: break-word;
+  white-space: pre-wrap; /* 保留换行符和空格 */
 }
 
 .user-bubble {
@@ -494,6 +495,38 @@ body {
   font-size: 14px;
   padding: 20px 0 20px 0;
   margin-left: 0;
+}
+
+/* ===== 聊天次数限制警告 ===== */
+.chat-limit-warning {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto 12px auto;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 101;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #FFD700;
+}
+
+.warning-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  flex: 1;
+  line-height: 1.4;
 }
 
 /* ===== 底部输入框 (max-width: 800px, 水平居中) ===== */

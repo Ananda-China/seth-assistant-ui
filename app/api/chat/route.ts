@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!permission.canChat) {
     let message = '';
     if (!permission.isTrialActive && !permission.isPaidUser) {
-      message = `您的15次免费使用已用完，请升级到付费版本继续使用。`;
+      message = `您的5次免费使用已用完，请升级到付费版本继续使用。`;
     } else if (permission.usedChats >= permission.chatLimit) {
       message = `免费次数已用完（${permission.usedChats}/${permission.chatLimit}），请升级继续使用。`;
     } else {
@@ -191,14 +191,13 @@ export async function POST(req: NextRequest) {
 
             const content = evt?.answer || evt?.data || '';
             if (content) {
-              // 清理内容，过滤掉可能的对象字符串
+              // 清理内容，过滤掉可能的对象字符串，但保留换行符
               let cleanContent = String(content);
               // 过滤掉 [object Object] 等无效内容
               cleanContent = cleanContent.replace(/\[object Object\]/gi, '');
               cleanContent = cleanContent.replace(/\[Object object\]/gi, '');
-              cleanContent = cleanContent.replace(/null/gi, '');
-              cleanContent = cleanContent.replace(/undefined/gi, '');
-              cleanContent = cleanContent.trim();
+              // 注意：不要过滤 null 和 undefined 字符串，因为可能是正常内容的一部分
+              // 也不要使用 trim()，因为会去掉换行符
 
               if (cleanContent) {
                 assistantFull += cleanContent;
@@ -213,6 +212,14 @@ export async function POST(req: NextRequest) {
       // 助手消息落库，包含token使用量
       try {
         if (clientConversationId && assistantFull) {
+          console.log('📝 保存助手消息:', {
+            conversationId: clientConversationId,
+            contentLength: assistantFull.length,
+            contentPreview: assistantFull.substring(0, 100) + '...',
+            contentEnd: '...' + assistantFull.substring(assistantFull.length - 100),
+            hasNewlines: assistantFull.includes('\n'),
+            newlineCount: (assistantFull.match(/\n/g) || []).length
+          });
           await storeModule.addMessage(auth.phone, clientConversationId, 'assistant', assistantFull, assistantTokens);
 
           // 更新用户消息的token使用量
