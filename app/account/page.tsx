@@ -491,7 +491,7 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="subscription-empty">
-                    未订阅。<a href="/pay" className="subscription-link">立即订阅</a>
+                    未订阅。<a href="/#upgrade" className="subscription-link">立即订阅</a>
                   </div>
                 )}
               </div>

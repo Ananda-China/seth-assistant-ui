@@ -110,7 +110,8 @@ export default function HomePage() {
         const data = await res.json();
         const conv = data.conversation;
         console.log('✅ 新聊天记录创建成功:', conv.id);
-        setConversations(prev => [...prev, conv]);
+        // 修复：将新对话添加到数组开头，与其他地方保持一致
+        setConversations(prev => [conv, ...prev]);
         setActiveConv(conv.id);
         conversationIdRef.current = null;
         try { localStorage.removeItem('cid'); } catch {}
@@ -484,11 +485,20 @@ export default function HomePage() {
           preview: assistantText.substring(0, 100) + '...',
           end: '...' + assistantText.substring(assistantText.length - 100),
           hasNewlines: assistantText.includes('\n'),
-          newlineCount: (assistantText.match(/\n/g) || []).length
+          newlineCount: (assistantText.match(/\n/g) || []).length,
+          endsWithPunctuation: /[。！？，、；：.!?,;:]$/.test(assistantText.trim())
         });
+        if (!assistantText.trim().match(/[。！？.!?]$/)) {
+          console.warn('⚠️ 警告: AI回复可能不完整（没有结束标点符号）');
+        }
         break;
       }
       const chunk = decoder.decode(value, { stream: true });
+      console.log('📦 收到chunk:', {
+        length: chunk.length,
+        preview: chunk.substring(0, 50),
+        hasCID: chunk.includes('CID:')
+      });
 
       // 检查是否包含 CID: 标记
       if (chunk.includes('CID:')) {
