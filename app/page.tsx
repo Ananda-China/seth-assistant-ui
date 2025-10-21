@@ -517,7 +517,8 @@ export default function HomePage() {
       // 检查是否包含 CID: 标记
       if (chunk.includes('CID:')) {
         const lines = chunk.split('\n');
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
           if (line.startsWith('CID:')) {
             const cid = line.slice(4).trim();
             if (cid) {
@@ -531,6 +532,10 @@ export default function HomePage() {
               continue;
             }
             assistantText += line;
+            // 恢复换行符（除了最后一行）
+            if (i < lines.length - 1) {
+              assistantText += '\n';
+            }
           }
         }
       } else {

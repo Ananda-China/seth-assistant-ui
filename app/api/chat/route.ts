@@ -6,6 +6,88 @@ import { getStoreModule, getBillingModule, getUsers } from '../../../lib/config'
 const DIFY_API_URL = process.env.DIFY_API_URL || '';
 const DIFY_API_KEY = process.env.DIFY_API_KEY || '';
 
+// 性能优化配置
+const MAX_RETRIES = 2;
+const CONNECT_TIMEOUT = 10000; // 10秒连接超时
+const TOTAL_TIMEOUT = 60000; // 60秒总超时
+const RETRY_DELAY = 1000; // 重试延迟
+
+// 带重试的fetch函数
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      console.log(`🔄 Dify请求 (尝试 ${attempt + 1}/${retries + 1})`);
+
+      const startTime = Date.now();
+      const response = await fetch(url, options);
+      const connectTime = Date.now() - startTime;
+
+      console.log(`⏱️ Dify连接时间: ${connectTime}ms`);
+
+      if (response.ok) {
+        return response;
+      }
+
+      lastError = new Error(`Dify返回 ${response.status}`);
+      console.warn(`⚠️ 第 ${attempt + 1} 次尝试失败: ${lastError.message}`);
+
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`⚠️ 第 ${attempt + 1} 次尝试异常:`, lastError.message);
+
+      if (attempt < retries) {
+        const delayMs = RETRY_DELAY * (attempt + 1);
+        console.log(`⏳ 等待 ${delayMs}ms 后重试...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  throw lastError || new Error('Dify请求失败');
+}
+
+// 性能监控器
+function createPerformanceMonitor() {
+  const startTime = Date.now();
+  let chunkCount = 0;
+  let lastChunkTime = startTime;
+
+  return {
+    recordChunk() {
+      chunkCount++;
+      const now = Date.now();
+      const timeSinceLastChunk = now - lastChunkTime;
+
+      if (chunkCount % 10 === 0) {
+        const elapsed = now - startTime;
+        console.log(
+          `📊 进度: ${chunkCount} chunks, ` +
+          `总耗时: ${elapsed}ms, ` +
+          `最后chunk耗时: ${timeSinceLastChunk}ms`
+        );
+      }
+
+      lastChunkTime = now;
+    },
+
+    finish() {
+      const totalTime = Date.now() - startTime;
+      console.log(
+        `✅ 完整请求耗时: ${totalTime}ms ` +
+        `(${chunkCount} chunks, ` +
+        `平均: ${chunkCount > 0 ? (totalTime / chunkCount).toFixed(2) : 0}ms/chunk)`
+      );
+      return totalTime;
+    }
+  };
+}
+
 export async function POST(req: NextRequest) {
   const auth = requireUser(req);
   if (!auth) return new Response('unauthorized', { status: 401 });
@@ -121,24 +203,28 @@ export async function POST(req: NextRequest) {
     hasDifyConversationId: !!difyConversationId
   });
 
-  const difyRes = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${DIFY_API_KEY}`,
-      'Content-Type': 'application/json',
+  const difyRes = await fetchWithRetry(
+    apiUrl,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${DIFY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: {},
+        query,
+        response_mode: 'streaming',
+        user: 'anonymous',
+        conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
+        // 添加更多配置以确保完整回复
+        auto_generate_name: false, // 不自动生成对话名称
+      }),
+      // 增加超时时间，避免长回复被截断
+      signal: AbortSignal.timeout(TOTAL_TIMEOUT),
     },
-    body: JSON.stringify({
-      inputs: {},
-      query,
-      response_mode: 'streaming',
-      user: 'anonymous',
-      conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
-      // 添加更多配置以确保完整回复
-      auto_generate_name: false, // 不自动生成对话名称
-    }),
-    // 增加超时时间，避免长回复被截断
-    signal: AbortSignal.timeout(120000), // 120秒超时
-  });
+    MAX_RETRIES
+  );
 
   if (!difyRes.ok || !difyRes.body) {
     const text = await difyRes.text().catch(() => '');
@@ -153,6 +239,8 @@ export async function POST(req: NextRequest) {
   let totalTokens = 0;
   let userTokens = 0;
   let assistantTokens = 0;
+  const monitor = createPerformanceMonitor();
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let firstEventSent = false;
@@ -165,6 +253,7 @@ export async function POST(req: NextRequest) {
         const { value, done } = await reader.read();
         if (done) {
           const duration = Date.now() - startTime;
+          monitor.finish();
           console.log('✅ Dify流式响应完成:', {
             duration: `${duration}ms`,
             chunks: chunkCount,
@@ -175,6 +264,7 @@ export async function POST(req: NextRequest) {
         }
 
         chunkCount++;
+        monitor.recordChunk();
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split(/\n/);
         buffer = lines.pop() || '';
@@ -239,16 +329,29 @@ export async function POST(req: NextRequest) {
             hasNewlines: assistantFull.includes('\n'),
             newlineCount: (assistantFull.match(/\n/g) || []).length
           });
-          await storeModule.addMessage(auth.phone, clientConversationId, 'assistant', assistantFull, assistantTokens);
+
+          const savedMessage = await storeModule.addMessage(auth.phone, clientConversationId, 'assistant', assistantFull, assistantTokens);
+          console.log('✅ 助手消息已保存到数据库:', {
+            messageId: savedMessage.id,
+            contentLength: savedMessage.content?.length || 0
+          });
 
           // 更新用户消息的token使用量
           if (userMessageId && userTokens > 0) {
             await storeModule.updateMessageTokens(userMessageId, userTokens);
             console.log(`✅ 已更新用户消息token使用量: ${userTokens}`);
           }
+        } else {
+          if (!clientConversationId) {
+            console.warn('⚠️ 未提供clientConversationId，无法保存消息');
+          }
+          if (!assistantFull) {
+            console.warn('⚠️ 助手回复为空，无法保存消息');
+          }
         }
       } catch (error) {
         console.error('❌ 保存消息或更新token失败:', error);
+        // 即使保存失败也要关闭流，避免客户端挂起
       }
       controller.close();
     },
