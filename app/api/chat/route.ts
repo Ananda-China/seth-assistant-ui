@@ -9,8 +9,9 @@ const DIFY_API_KEY = process.env.DIFY_API_KEY || '';
 // 性能优化配置
 const MAX_RETRIES = 2;
 const CONNECT_TIMEOUT = 10000; // 10秒连接超时
-const TOTAL_TIMEOUT = 60000; // 60秒总超时
+const TOTAL_TIMEOUT = 8000; // 8秒总超时（Vercel免费计划限制10秒，留2秒缓冲）
 const RETRY_DELAY = 1000; // 重试延迟
+const MAX_CONVERSATION_ROUNDS = 8; // 最大对话轮次
 
 // 带重试的fetch函数
 async function fetchWithRetry(
@@ -134,6 +135,31 @@ export async function POST(req: NextRequest) {
       status: 402,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  // 检查对话轮次（避免超时）
+  if (conversationId) {
+    try {
+      const storeModule = await getStoreModule();
+      const messages = await storeModule.getMessages(conversationId);
+      const rounds = Math.floor(messages.length / 2);
+
+      if (rounds >= MAX_CONVERSATION_ROUNDS) {
+        console.warn(`⚠️ 对话轮次过多: ${rounds}轮，可能会超时`);
+        return new Response(JSON.stringify({
+          error: `当前对话已进行${rounds}轮，为避免超时，建议开始新对话。`,
+          suggestion: '点击"新对话"按钮开始新的聊天',
+          rounds: rounds,
+          maxRounds: MAX_CONVERSATION_ROUNDS
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } catch (error) {
+      console.error('❌ 检查对话轮次失败:', error);
+      // 继续执行，不阻止聊天
+    }
   }
 
   // 增加聊天次数计数
