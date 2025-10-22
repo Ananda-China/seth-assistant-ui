@@ -38,11 +38,7 @@ export default function HomePage() {
   // 用户引导相关状态
   const [showUserGuide, setShowUserGuide] = useState(false);
 
-  // 聊天次数限制相关状态
-  const [chatCountInConversation, setChatCountInConversation] = useState(0);
-  const [showChatLimitWarning, setShowChatLimitWarning] = useState(false);
-  const MAX_CHATS_PER_CONVERSATION = 50;
-  const WARNING_THRESHOLD = 45;
+  // 移除聊天次数限制 - 用户应该可以无限制地聊天
 
   // 输入字数限制
   const MAX_INPUT_LENGTH = 1500;
@@ -260,28 +256,14 @@ export default function HomePage() {
             setMessages(list.map(m => ({ id: m.id, role: m.role, content: m.content })));
             // 计算当前对话中的用户消息数（聊天次数）
             const userMessageCount = list.filter(m => m.role === 'user').length;
-            console.log('📊 聊天次数统计:', {
+            console.log('📊 消息统计:', {
               conversationId: activeConv,
               totalMessages: list.length,
-              userMessages: userMessageCount,
-              warningThreshold: WARNING_THRESHOLD,
-              maxChats: MAX_CHATS_PER_CONVERSATION,
-              shouldShowWarning: userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION
+              userMessages: userMessageCount
             });
-            setChatCountInConversation(userMessageCount);
-            // 检查是否需要显示警告
-            if (userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION) {
-              console.log('⚠️ 显示聊天次数警告');
-              setShowChatLimitWarning(true);
-            } else {
-              console.log('✅ 不显示警告');
-              setShowChatLimitWarning(false);
-            }
           } else {
             // 如果没有消息，保持当前消息列表，不要清空
             console.log('⚠️ 对话中没有消息，保持当前状态');
-            setChatCountInConversation(0);
-            setShowChatLimitWarning(false);
           }
         } else {
           console.error('❌ 获取对话消息失败:', r.status);
@@ -318,12 +300,6 @@ export default function HomePage() {
   async function send() {
     if (!input.trim()) return;
 
-    // 检查聊天次数限制
-    if (chatCountInConversation >= MAX_CHATS_PER_CONVERSATION) {
-      alert(`当前对话已达到${MAX_CHATS_PER_CONVERSATION}次聊天上限，请创建新的聊天来继续。`);
-      return;
-    }
-
     console.log('🚀 开始发送消息:', input.trim());
 
     // 确保有聊天记录，并等待创建完成
@@ -341,15 +317,6 @@ export default function HomePage() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
-
-    // 更新聊天计数
-    const newChatCount = chatCountInConversation + 1;
-    setChatCountInConversation(newChatCount);
-
-    // 检查是否需要显示警告
-    if (newChatCount >= WARNING_THRESHOLD && newChatCount < MAX_CHATS_PER_CONVERSATION) {
-      setShowChatLimitWarning(true);
-    }
 
     // 确保有活跃的对话ID，优先使用新创建的对话ID
     const currentConvId = convId || activeConv;
@@ -1246,27 +1213,6 @@ export default function HomePage() {
 
           {/* 输入区域 */}
           <div className="input-area">
-            {/* 聊天次数限制警告 */}
-            {(() => {
-              const shouldShow = showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION;
-              console.log('🔍 警告框渲染检查:', {
-                showChatLimitWarning,
-                chatCountInConversation,
-                WARNING_THRESHOLD,
-                MAX_CHATS_PER_CONVERSATION,
-                shouldShow
-              });
-              return shouldShow ? (
-                <div className="chat-limit-warning">
-                  <div className="warning-content">
-                    <span className="warning-icon">⚠️</span>
-                    <span className="warning-text">
-                      已聊天 {chatCountInConversation}/{MAX_CHATS_PER_CONVERSATION} 次，建议做聊天小结后创建新的聊天
-                    </span>
-                  </div>
-                </div>
-              ) : null;
-            })()}
             <div className="composer">
               <textarea
                 rows={1}
