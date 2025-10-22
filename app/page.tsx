@@ -324,19 +324,6 @@ export default function HomePage() {
       return;
     }
 
-    // 检查对话轮次（避免超时）
-    const currentRounds = Math.floor(messages.filter(m => m.role === 'user' || m.role === 'assistant').length / 2);
-    if (currentRounds >= 8) {
-      const confirmContinue = confirm(
-        '⚠️ 当前对话已进行了8轮以上，继续对话可能会因为响应时间过长而超时。\n\n' +
-        '建议：点击"新对话"按钮开始新的聊天，以获得更好的体验。\n\n' +
-        '是否仍要继续当前对话？'
-      );
-      if (!confirmContinue) {
-        return;
-      }
-    }
-
     console.log('🚀 开始发送消息:', input.trim());
 
     // 确保有聊天记录，并等待创建完成
