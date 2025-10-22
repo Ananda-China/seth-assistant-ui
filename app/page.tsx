@@ -38,7 +38,22 @@ export default function HomePage() {
   // 用户引导相关状态
   const [showUserGuide, setShowUserGuide] = useState(false);
 
-  // 移除聊天次数限制 - 用户应该可以无限制地聊天
+  // 聊天次数限制相关状态
+  const [chatCountInConversation, setChatCountInConversation] = useState(0);
+  const [showChatLimitWarning, setShowChatLimitWarning] = useState(false);
+  const MAX_CHATS_PER_CONVERSATION = 50;
+  const WARNING_THRESHOLD = 45;
+
+  // 监听聊天次数和警告状态的变化，打印日志
+  useEffect(() => {
+    console.log('🔔 [状态变化] 聊天次数限制状态更新:', {
+      chatCountInConversation,
+      showChatLimitWarning,
+      WARNING_THRESHOLD,
+      MAX_CHATS_PER_CONVERSATION,
+      shouldShowWarning: chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION
+    });
+  }, [chatCountInConversation, showChatLimitWarning]);
 
   // 输入字数限制
   const MAX_INPUT_LENGTH = 1500;
@@ -256,14 +271,38 @@ export default function HomePage() {
             setMessages(list.map(m => ({ id: m.id, role: m.role, content: m.content })));
             // 计算当前对话中的用户消息数（聊天次数）
             const userMessageCount = list.filter(m => m.role === 'user').length;
-            console.log('📊 消息统计:', {
+            console.log('📊 聊天次数统计:', {
               conversationId: activeConv,
               totalMessages: list.length,
-              userMessages: userMessageCount
+              userMessages: userMessageCount,
+              warningThreshold: WARNING_THRESHOLD,
+              maxChats: MAX_CHATS_PER_CONVERSATION,
+              shouldShowWarning: userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION
             });
+            setChatCountInConversation(userMessageCount);
+            // 检查是否需要显示警告
+            if (userMessageCount >= WARNING_THRESHOLD && userMessageCount < MAX_CHATS_PER_CONVERSATION) {
+              console.log('🚨🚨🚨 [重要] 显示聊天次数警告 🚨🚨🚨', {
+                userMessageCount,
+                WARNING_THRESHOLD,
+                MAX_CHATS_PER_CONVERSATION,
+                willShow: true
+              });
+              setShowChatLimitWarning(true);
+            } else {
+              console.log('✅ 不显示警告', {
+                userMessageCount,
+                WARNING_THRESHOLD,
+                MAX_CHATS_PER_CONVERSATION,
+                reason: userMessageCount < WARNING_THRESHOLD ? '未达到警告阈值' : '已超过最大限制'
+              });
+              setShowChatLimitWarning(false);
+            }
           } else {
             // 如果没有消息，保持当前消息列表，不要清空
             console.log('⚠️ 对话中没有消息，保持当前状态');
+            setChatCountInConversation(0);
+            setShowChatLimitWarning(false);
           }
         } else {
           console.error('❌ 获取对话消息失败:', r.status);
@@ -300,6 +339,12 @@ export default function HomePage() {
   async function send() {
     if (!input.trim()) return;
 
+    // 检查聊天次数限制
+    if (chatCountInConversation >= MAX_CHATS_PER_CONVERSATION) {
+      alert(`当前对话已达到${MAX_CHATS_PER_CONVERSATION}次聊天上限，请创建新的聊天来继续。`);
+      return;
+    }
+
     console.log('🚀 开始发送消息:', input.trim());
 
     // 确保有聊天记录，并等待创建完成
@@ -317,6 +362,27 @@ export default function HomePage() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+
+    // 更新聊天计数
+    const newChatCount = chatCountInConversation + 1;
+    console.log('📈 [发送消息] 更新聊天计数:', {
+      oldCount: chatCountInConversation,
+      newCount: newChatCount,
+      WARNING_THRESHOLD,
+      MAX_CHATS_PER_CONVERSATION
+    });
+    setChatCountInConversation(newChatCount);
+
+    // 检查是否需要显示警告
+    if (newChatCount >= WARNING_THRESHOLD && newChatCount < MAX_CHATS_PER_CONVERSATION) {
+      console.log('🚨 [发送消息] 触发警告显示:', newChatCount);
+      setShowChatLimitWarning(true);
+    } else {
+      console.log('✅ [发送消息] 不显示警告:', {
+        newChatCount,
+        reason: newChatCount < WARNING_THRESHOLD ? '未达到阈值' : '已超过最大值'
+      });
+    }
 
     // 确保有活跃的对话ID，优先使用新创建的对话ID
     const currentConvId = convId || activeConv;
@@ -369,17 +435,32 @@ export default function HomePage() {
       client_conversation_id: currentConvId
     });
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: userMsg.content,
-        conversation_id: currentConvId, // 修复：使用当前有效的对话ID
-        client_conversation_id: currentConvId, // 使用当前有效的对话ID
-      }),
-    });
+    let res;
+    try {
+      res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: userMsg.content,
+          conversation_id: currentConvId, // 修复：使用当前有效的对话ID
+          client_conversation_id: currentConvId, // 使用当前有效的对话ID
+        }),
+      });
 
-    console.log('📥 /api/chat 响应状态:', res.status);
+      console.log('📥 /api/chat 响应状态:', res.status);
+    } catch (error) {
+      console.error('❌ fetch请求失败:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      setLoading(false);
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        role: 'system',
+        content: `⚠️ 网络请求失败: ${error instanceof Error ? error.message : '未知错误'}`
+      }]);
+      return;
+    }
 
     if (!res.ok || !res.body) {
       setLoading(false);
@@ -469,8 +550,11 @@ export default function HomePage() {
           newlineCount: (assistantText.match(/\n/g) || []).length,
           endsWithPunctuation: /[。！？，、；：.!?,;:]$/.test(assistantText.trim())
         });
-        if (!assistantText.trim().match(/[。！？.!?]$/)) {
-          console.warn('⚠️ 警告: AI回复可能不完整（没有结束标点符号）');
+        // 检查是否以标点符号或emoji结尾
+        const endsWithPunctuation = /[。！？.!?,;:：；，、]$/.test(assistantText.trim());
+        const endsWithEmoji = /[\u{1F300}-\u{1F9FF}]$/u.test(assistantText.trim());
+        if (!endsWithPunctuation && !endsWithEmoji) {
+          console.warn('⚠️ 警告: AI回复可能不完整（没有结束标点符号或emoji）');
         }
         break;
       }
@@ -1213,6 +1297,40 @@ export default function HomePage() {
 
           {/* 输入区域 */}
           <div className="input-area">
+            {/* 调试信息 - 临时显示，方便排查问题 */}
+            <div style={{
+              maxWidth: '800px',
+              margin: '0 auto 8px',
+              padding: '8px 12px',
+              background: 'rgba(100, 100, 255, 0.1)',
+              border: '1px solid rgba(100, 100, 255, 0.3)',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#aaa',
+              fontFamily: 'monospace'
+            }}>
+              <div>🔍 调试信息:</div>
+              <div>chatCountInConversation: {chatCountInConversation}</div>
+              <div>showChatLimitWarning: {showChatLimitWarning ? 'true' : 'false'}</div>
+              <div>WARNING_THRESHOLD: {WARNING_THRESHOLD}</div>
+              <div>MAX_CHATS_PER_CONVERSATION: {MAX_CHATS_PER_CONVERSATION}</div>
+              <div>条件1 (showChatLimitWarning): {showChatLimitWarning ? '✅' : '❌'}</div>
+              <div>条件2 (count &gt;= {WARNING_THRESHOLD}): {chatCountInConversation >= WARNING_THRESHOLD ? '✅' : '❌'}</div>
+              <div>条件3 (count &lt; {MAX_CHATS_PER_CONVERSATION}): {chatCountInConversation < MAX_CHATS_PER_CONVERSATION ? '✅' : '❌'}</div>
+              <div>应该显示警告: {showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION ? '✅ YES' : '❌ NO'}</div>
+            </div>
+
+            {/* 聊天次数限制警告 */}
+            {showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION && (
+              <div className="chat-limit-warning">
+                <div className="warning-content">
+                  <span className="warning-icon">⚠️</span>
+                  <span className="warning-text">
+                    已聊天 {chatCountInConversation}/{MAX_CHATS_PER_CONVERSATION} 次，建议做聊天小结后创建新的聊天
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="composer">
               <textarea
                 rows={1}
