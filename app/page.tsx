@@ -81,6 +81,64 @@ export default function HomePage() {
     adjustTextareaHeight();
   };
 
+  // 处理粘贴事件
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    console.log('📋 粘贴事件触发');
+    const pastedText = e.clipboardData.getData('text');
+    console.log('📋 粘贴的文字长度:', pastedText.length);
+    console.log('📋 当前输入框长度:', input.length);
+
+    const newLength = input.length + pastedText.length;
+    console.log('📋 粘贴后总长度:', newLength);
+
+    if (newLength > MAX_INPUT_LENGTH) {
+      e.preventDefault();
+      const remainingSpace = MAX_INPUT_LENGTH - input.length;
+      if (remainingSpace > 0) {
+        const truncatedText = pastedText.substring(0, remainingSpace);
+        setInput(input + truncatedText);
+        console.log('⚠️ 粘贴内容被截断，只保留前', remainingSpace, '个字符');
+        alert(`粘贴内容过长！已截断至 ${MAX_INPUT_LENGTH} 字符限制。\n原文本长度: ${pastedText.length}\n已粘贴: ${remainingSpace} 个字符`);
+      } else {
+        console.log('❌ 输入框已满，无法粘贴');
+        alert(`输入框已达到 ${MAX_INPUT_LENGTH} 字符上限，无法粘贴更多内容。`);
+      }
+      setTimeout(adjustTextareaHeight, 10);
+    } else {
+      console.log('✅ 粘贴成功');
+      // 让默认的粘贴行为继续，然后调整高度
+      setTimeout(adjustTextareaHeight, 10);
+    }
+  };
+
+  // 复制消息内容
+  const copyMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      console.log('✅ 复制成功');
+      // 可以添加一个临时提示
+      alert('已复制到剪贴板');
+    } catch (err) {
+      console.error('❌ 复制失败:', err);
+      // 降级方案：使用 execCommand
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        console.log('✅ 使用降级方案复制成功');
+        alert('已复制到剪贴板');
+      } catch (e) {
+        console.error('❌ 降级方案也失败:', e);
+        alert('复制失败，请手动复制');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   // 自动创建聊天记录（如果没有的话）
   const ensureConversation = async () => {
     // 如果已经有活跃对话，直接返回
@@ -1290,6 +1348,16 @@ export default function HomePage() {
               <div key={m.id} className={`message ${m.role === 'user' ? 'user-message' : 'assistant-message'}`}>
                 <div className={`message-bubble ${m.role === 'user' ? 'user-bubble' : 'assistant-bubble'}`}>
                   {m.content}
+                  <button
+                    className="copy-message-btn"
+                    onClick={() => copyMessage(m.content)}
+                    title="复制此消息"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="copy-icon">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}
@@ -1322,6 +1390,7 @@ export default function HomePage() {
                     adjustTextareaHeight();
                   }
                 }}
+                onPaste={handlePaste}
                 placeholder="问问赛斯"
                 style={{
                   minHeight: '120px',

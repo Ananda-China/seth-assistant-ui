@@ -455,6 +455,47 @@ body {
   line-height: 1.8; /* 严格按照规范 */
   word-wrap: break-word;
   white-space: pre-wrap; /* 保留换行符和空格 */
+  position: relative; /* 为复制按钮定位 */
+}
+
+/* 复制按钮 */
+.copy-message-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(200, 182, 226, 0.1);
+  border: 1px solid rgba(200, 182, 226, 0.2);
+  color: rgba(200, 182, 226, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.copy-message-btn:hover {
+  background: rgba(200, 182, 226, 0.2);
+  border-color: rgba(200, 182, 226, 0.4);
+  color: rgba(200, 182, 226, 1);
+  transform: scale(1.05);
+}
+
+.copy-message-btn:active {
+  transform: scale(0.95);
+}
+
+.message-bubble:hover .copy-message-btn {
+  opacity: 1;
+}
+
+.copy-icon {
+  width: 14px;
+  height: 14px;
 }
 
 .user-bubble {
