@@ -112,6 +112,16 @@ export async function POST(req: NextRequest) {
   const usersModule = await getUsers();
   const permission = await usersModule.getUserPermission(auth.phone);
 
+  console.log('🔐 权限检查结果:', {
+    phone: auth.phone,
+    canChat: permission.canChat,
+    isTrialActive: permission.isTrialActive,
+    isPaidUser: permission.isPaidUser,
+    chatLimit: permission.chatLimit,
+    usedChats: permission.usedChats,
+    remainingChats: permission.chatLimit - permission.usedChats
+  });
+
   if (!permission.canChat) {
     let message = '';
     if (!permission.isTrialActive && !permission.isPaidUser) {

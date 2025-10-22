@@ -223,6 +223,17 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
   const usedChats = user.chat_count || 0;
   const canChat = usedChats < chatLimit;
 
+  console.log('🔍 权限计算详情:', {
+    phone,
+    isTrialActive,
+    isPaidUser,
+    isTimesCard,
+    chatLimit,
+    usedChats,
+    canChat,
+    calculation: `${usedChats} < ${chatLimit} = ${canChat}`
+  });
+
   return {
     canChat,
     isTrialActive,
