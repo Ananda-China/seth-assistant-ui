@@ -1298,29 +1298,6 @@ export default function HomePage() {
 
           {/* 输入区域 */}
           <div className="input-area">
-            {/* 调试信息 - 临时显示，方便排查问题 */}
-            <div style={{
-              maxWidth: '800px',
-              margin: '0 auto 8px',
-              padding: '8px 12px',
-              background: 'rgba(100, 100, 255, 0.1)',
-              border: '1px solid rgba(100, 100, 255, 0.3)',
-              borderRadius: '8px',
-              fontSize: '12px',
-              color: '#aaa',
-              fontFamily: 'monospace'
-            }}>
-              <div>🔍 调试信息:</div>
-              <div>chatCountInConversation: {chatCountInConversation}</div>
-              <div>showChatLimitWarning: {showChatLimitWarning ? 'true' : 'false'}</div>
-              <div>WARNING_THRESHOLD: {WARNING_THRESHOLD}</div>
-              <div>MAX_CHATS_PER_CONVERSATION: {MAX_CHATS_PER_CONVERSATION}</div>
-              <div>条件1 (showChatLimitWarning): {showChatLimitWarning ? '✅' : '❌'}</div>
-              <div>条件2 (count &gt;= {WARNING_THRESHOLD}): {chatCountInConversation >= WARNING_THRESHOLD ? '✅' : '❌'}</div>
-              <div>条件3 (count &lt; {MAX_CHATS_PER_CONVERSATION}): {chatCountInConversation < MAX_CHATS_PER_CONVERSATION ? '✅' : '❌'}</div>
-              <div>应该显示警告: {showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION ? '✅ YES' : '❌ NO'}</div>
-            </div>
-
             {/* 聊天次数限制警告 */}
             {showChatLimitWarning && chatCountInConversation >= WARNING_THRESHOLD && chatCountInConversation < MAX_CHATS_PER_CONVERSATION && (
               <div className="chat-limit-warning">
