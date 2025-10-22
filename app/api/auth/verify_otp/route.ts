@@ -65,10 +65,19 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('用户创建或邀请关系保存失败:', error);
   }
+  // 设置Cookie，确保在所有环境下都能正常工作
+  const cookieValue = `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Secure`;
+
+  console.log('🍪 设置Cookie:', {
+    tokenLength: token.length,
+    tokenPreview: token.substring(0, 50) + '...',
+    cookieValue: cookieValue.substring(0, 100) + '...'
+  });
+
   return new Response(JSON.stringify({ success: true }), {
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': `sid=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`,
+      'Set-Cookie': cookieValue,
     },
   });
 }
