@@ -552,7 +552,8 @@ export default function HomePage() {
         });
         // 检查是否以标点符号或emoji结尾
         const endsWithPunctuation = /[。！？.!?,;:：；，、]$/.test(assistantText.trim());
-        const endsWithEmoji = /[\u{1F300}-\u{1F9FF}]$/u.test(assistantText.trim());
+        // 使用 ES5 兼容的 emoji 检测方式
+        const endsWithEmoji = /[\uD800-\uDFFF]$/.test(assistantText.trim());
         if (!endsWithPunctuation && !endsWithEmoji) {
           console.warn('⚠️ 警告: AI回复可能不完整（没有结束标点符号或emoji）');
         }
