@@ -43,8 +43,15 @@ export async function GET(req: NextRequest) {
 
     // 2) 用户信息读写失败时，不再返回401，至少返回已验证的手机号
     try {
-      const url = new URL(req.url);
-      const newNick = url.searchParams.get('nickname');
+      // 安全地解析URL
+      let newNick: string | null = null;
+      try {
+        const url = new URL(req.url, `http://${req.headers.get('host') || 'localhost'}`);
+        newNick = url.searchParams.get('nickname');
+      } catch (urlError) {
+        console.warn('⚠️ URL解析失败，跳过nickname参数:', urlError);
+      }
+
       const usersModule = await getUsers();
       if (newNick !== null) {
         await usersModule.updateUserNickname(decoded.phone, newNick);
@@ -53,6 +60,7 @@ export async function GET(req: NextRequest) {
       return Response.json({ phone: String(decoded.phone), nickname: user?.nickname || '' });
     } catch (err) {
       console.error('⚠️ 用户资料读取/写入失败，降级仅返回手机号:', err);
+      console.error('⚠️ 错误堆栈:', err instanceof Error ? err.stack : 'No stack trace');
       return Response.json({ phone: String((decoded as any).phone), nickname: '' });
     }
   } catch (err) {
