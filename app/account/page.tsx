@@ -148,6 +148,12 @@ export default function AccountPage() {
       const response = await fetch('/api/qr-codes');
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 二维码数据:', data.qrCodes);
+        console.log('🔍 二维码数量:', data.qrCodes?.length);
+        if (data.qrCodes && data.qrCodes.length > 0) {
+          console.log('🔍 第一个二维码:', data.qrCodes[0]);
+          console.log('🔍 type字段:', data.qrCodes[0].type);
+        }
         setQRCodes(data.qrCodes || []);
       }
     } catch (error) {
@@ -729,9 +735,9 @@ export default function AccountPage() {
                     <p>购买激活码、技术支持、意见反馈</p>
                   </div>
 
-                  {qrCodes.filter(qr => qr.is_active && qr.type === 'customer').length > 0 ? (
+                  {qrCodes.filter(qr => qr.is_active && (!qr.type || qr.type === 'customer')).length > 0 ? (
                     <div className="qr-codes-grid">
-                      {qrCodes.filter(qr => qr.is_active && qr.type === 'customer').map((qr) => {
+                      {qrCodes.filter(qr => qr.is_active && (!qr.type || qr.type === 'customer')).map((qr) => {
                         // 添加时间戳防止缓存（仅对非base64图片）
                         const imageUrl = qr.url.startsWith('data:')
                           ? qr.url
