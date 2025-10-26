@@ -729,43 +729,50 @@ export default function AccountPage() {
                     <p>购买激活码、技术支持、意见反馈</p>
                   </div>
 
-                  {qrCodes.length > 0 ? (
+                  {qrCodes.filter(qr => qr.is_active && qr.type === 'customer').length > 0 ? (
                     <div className="qr-codes-grid">
-                      {qrCodes.filter(qr => qr.is_active).map((qr) => (
-                        <div key={qr.id} className="qr-code-item">
-                          <div className="qr-code-name">{qr.name}</div>
-                          <div className="qr-code-image">
-                            <img
-                              src={qr.url}
-                              alt={qr.name}
-                              crossOrigin="anonymous"
-                              style={{
-                                width: '280px',
-                                height: '280px',
-                                objectFit: 'contain',
-                                borderRadius: '8px',
-                                border: '1px solid #4A5568',
-                                backgroundColor: '#FFFFFF'
-                              }}
-                              onLoad={(e) => {
-                                console.log('✅ 二维码加载成功:', qr.name, qr.url.substring(0, 50));
-                              }}
-                              onError={(e) => {
-                                console.error('❌ 二维码加载失败:', qr.name, qr.url.substring(0, 100));
-                                const img = e.target as HTMLImageElement;
-                                img.style.display = 'none';
-                                const parent = img.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = '<div style="width:280px;height:280px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
-                                }
-                              }}
-                            />
+                      {qrCodes.filter(qr => qr.is_active && qr.type === 'customer').map((qr) => {
+                        // 添加时间戳防止缓存（仅对非base64图片）
+                        const imageUrl = qr.url.startsWith('data:')
+                          ? qr.url
+                          : `${qr.url}${qr.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+
+                        return (
+                          <div key={qr.id} className="qr-code-item">
+                            <div className="qr-code-name">{qr.name}</div>
+                            <div className="qr-code-image">
+                              <img
+                                src={imageUrl}
+                                alt={qr.name}
+                                crossOrigin="anonymous"
+                                style={{
+                                  width: '280px',
+                                  height: '280px',
+                                  objectFit: 'contain',
+                                  borderRadius: '8px',
+                                  border: '1px solid #4A5568',
+                                  backgroundColor: '#FFFFFF'
+                                }}
+                                onLoad={(e) => {
+                                  console.log('✅ 客服二维码加载成功:', qr.name, qr.url.substring(0, 50));
+                                }}
+                                onError={(e) => {
+                                  console.error('❌ 客服二维码加载失败:', qr.name, qr.url.substring(0, 100));
+                                  const img = e.target as HTMLImageElement;
+                                  img.style.display = 'none';
+                                  const parent = img.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<div style="width:280px;height:280px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
+                                  }
+                                }}
+                              />
+                            </div>
+                            {qr.description && (
+                              <div className="qr-code-desc">{qr.description}</div>
+                            )}
                           </div>
-                          {qr.description && (
-                            <div className="qr-code-desc">{qr.description}</div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="qr-placeholder">
@@ -785,6 +792,83 @@ export default function AccountPage() {
                       }}>
                         <div style={{ fontSize: '20px', marginBottom: '6px' }}>📱</div>
                         <div>客服二维码配置中...</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 收款二维码卡 */}
+              <div className="account-card">
+                <h3 className="card-title">扫码付款</h3>
+                <div className="qr-section">
+                  <div className="qr-description">
+                    <p>扫描二维码完成付款</p>
+                  </div>
+
+                  {qrCodes.filter(qr => qr.is_active && qr.type === 'payment').length > 0 ? (
+                    <div className="qr-codes-grid">
+                      {qrCodes.filter(qr => qr.is_active && qr.type === 'payment').map((qr) => {
+                        // 添加时间戳防止缓存（仅对非base64图片）
+                        const imageUrl = qr.url.startsWith('data:')
+                          ? qr.url
+                          : `${qr.url}${qr.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+
+                        return (
+                          <div key={qr.id} className="qr-code-item">
+                            <div className="qr-code-name">{qr.name}</div>
+                            <div className="qr-code-image">
+                              <img
+                                src={imageUrl}
+                                alt={qr.name}
+                                crossOrigin="anonymous"
+                                style={{
+                                  width: '280px',
+                                  height: '280px',
+                                  objectFit: 'contain',
+                                  borderRadius: '8px',
+                                  border: '1px solid #4A5568',
+                                  backgroundColor: '#FFFFFF'
+                                }}
+                                onLoad={(e) => {
+                                  console.log('✅ 收款二维码加载成功:', qr.name, qr.url.substring(0, 50));
+                                }}
+                                onError={(e) => {
+                                  console.error('❌ 收款二维码加载失败:', qr.name, qr.url.substring(0, 100));
+                                  const img = e.target as HTMLImageElement;
+                                  img.style.display = 'none';
+                                  const parent = img.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<div style="width:280px;height:280px;display:flex;align-items:center;justify-content:center;background:#2E335B;border-radius:8px;color:#8A94B3;font-size:11px;text-align:center;padding:8px;">图片加载失败<br/>请联系管理员</div>';
+                                  }
+                                }}
+                              />
+                            </div>
+                            {qr.description && (
+                              <div className="qr-code-desc">{qr.description}</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="qr-placeholder">
+                      <div style={{
+                        width: '200px',
+                        height: '200px',
+                        background: '#2E335B',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        margin: '0 auto',
+                        color: '#8A94B3',
+                        fontSize: '12px',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '20px', marginBottom: '6px' }}>💰</div>
+                        <div>收款二维码配置中...</div>
                       </div>
                     </div>
                   )}

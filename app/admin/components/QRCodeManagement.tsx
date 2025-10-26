@@ -7,6 +7,7 @@ interface QRCodeConfig {
   name: string;
   url: string;
   description?: string;
+  type: 'customer' | 'payment';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -25,6 +26,7 @@ export default function QRCodeManagement() {
     name: '',
     url: '',
     description: '',
+    type: 'customer' as 'customer' | 'payment',
     is_active: true
   });
 
@@ -106,7 +108,7 @@ export default function QRCodeManagement() {
         setMsg(editingQR ? '更新成功' : '添加成功');
         setShowAddForm(false);
         setEditingQR(null);
-        setFormData({ name: '', url: '', description: '', is_active: true });
+        setFormData({ name: '', url: '', description: '', type: 'customer', is_active: true });
         await loadQRCodes();
       } else {
         setMsg(result.message || '操作失败');
@@ -125,6 +127,7 @@ export default function QRCodeManagement() {
       name: qr.name,
       url: qr.url,
       description: qr.description || '',
+      type: qr.type || 'customer',
       is_active: qr.is_active
     });
     setShowAddForm(true);
@@ -155,7 +158,7 @@ export default function QRCodeManagement() {
   const resetForm = () => {
     setShowAddForm(false);
     setEditingQR(null);
-    setFormData({ name: '', url: '', description: '', is_active: true });
+    setFormData({ name: '', url: '', description: '', type: 'customer', is_active: true });
     setMsg('');
   };
 
@@ -301,7 +304,23 @@ export default function QRCodeManagement() {
                 )}
               </div>
             </div>
-            
+
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-2">类型</label>
+              <select
+                value={formData.type}
+                onChange={e => setFormData(prev => ({ ...prev, type: e.target.value as 'customer' | 'payment' }))}
+                className="w-full px-4 py-2 bg-[#2E335B] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+                required
+              >
+                <option value="customer">客服二维码</option>
+                <option value="payment">收款二维码</option>
+              </select>
+              <p className="text-xs text-[#8A94B3] mt-1">
+                客服二维码用于用户咨询，收款二维码用于用户付款
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-[#EAEBF0] mb-2">描述（可选）</label>
               <textarea
@@ -351,6 +370,7 @@ export default function QRCodeManagement() {
             <thead className="bg-[#2E335B]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">名称</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">类型</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">预览</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">状态</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#8A94B3] uppercase tracking-wider">创建时间</th>
@@ -367,6 +387,15 @@ export default function QRCodeManagement() {
                         <div className="text-sm text-[#8A94B3]">{qr.description}</div>
                       )}
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      qr.type === 'payment'
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {qr.type === 'payment' ? '💰 收款' : '👤 客服'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <img 

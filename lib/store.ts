@@ -30,8 +30,30 @@ async function ensure() {
   }
 }
 
-async function readJson<T>(file: string): Promise<T[]> { await ensure(); const buf = await fs.readFile(file, 'utf8'); return JSON.parse(buf || '[]'); }
-async function writeJson<T>(file: string, data: T[]) { await ensure(); await fs.writeFile(file, JSON.stringify(data, null, 2)); }
+async function readJson<T>(file: string): Promise<T[]> {
+  await ensure();
+  const buf = await fs.readFile(file, 'utf8');
+  return JSON.parse(buf || '[]');
+}
+
+async function writeJson<T>(file: string, data: T[]) {
+  try {
+    await ensure();
+    const jsonStr = JSON.stringify(data, null, 2);
+    const sizeInMB = (jsonStr.length / 1024 / 1024).toFixed(2);
+    console.log(`💾 [Store] 准备写入文件: ${path.basename(file)}, 大小: ${sizeInMB}MB, 记录数: ${data.length}`);
+
+    await fs.writeFile(file, jsonStr);
+    console.log(`✅ [Store] 文件写入成功: ${path.basename(file)}`);
+  } catch (error) {
+    console.error(`❌ [Store] 文件写入失败: ${path.basename(file)}`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      dataLength: data.length
+    });
+    throw error;
+  }
+}
 
 export async function listConversations(user: string): Promise<Conversation[]> {
   const all = await readJson<Conversation>(CONV_FILE); return all.filter(c => c.user === user).sort((a,b)=>b.updated_at-a.updated_at);
@@ -82,9 +104,44 @@ export async function listMessages(user: string, conversationId: string): Promis
 }
 
 export async function addMessage(user: string, conversationId: string, role: Message['role'], content: string, token_usage?: number): Promise<Message> {
-  const msgs = await readJson<Message>(MSG_FILE);
-  const message: Message = { id: crypto.randomUUID(), conversation_id: conversationId, role, content, token_usage, created_at: Date.now() };
-  msgs.push(message); await writeJson(MSG_FILE, msgs); return message;
+  try {
+    console.log('📝 [Store] 开始保存消息:', {
+      conversationId,
+      role,
+      contentLength: content.length,
+      token_usage
+    });
+
+    const msgs = await readJson<Message>(MSG_FILE);
+    console.log('📊 [Store] 当前消息总数:', msgs.length);
+
+    const message: Message = {
+      id: crypto.randomUUID(),
+      conversation_id: conversationId,
+      role,
+      content,
+      token_usage,
+      created_at: Date.now()
+    };
+
+    msgs.push(message);
+
+    console.log('💾 [Store] 准备写入文件，新消息总数:', msgs.length);
+    await writeJson(MSG_FILE, msgs);
+
+    console.log('✅ [Store] 消息保存成功');
+    return message;
+  } catch (error) {
+    console.error('❌ [Store] 保存消息失败:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      conversationId,
+      role,
+      contentLength: content.length,
+      token_usage
+    });
+    throw error; // 重新抛出错误，让上层处理
+  }
 }
 
 // 更新消息的token使用量

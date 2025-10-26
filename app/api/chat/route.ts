@@ -9,7 +9,7 @@ const DIFY_API_KEY = process.env.DIFY_API_KEY || '';
 // 性能优化配置
 const MAX_RETRIES = 2;
 const CONNECT_TIMEOUT = 10000; // 10秒连接超时
-const TOTAL_TIMEOUT = 60000; // 60秒总超时
+const TOTAL_TIMEOUT = 300000; // 300秒（5分钟）总超时 - 增加以支持长回复
 const RETRY_DELAY = 1000; // 重试延迟
 
 // 带重试的fetch函数
@@ -360,7 +360,13 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (error) {
-        console.error('❌ 保存消息或更新token失败:', error);
+        console.error('❌ 保存消息或更新token失败:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          conversationId: clientConversationId,
+          contentLength: assistantFull?.length || 0,
+          assistantTokens
+        });
         // 即使保存失败也要关闭流，避免客户端挂起
       }
       controller.close();

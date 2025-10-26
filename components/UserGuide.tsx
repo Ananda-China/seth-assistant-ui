@@ -226,35 +226,42 @@ export default function UserGuide({ phone, onClose }: UserGuideProps) {
               <div className="bg-[#1A1D33] p-4 rounded-lg border border-[#C8B6E2]/20">
                 <h4 className="text-[#C8B6E2] font-semibold mb-3">📱 联系客服购买</h4>
                 <div className="grid grid-cols-1 gap-4">
-                  {wechatQRCodes.map((qr) => (
-                    <div key={qr.id} className="text-center">
-                      <img
-                        src={qr.url}
-                        alt={qr.name}
-                        crossOrigin="anonymous"
-                        className="w-32 h-32 mx-auto rounded-lg bg-white"
-                        onLoad={() => {
-                          console.log('✅ UserGuide二维码加载成功:', qr.name);
-                        }}
-                        onError={(e) => {
-                          console.error('❌ UserGuide二维码加载失败:', qr.name, qr.url.substring(0, 100));
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'none';
-                          const parent = img.parentElement;
-                          if (parent) {
-                            const errorDiv = document.createElement('div');
-                            errorDiv.className = 'w-32 h-32 mx-auto rounded-lg bg-[#2E335B] flex items-center justify-center text-[#8A94B3] text-xs text-center p-2';
-                            errorDiv.textContent = '图片加载失败';
-                            parent.appendChild(errorDiv);
-                          }
-                        }}
-                      />
-                      <p className="text-sm text-[#EAEBF0] mt-2">{qr.name}</p>
-                      {qr.description && (
-                        <p className="text-xs text-[#8A94B3]">{qr.description}</p>
-                      )}
-                    </div>
-                  ))}
+                  {wechatQRCodes.map((qr) => {
+                    // 添加时间戳防止缓存（仅对非base64图片）
+                    const imageUrl = qr.url.startsWith('data:')
+                      ? qr.url
+                      : `${qr.url}${qr.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+
+                    return (
+                      <div key={qr.id} className="text-center">
+                        <img
+                          src={imageUrl}
+                          alt={qr.name}
+                          crossOrigin="anonymous"
+                          className="w-32 h-32 mx-auto rounded-lg bg-white"
+                          onLoad={() => {
+                            console.log('✅ UserGuide二维码加载成功:', qr.name);
+                          }}
+                          onError={(e) => {
+                            console.error('❌ UserGuide二维码加载失败:', qr.name, qr.url.substring(0, 100));
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                            const parent = img.parentElement;
+                            if (parent) {
+                              const errorDiv = document.createElement('div');
+                              errorDiv.className = 'w-32 h-32 mx-auto rounded-lg bg-[#2E335B] flex items-center justify-center text-[#8A94B3] text-xs text-center p-2';
+                              errorDiv.textContent = '图片加载失败';
+                              parent.appendChild(errorDiv);
+                            }
+                          }}
+                        />
+                        <p className="text-sm text-[#EAEBF0] mt-2">{qr.name}</p>
+                        {qr.description && (
+                          <p className="text-xs text-[#8A94B3]">{qr.description}</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

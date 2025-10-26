@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       return authResult.error;
     }
 
-    const { name, url, description, is_active } = await req.json();
+    const { name, url, description, type, is_active } = await req.json();
 
     if (!name || !url) {
       return Response.json({ success: false, message: '名称和URL不能为空' }, { status: 400 });
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
         name,
         url,
         description: description || null,
+        type: type || 'customer',
         is_active: is_active !== false
       })
       .select()
@@ -87,7 +88,7 @@ export async function PUT(req: NextRequest) {
       return authResult.error;
     }
 
-    const { id, name, url, description, is_active } = await req.json();
+    const { id, name, url, description, type, is_active } = await req.json();
 
     if (!id || !name || !url) {
       return Response.json({ success: false, message: 'ID、名称和URL不能为空' }, { status: 400 });
@@ -108,6 +109,7 @@ export async function PUT(req: NextRequest) {
         name,
         url,
         description: description || null,
+        type: type || 'customer',
         is_active: is_active !== false,
         updated_at: new Date().toISOString()
       })
