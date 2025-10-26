@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import UserGuide from '../components/UserGuide';
+import CozeCustomerService from '../components/CozeCustomerService';
 
 type ChatMessage = {
   id: string;
@@ -1436,6 +1437,9 @@ export default function HomePage() {
       {showUserGuide && mePhone && (
         <UserGuide phone={mePhone} onClose={handleCloseUserGuide} />
       )}
+
+      {/* Coze 客服 */}
+      <CozeCustomerService />
     </main>
   );
 }
