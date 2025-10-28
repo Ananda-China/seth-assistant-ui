@@ -43,6 +43,7 @@ interface AnalyticsData {
     period_data: {
       period_active_users: number;
       period_tokens: number;
+      period_total_tokens: number;
       period_avg_tokens_per_message: string;
       period_conversations: number;
       period_messages: number;
@@ -344,8 +345,8 @@ export default function Analytics() {
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">总token消耗</span>
-              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
+              <span className="text-sm text-[#EAEBF0]">时间段总token</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段平均每消息Token</span>

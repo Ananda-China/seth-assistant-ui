@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const recentThreeDaysMessages = messages.filter((msg: any) => {
       const msgDate = new Date(msg.created_at);
-      return msgDate >= threeDaysAgo && msgDate < endTime;
+      return msgDate >= threeDaysAgo;
     });
     const activeUserPhones = new Set<string>();
     recentThreeDaysMessages.forEach((msg: any) => {
@@ -176,6 +176,11 @@ export async function GET(req: NextRequest) {
 
     // 计算时间段内的活跃用户（用于下方分析框框）
     const recentActiveUsers = new Set(recentConversations.map((conv: any) => conv.user_phone)).size;
+
+    // 计算时间段内的总token（用于Token使用分析框框）
+    const periodTotalTokens = recentMessages.reduce((sum: number, msg: any) =>
+      sum + (msg.token_usage || 0), 0
+    );
 
     // 计算活跃度排行（Top 5）
     // 按今日对话数由高到低排序，相同则按最新对话时间排序
@@ -316,6 +321,7 @@ export async function GET(req: NextRequest) {
         period_data: {
           period_active_users: recentActiveUsers,
           period_tokens: recentTokens,
+          period_total_tokens: periodTotalTokens,
           period_avg_tokens_per_message: recentAvgTokensPerMessage.toFixed(1),
           period_conversations: newConversations,
           period_messages: newMessages
