@@ -46,6 +46,11 @@ export async function GET(req: NextRequest) {
         if (msgError) {
           return {
             ...conv,
+            messageCount: 0,
+            userMessageCount: 0,
+            assistantMessageCount: 0,
+            totalTokens: 0,
+            avgTokensPerMessage: '0',
             messages: [],
             error: msgError.message
           };
@@ -77,10 +82,10 @@ export async function GET(req: NextRequest) {
 
     // 4. 计算总体统计
     const totalConversations = conversations?.length || 0;
-    const totalMessages = conversationDetails.reduce((sum, conv) => sum + conv.messageCount, 0);
-    const totalTokens = conversationDetails.reduce((sum, conv) => sum + conv.totalTokens, 0);
-    const totalUserMessages = conversationDetails.reduce((sum, conv) => sum + conv.userMessageCount, 0);
-    const totalAssistantMessages = conversationDetails.reduce((sum, conv) => sum + conv.assistantMessageCount, 0);
+    const totalMessages = conversationDetails.reduce((sum, conv) => sum + (conv.messageCount || 0), 0);
+    const totalTokens = conversationDetails.reduce((sum, conv) => sum + (conv.totalTokens || 0), 0);
+    const totalUserMessages = conversationDetails.reduce((sum, conv) => sum + (conv.userMessageCount || 0), 0);
+    const totalAssistantMessages = conversationDetails.reduce((sum, conv) => sum + (conv.assistantMessageCount || 0), 0);
 
     return Response.json({
       user: {
