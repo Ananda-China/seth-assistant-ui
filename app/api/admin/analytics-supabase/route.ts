@@ -200,12 +200,22 @@ export async function GET(req: NextRequest) {
     console.log('  总对话数:', conversations.length);
     if (messages.length > 0) {
       console.log('  第一条消息时间:', messages[0].created_at, '类型:', typeof messages[0].created_at);
+      const firstMsgDate = new Date(messages[0].created_at);
+      console.log('  第一条消息转换后:', firstMsgDate.toISOString());
+      console.log('  第一条消息是否在三天内:', firstMsgDate >= threeDaysAgo);
+      console.log('  最后一条消息时间:', messages[messages.length - 1].created_at);
+      const lastMsgDate = new Date(messages[messages.length - 1].created_at);
+      console.log('  最后一条消息转换后:', lastMsgDate.toISOString());
+      console.log('  最后一条消息是否在三天内:', lastMsgDate >= threeDaysAgo);
     }
 
     const activeUserPhones = new Set<string>();
-    recentThreeDaysMessages.forEach((msg: any) => {
+    recentThreeDaysMessages.forEach((msg: any, index: number) => {
       const convId = msg.conversation_id;
       const conv = conversations.find((c: any) => c.id === convId);
+      if (index < 3) {
+        console.log(`  消息${index + 1}: conversation_id=${convId}, 找到对话=${!!conv}, user_phone=${conv?.user_phone}`);
+      }
       if (conv && conv.user_phone) {
         activeUserPhones.add(conv.user_phone);
       }
