@@ -124,6 +124,8 @@ export default function Analytics() {
                 onChange={(e) => setPeriod(e.target.value)}
                 className="px-3 py-2 bg-[#2E335B] border-none rounded-lg text-[#EAEBF0]"
               >
+                <option value="today">今天</option>
+                <option value="yesterday">昨天</option>
                 <option value="7d">最近7天</option>
                 <option value="14d">最近14天</option>
                 <option value="30d">最近30天</option>
@@ -187,6 +189,8 @@ export default function Analytics() {
               onChange={(e) => setPeriod(e.target.value)}
               className="px-3 py-2 bg-[#2E335B] border-none rounded-lg text-[#EAEBF0]"
             >
+              <option value="today">今天</option>
+              <option value="yesterday">昨天</option>
               <option value="7d">最近7天</option>
               <option value="14d">最近14天</option>
               <option value="30d">最近30天</option>
@@ -195,55 +199,53 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* 关键指标卡片 */}
+      {/* 关键指标卡片 - 今日新增数据 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
+        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-[#C8B6E2]">{data.overview.user_growth.total}</div>
-              <div className="text-sm text-[#8A94B3]">总用户数</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.user_growth.new}</div>
+              <div className="text-sm text-[#8A94B3]">今日新增用户</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-green-400">+{data.overview.user_growth.new}</div>
-              <div className="text-xs text-[#8A94B3]">新增用户</div>
+              <div className="text-lg font-semibold text-red-400">📈</div>
+              <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
           <div className="mt-3 text-xs text-[#8A94B3]">
-            增长率：{data.overview.user_growth.growth_rate}%
+            总用户数：{data.overview.user_growth.total}
           </div>
         </div>
 
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
+        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-[#C8B6E2]">{data.overview.conversation_activity.total.toLocaleString()}</div>
-              <div className="text-sm text-[#8A94B3]">总对话数</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.conversation_activity.new}</div>
+              <div className="text-sm text-[#8A94B3]">今日对话数</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-purple-400">{data.overview.conversation_activity.avg_per_user}</div>
-              <div className="text-xs text-[#8A94B3]">人均对话</div>
+              <div className="text-lg font-semibold text-red-400">💬</div>
+              <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
           <div className="mt-3 text-xs text-[#8A94B3]">
-            新增：{data.overview.conversation_activity.new} | 平均消息：{data.overview.conversation_activity.avg_messages}
+            总对话数：{data.overview.conversation_activity.total.toLocaleString()}
           </div>
         </div>
 
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
+        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-[#C8B6E2]">{data.overview.message_stats.total.toLocaleString()}</div>
-              <div className="text-sm text-[#8A94B3]">总消息数</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.message_stats.new}</div>
+              <div className="text-sm text-[#8A94B3]">今日消息数</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-blue-400">{data.overview.message_stats.avg_per_conversation}</div>
-              <div className="text-xs text-[#8A94B3]">平均消息</div>
+              <div className="text-lg font-semibold text-red-400">✉️</div>
+              <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
           <div className="mt-3 text-xs text-[#8A94B3]">
-            新增：{data.overview.message_stats.new} | Token：{data.overview.message_stats.total_tokens.toLocaleString()}
-            <br />
-            最近Token使用：{data.overview.message_stats.recent_tokens.toLocaleString()} (过去{period === '7d' ? '7天' : period === '14d' ? '14天' : '30天'})
+            总消息数：{data.overview.message_stats.total.toLocaleString()}
           </div>
         </div>
 

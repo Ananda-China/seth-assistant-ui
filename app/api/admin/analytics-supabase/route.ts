@@ -21,13 +21,24 @@ export async function GET(req: NextRequest) {
 
     // 计算时间范围
     const now = new Date();
-    const periodMs = {
-      '7d': 7 * 24 * 60 * 60 * 1000,
-      '14d': 14 * 24 * 60 * 60 * 1000,
-      '30d': 30 * 24 * 60 * 60 * 1000
-    }[period] || 30 * 24 * 60 * 60 * 1000;
-    
-    const startTime = new Date(now.getTime() - periodMs);
+    let startTime: Date;
+
+    if (period === 'today') {
+      // 今天的开始时间
+      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (period === 'yesterday') {
+      // 昨天的开始时间
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      startTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    } else {
+      const periodMs = {
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '14d': 14 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000
+      }[period] || 30 * 24 * 60 * 60 * 1000;
+
+      startTime = new Date(now.getTime() - periodMs);
+    }
 
     // 获取用户数据
     const { data: users, error: userError } = await supabase

@@ -1,22 +1,35 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 export default function ActivationManagement() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
-  
+
   // 激活码管理
   const [activationCodes, setActivationCodes] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [generateCount, setGenerateCount] = useState(10);
   const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
-  
+
+  // 激活码列表筛选和分页
+  const [codeStartDate, setCodeStartDate] = useState('');
+  const [codeEndDate, setCodeEndDate] = useState('');
+  const [codePageSize, setCodePageSize] = useState(10);
+  const [codeCurrentPage, setCodeCurrentPage] = useState(1);
+
   // 提现管理
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [screenshotUrl, setScreenshotUrl] = useState('');
+
+  // 提现列表筛选和分页
+  const [withdrawalStartDate, setWithdrawalStartDate] = useState('');
+  const [withdrawalEndDate, setWithdrawalEndDate] = useState('');
+  const [withdrawalPageSize, setWithdrawalPageSize] = useState(10);
+  const [withdrawalCurrentPage, setWithdrawalCurrentPage] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -113,7 +126,7 @@ export default function ActivationManagement() {
   const processWithdrawal = async (requestId: string, status: string) => {
     setLoading(true);
     setMsg('');
-    
+
     try {
       const res = await fetch('/api/admin/process-withdrawal', {
         method: 'POST',
@@ -124,9 +137,9 @@ export default function ActivationManagement() {
           screenshot_url: screenshotUrl
         })
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setMsg('处理成功');
         setSelectedRequest(null);
@@ -140,6 +153,75 @@ export default function ActivationManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 筛选激活码
+  const getFilteredActivationCodes = () => {
+    return activationCodes.filter(code => {
+      if (codeStartDate && new Date(code.created_at) < new Date(codeStartDate)) return false;
+      if (codeEndDate && new Date(code.created_at) > new Date(codeEndDate)) return false;
+      return true;
+    });
+  };
+
+  // 筛选提现申请
+  const getFilteredWithdrawalRequests = () => {
+    return withdrawalRequests.filter(request => {
+      if (withdrawalStartDate && new Date(request.created_at) < new Date(withdrawalStartDate)) return false;
+      if (withdrawalEndDate && new Date(request.created_at) > new Date(withdrawalEndDate)) return false;
+      return true;
+    });
+  };
+
+  // 导出激活码Excel
+  const exportActivationCodesToExcel = () => {
+    const filteredCodes = getFilteredActivationCodes();
+    const data = filteredCodes.map(code => ({
+      '激活码': code.code,
+      '手机号': code.used_by_user?.phone || '-',
+      '订阅套餐': code.plan?.name || '-',
+      '套餐金额': code.plan ? `¥${(code.plan.price / 100).toFixed(2)}` : '-',
+      '状态': code.is_used ? '已使用' : '未使用',
+      '激活时间': code.activated_at ? new Date(code.activated_at).toLocaleString('zh-CN') : '-',
+      '到期时间': new Date(code.expires_at).toLocaleString('zh-CN')
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '激活码列表');
+    XLSX.writeFile(workbook, `激活码列表_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  // 导出提现申请Excel
+  const exportWithdrawalRequestsToExcel = () => {
+    const filteredRequests = getFilteredWithdrawalRequests();
+    const totalAmount = filteredRequests.reduce((sum, req) => sum + req.amount, 0);
+
+    const data = filteredRequests.map(request => ({
+      '用户': request.user?.phone || '-',
+      '金额': `¥${(request.amount / 100).toFixed(2)}`,
+      '方式': request.payment_method === 'alipay' ? '支付宝' : '微信',
+      '账号': request.account_info || '-',
+      '状态': request.status === 'pending' ? '待处理' :
+              request.status === 'processing' ? '处理中' :
+              request.status === 'completed' ? '已完成' : '已拒绝',
+      '申请时间': new Date(request.created_at).toLocaleString('zh-CN')
+    }));
+
+    // 添加汇总行
+    data.push({
+      '用户': '汇总',
+      '金额': `¥${(totalAmount / 100).toFixed(2)}`,
+      '方式': '',
+      '账号': '',
+      '状态': '',
+      '申请时间': ''
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '提现申请');
+    XLSX.writeFile(workbook, `提现申请_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   return (
@@ -243,7 +325,67 @@ export default function ActivationManagement() {
 
         {/* 激活码列表 */}
         <div className="mt-6 bg-[#1A1D33] rounded-xl p-6 border border-[#2E335B]">
-          <h2 className="text-xl font-semibold text-[#C8B6E2] mb-4">激活码列表</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-[#C8B6E2]">激活码列表</h2>
+            <button
+              onClick={exportActivationCodesToExcel}
+              className="px-4 py-2 bg-[#10B981] text-white rounded-lg font-medium hover:bg-[#059669] text-sm"
+            >
+              📥 导出Excel
+            </button>
+          </div>
+
+          {/* 筛选条件 */}
+          <div className="mb-4 p-4 bg-[#2E335B] rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">开始日期</label>
+              <input
+                type="date"
+                value={codeStartDate}
+                onChange={e => setCodeStartDate(e.target.value)}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">结束日期</label>
+              <input
+                type="date"
+                value={codeEndDate}
+                onChange={e => setCodeEndDate(e.target.value)}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">每页显示</label>
+              <select
+                value={codePageSize}
+                onChange={e => {
+                  setCodePageSize(parseInt(e.target.value));
+                  setCodeCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              >
+                <option value={10}>10条</option>
+                <option value={20}>20条</option>
+                <option value={50}>50条</option>
+                <option value={100}>100条</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">操作</label>
+              <button
+                onClick={() => {
+                  setCodeStartDate('');
+                  setCodeEndDate('');
+                  setCodeCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-[#4A5568] text-[#EAEBF0] rounded-lg hover:bg-[#5A6578] text-sm"
+              >
+                重置筛选
+              </button>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -257,36 +399,129 @@ export default function ActivationManagement() {
                 </tr>
               </thead>
               <tbody>
-                {activationCodes.map(code => (
-                  <tr key={code.id} className="border-b border-[#2E335B] hover:bg-[#2E335B]">
-                    <td className="py-3 px-4 text-[#EAEBF0] font-mono">{code.code}</td>
-                    <td className="py-3 px-4 text-[#EAEBF0]">{code.plan?.name}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        code.is_used 
-                          ? 'bg-[#10B981] bg-opacity-20 text-[#10B981]' 
-                          : 'bg-[#F59E0B] bg-opacity-20 text-[#F59E0B]'
-                      }`}>
-                        {code.is_used ? '已使用' : '未使用'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-[#EAEBF0]">{code.used_by_user?.phone || '-'}</td>
-                    <td className="py-3 px-4 text-[#8A94B3]">
-                      {code.activated_at ? new Date(code.activated_at).toLocaleString() : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-[#8A94B3]">
-                      {new Date(code.expires_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const filtered = getFilteredActivationCodes();
+                  const start = (codeCurrentPage - 1) * codePageSize;
+                  const end = start + codePageSize;
+                  const paged = filtered.slice(start, end);
+
+                  return paged.map(code => (
+                    <tr key={code.id} className="border-b border-[#2E335B] hover:bg-[#2E335B]">
+                      <td className="py-3 px-4 text-[#EAEBF0] font-mono">{code.code}</td>
+                      <td className="py-3 px-4 text-[#EAEBF0]">{code.plan?.name}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          code.is_used
+                            ? 'bg-[#10B981] bg-opacity-20 text-[#10B981]'
+                            : 'bg-[#F59E0B] bg-opacity-20 text-[#F59E0B]'
+                        }`}>
+                          {code.is_used ? '已使用' : '未使用'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-[#EAEBF0]">{code.used_by_user?.phone || '-'}</td>
+                      <td className="py-3 px-4 text-[#8A94B3]">
+                        {code.activated_at ? new Date(code.activated_at).toLocaleString() : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-[#8A94B3]">
+                        {new Date(code.expires_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
+          </div>
+
+          {/* 分页 */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-[#8A94B3]">
+              共 {getFilteredActivationCodes().length} 条记录，第 {codeCurrentPage} 页
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCodeCurrentPage(Math.max(1, codeCurrentPage - 1))}
+                disabled={codeCurrentPage === 1}
+                className="px-3 py-1 bg-[#2E335B] text-[#EAEBF0] rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#4A5568]"
+              >
+                上一页
+              </button>
+              <button
+                onClick={() => {
+                  const maxPage = Math.ceil(getFilteredActivationCodes().length / codePageSize);
+                  setCodeCurrentPage(Math.min(maxPage, codeCurrentPage + 1));
+                }}
+                disabled={codeCurrentPage * codePageSize >= getFilteredActivationCodes().length}
+                className="px-3 py-1 bg-[#2E335B] text-[#EAEBF0] rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#4A5568]"
+              >
+                下一页
+              </button>
+            </div>
           </div>
         </div>
 
         {/* 提现申请管理 */}
         <div className="mt-6 bg-[#1A1D33] rounded-xl p-6 border border-[#2E335B]">
-          <h2 className="text-xl font-semibold text-[#C8B6E2] mb-4">提现申请管理</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-[#C8B6E2]">提现申请管理</h2>
+            <button
+              onClick={exportWithdrawalRequestsToExcel}
+              className="px-4 py-2 bg-[#10B981] text-white rounded-lg font-medium hover:bg-[#059669] text-sm"
+            >
+              📥 导出Excel
+            </button>
+          </div>
+
+          {/* 筛选条件 */}
+          <div className="mb-4 p-4 bg-[#2E335B] rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">开始日期</label>
+              <input
+                type="date"
+                value={withdrawalStartDate}
+                onChange={e => setWithdrawalStartDate(e.target.value)}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">结束日期</label>
+              <input
+                type="date"
+                value={withdrawalEndDate}
+                onChange={e => setWithdrawalEndDate(e.target.value)}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">每页显示</label>
+              <select
+                value={withdrawalPageSize}
+                onChange={e => {
+                  setWithdrawalPageSize(parseInt(e.target.value));
+                  setWithdrawalCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-[#1A1D33] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              >
+                <option value={10}>10条</option>
+                <option value={20}>20条</option>
+                <option value={50}>50条</option>
+                <option value={100}>100条</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-1">操作</label>
+              <button
+                onClick={() => {
+                  setWithdrawalStartDate('');
+                  setWithdrawalEndDate('');
+                  setWithdrawalCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 bg-[#4A5568] text-[#EAEBF0] rounded-lg hover:bg-[#5A6578] text-sm"
+              >
+                重置筛选
+              </button>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -301,45 +536,78 @@ export default function ActivationManagement() {
                 </tr>
               </thead>
               <tbody>
-                {withdrawalRequests.map(request => (
-                  <tr key={request.id} className="border-b border-[#2E335B] hover:bg-[#2E335B]">
-                    <td className="py-3 px-4 text-[#EAEBF0]">{request.user?.phone}</td>
-                    <td className="py-3 px-4 text-[#EAEBF0]">¥{(request.amount / 100).toFixed(2)}</td>
-                    <td className="py-3 px-4 text-[#EAEBF0]">
-                      {request.payment_method === 'alipay' ? '支付宝' : '微信'}
-                    </td>
-                    <td className="py-3 px-4 text-[#EAEBF0]">{request.account_info}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        request.status === 'pending' ? 'bg-[#F59E0B] bg-opacity-20 text-[#F59E0B]' :
-                        request.status === 'completed' ? 'bg-[#10B981] bg-opacity-20 text-[#10B981]' :
-                        request.status === 'rejected' ? 'bg-[#EF4444] bg-opacity-20 text-[#EF4444]' :
-                        'bg-[#8A94B3] bg-opacity-20 text-[#8A94B3]'
-                      }`}>
-                        {request.status === 'pending' ? '待处理' : 
-                         request.status === 'processing' ? '处理中' :
-                         request.status === 'completed' ? '已完成' : '已拒绝'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-[#8A94B3]">
-                      {new Date(request.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setSelectedRequest(request)}
-                            className="px-3 py-1 bg-[#C8B6E2] text-[#1A1D33] rounded text-xs hover:bg-[#B8A6D2]"
-                          >
-                            处理
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const filtered = getFilteredWithdrawalRequests();
+                  const start = (withdrawalCurrentPage - 1) * withdrawalPageSize;
+                  const end = start + withdrawalPageSize;
+                  const paged = filtered.slice(start, end);
+
+                  return paged.map(request => (
+                    <tr key={request.id} className="border-b border-[#2E335B] hover:bg-[#2E335B]">
+                      <td className="py-3 px-4 text-[#EAEBF0]">{request.user?.phone}</td>
+                      <td className="py-3 px-4 text-[#EAEBF0]">¥{(request.amount / 100).toFixed(2)}</td>
+                      <td className="py-3 px-4 text-[#EAEBF0]">
+                        {request.payment_method === 'alipay' ? '支付宝' : '微信'}
+                      </td>
+                      <td className="py-3 px-4 text-[#EAEBF0]">{request.account_info}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          request.status === 'pending' ? 'bg-[#F59E0B] bg-opacity-20 text-[#F59E0B]' :
+                          request.status === 'completed' ? 'bg-[#10B981] bg-opacity-20 text-[#10B981]' :
+                          request.status === 'rejected' ? 'bg-[#EF4444] bg-opacity-20 text-[#EF4444]' :
+                          'bg-[#8A94B3] bg-opacity-20 text-[#8A94B3]'
+                        }`}>
+                          {request.status === 'pending' ? '待处理' :
+                           request.status === 'processing' ? '处理中' :
+                           request.status === 'completed' ? '已完成' : '已拒绝'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-[#8A94B3]">
+                        {new Date(request.created_at).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        {request.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setSelectedRequest(request)}
+                              className="px-3 py-1 bg-[#C8B6E2] text-[#1A1D33] rounded text-xs hover:bg-[#B8A6D2]"
+                            >
+                              处理
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
+          </div>
+
+          {/* 分页 */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-[#8A94B3]">
+              共 {getFilteredWithdrawalRequests().length} 条记录，第 {withdrawalCurrentPage} 页
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setWithdrawalCurrentPage(Math.max(1, withdrawalCurrentPage - 1))}
+                disabled={withdrawalCurrentPage === 1}
+                className="px-3 py-1 bg-[#2E335B] text-[#EAEBF0] rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#4A5568]"
+              >
+                上一页
+              </button>
+              <button
+                onClick={() => {
+                  const maxPage = Math.ceil(getFilteredWithdrawalRequests().length / withdrawalPageSize);
+                  setWithdrawalCurrentPage(Math.min(maxPage, withdrawalCurrentPage + 1));
+                }}
+                disabled={withdrawalCurrentPage * withdrawalPageSize >= getFilteredWithdrawalRequests().length}
+                className="px-3 py-1 bg-[#2E335B] text-[#EAEBF0] rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#4A5568]"
+              >
+                下一页
+              </button>
+            </div>
           </div>
         </div>
       </div>
