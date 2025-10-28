@@ -46,6 +46,11 @@ interface AnalyticsData {
       messages: number;
     }>;
   };
+  activity_ranking: Array<{
+    phone: string;
+    today_messages: number;
+    today_tokens: number;
+  }>;
   top_metrics: Array<{
     label: string;
     value: string | number;
@@ -292,64 +297,86 @@ export default function Analytics() {
       </div>
 
       {/* 用户参与度分析 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户参与度分析</h3>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-[#1A1D33] p-5 rounded-xl">
+          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">用户参与度分析</h3>
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">今日活跃</span>
+              <span className="text-sm text-[#EAEBF0]">今日活跃</span>
               <div className="flex items-center gap-2">
-                <div className="w-24 bg-[#2E335B] rounded-full h-2">
+                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
                   <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
+                    className="bg-[#C8B6E2] h-1.5 rounded-full"
                     style={{ width: `${Math.min((data.overview.user_engagement.today_active / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
+                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">活跃用户</span>
+              <span className="text-sm text-[#EAEBF0]">活跃用户</span>
               <div className="flex items-center gap-2">
-                <div className="w-24 bg-[#2E335B] rounded-full h-2">
+                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
                   <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
+                    className="bg-[#C8B6E2] h-1.5 rounded-full"
                     style={{ width: `${Math.min((data.overview.user_engagement.active_users / data.overview.user_growth.total) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.active_users}</span>
+                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.active_users}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">参与率</span>
+              <span className="text-sm text-[#EAEBF0]">参与率</span>
               <div className="flex items-center gap-2">
-                <div className="w-24 bg-[#2E335B] rounded-full h-2">
+                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
                   <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
+                    className="bg-[#C8B6E2] h-1.5 rounded-full"
                     style={{ width: `${Math.min(parseFloat(data.overview.user_engagement.engagement_rate), 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.engagement_rate}%</span>
+                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.engagement_rate}%</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">Token使用分析</h3>
-          <div className="space-y-3">
+        <div className="bg-[#1A1D33] p-5 rounded-xl">
+          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">Token使用分析</h3>
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">今日token消耗</span>
-              <span className="text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
+              <span className="text-sm text-[#EAEBF0]">今日token消耗</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">总token消耗</span>
-              <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
+              <span className="text-sm text-[#EAEBF0]">总token消耗</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">平均每消息Token</span>
-              <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.avg_tokens_per_message}</span>
+              <span className="text-sm text-[#EAEBF0]">平均每消息Token</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.avg_tokens_per_message}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="bg-[#1A1D33] p-5 rounded-xl">
+          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">活跃度排行</h3>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {data.activity_ranking.length > 0 ? (
+              data.activity_ranking.map((user, index) => (
+                <div key={index} className="flex items-center justify-between text-xs border-b border-[#2E335B] pb-2">
+                  <div className="flex-1">
+                    <div className="text-[#EAEBF0] font-mono">{user.phone}</div>
+                    <div className="text-[#8A94B3] text-xs">消息: {user.today_messages}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[#C8B6E2] font-semibold">{user.today_tokens}</div>
+                    <div className="text-[#8A94B3] text-xs">Token</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-[#8A94B3] text-xs py-4">暂无数据</div>
+            )}
           </div>
         </div>
       </div>

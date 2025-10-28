@@ -59,20 +59,22 @@ export async function GET(req: NextRequest) {
       return new Response('Failed to fetch users', { status: 500 });
     }
 
-    // 获取对话数据
+    // 获取对话数据（只获取未删除的）
     const { data: conversations, error: convError } = await supabase
       .from('conversations')
-      .select('*');
-    
+      .select('*')
+      .eq('is_deleted', false);
+
     if (convError) {
       console.error('Error fetching conversations:', convError);
       return new Response('Failed to fetch conversations', { status: 500 });
     }
 
-    // 获取消息数据
+    // 获取消息数据（只获取未删除的）
     const { data: messages, error: msgError } = await supabase
       .from('messages')
-      .select('*');
+      .select('*')
+      .eq('is_deleted', false);
     
     if (msgError) {
       console.error('Error fetching messages:', msgError);
@@ -149,6 +151,52 @@ export async function GET(req: NextRequest) {
     // 计算活跃用户（有对话的用户）
     const activeUsers = new Set(conversations.map((conv: any) => conv.user_phone)).size;
     const recentActiveUsers = new Set(recentConversations.map((conv: any) => conv.user_phone)).size;
+
+    // 计算活跃度排行（Top 5）
+    // 按今日对话数由高到低排序，相同则按最新对话时间排序
+    const userActivityMap = new Map<string, {
+      phone: string;
+      today_messages: number;
+      today_tokens: number;
+      latest_conversation_time: Date;
+    }>();
+
+    // 统计今日每个用户的消息数和token消耗
+    todayMessages.forEach((msg: any) => {
+      const convId = msg.conversation_id;
+      const conv = conversations.find((c: any) => c.id === convId);
+      if (conv && conv.user_phone) {
+        const phone = conv.user_phone;
+        if (!userActivityMap.has(phone)) {
+          userActivityMap.set(phone, {
+            phone,
+            today_messages: 0,
+            today_tokens: 0,
+            latest_conversation_time: new Date(msg.created_at)
+          });
+        }
+        const userData = userActivityMap.get(phone)!;
+        userData.today_messages += 1;
+        userData.today_tokens += msg.token_usage || 0;
+        // 更新最新对话时间
+        const msgTime = new Date(msg.created_at);
+        if (msgTime > userData.latest_conversation_time) {
+          userData.latest_conversation_time = msgTime;
+        }
+      }
+    });
+
+    // 转换为数组并排序
+    const activityRanking = Array.from(userActivityMap.values())
+      .sort((a, b) => {
+        // 先按今日消息数降序
+        if (b.today_messages !== a.today_messages) {
+          return b.today_messages - a.today_messages;
+        }
+        // 相同则按最新对话时间降序
+        return b.latest_conversation_time.getTime() - a.latest_conversation_time.getTime();
+      })
+      .slice(0, 5); // 只取Top 5
 
     // 计算平均对话长度
     const avgMessagesPerConversation = totalConversations > 0 ? totalMessages / totalConversations : 0;
@@ -236,6 +284,11 @@ export async function GET(req: NextRequest) {
       trends: {
         daily_data: dailyData
       },
+      activity_ranking: activityRanking.map(item => ({
+        phone: item.phone,
+        today_messages: item.today_messages,
+        today_tokens: item.today_tokens
+      })),
       top_metrics: [
         {
           label: '总用户数',
