@@ -22,14 +22,19 @@ export async function GET(req: NextRequest) {
     // 计算时间范围
     const now = new Date();
     let startTime: Date;
+    let endTime: Date = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 默认到明天
 
     if (period === 'today') {
-      // 今天的开始时间
+      // 今天的开始时间（从今天凌晨00:00:00开始）
       startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // 今天的结束时间（到明天凌晨00:00:00）
+      endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
     } else if (period === 'yesterday') {
       // 昨天的开始时间
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       startTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+      // 昨天的结束时间
+      endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
     } else {
       const periodMs = {
         '7d': 7 * 24 * 60 * 60 * 1000,
@@ -81,15 +86,18 @@ export async function GET(req: NextRequest) {
     }
 
     // 过滤指定时间范围内的数据
-    const recentUsers = users.filter((user: any) => 
-      new Date(user.created_at) >= startTime
-    );
-    const recentConversations = conversations.filter((conv: any) => 
-      new Date(conv.created_at) >= startTime
-    );
-    const recentMessages = messages.filter((msg: any) => 
-      new Date(msg.created_at) >= startTime
-    );
+    const recentUsers = users.filter((user: any) => {
+      const userDate = new Date(user.created_at);
+      return userDate >= startTime && userDate < endTime;
+    });
+    const recentConversations = conversations.filter((conv: any) => {
+      const convDate = new Date(conv.created_at);
+      return convDate >= startTime && convDate < endTime;
+    });
+    const recentMessages = messages.filter((msg: any) => {
+      const msgDate = new Date(msg.created_at);
+      return msgDate >= startTime && msgDate < endTime;
+    });
 
     // 计算基础统计数据
     const totalUsers = users.length;

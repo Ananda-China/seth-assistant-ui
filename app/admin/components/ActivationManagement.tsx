@@ -176,15 +176,28 @@ export default function ActivationManagement() {
   // 导出激活码Excel
   const exportActivationCodesToExcel = () => {
     const filteredCodes = getFilteredActivationCodes();
+    const totalAmount = filteredCodes.reduce((sum, code) => sum + (code.plan?.price || 0), 0);
+
     const data = filteredCodes.map(code => ({
       '激活码': code.code,
       '手机号': code.used_by_user?.phone || '-',
       '订阅套餐': code.plan?.name || '-',
-      '套餐金额': code.plan ? `¥${(code.plan.price / 100).toFixed(2)}` : '-',
+      '套餐金额': code.plan ? (code.plan.price / 100).toFixed(2) : '-',
       '状态': code.is_used ? '已使用' : '未使用',
       '激活时间': code.activated_at ? new Date(code.activated_at).toLocaleString('zh-CN') : '-',
       '到期时间': new Date(code.expires_at).toLocaleString('zh-CN')
     }));
+
+    // 添加汇总行
+    data.push({
+      '激活码': '汇总',
+      '手机号': '',
+      '订阅套餐': '',
+      '套餐金额': (totalAmount / 100).toFixed(2),
+      '状态': '',
+      '激活时间': '',
+      '到期时间': ''
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -199,7 +212,7 @@ export default function ActivationManagement() {
 
     const data = filteredRequests.map(request => ({
       '用户': request.user?.phone || '-',
-      '金额': `¥${(request.amount / 100).toFixed(2)}`,
+      '金额': (request.amount / 100).toFixed(2),
       '方式': request.payment_method === 'alipay' ? '支付宝' : '微信',
       '账号': request.account_info || '-',
       '状态': request.status === 'pending' ? '待处理' :
@@ -211,7 +224,7 @@ export default function ActivationManagement() {
     // 添加汇总行
     data.push({
       '用户': '汇总',
-      '金额': `¥${(totalAmount / 100).toFixed(2)}`,
+      '金额': (totalAmount / 100).toFixed(2),
       '方式': '',
       '账号': '',
       '状态': '',
