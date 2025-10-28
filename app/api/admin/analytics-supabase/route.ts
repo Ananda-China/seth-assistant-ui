@@ -98,29 +98,39 @@ export async function GET(req: NextRequest) {
       // 订单错误不影响其他统计
     }
 
+    // 辅助函数：将时间转换为Date对象（处理毫秒时间戳和ISO字符串）
+    const toDate = (time: any): Date => {
+      if (typeof time === 'number') {
+        return new Date(time);
+      } else if (typeof time === 'string') {
+        return new Date(time);
+      }
+      return new Date();
+    };
+
     // 过滤指定时间范围内的数据
     const recentUsers = users.filter((user: any) => {
-      const userDate = new Date(user.created_at);
+      const userDate = toDate(user.created_at);
       return userDate >= startTime && userDate < endTime;
     });
     const recentConversations = conversations.filter((conv: any) => {
-      const convDate = new Date(conv.created_at);
+      const convDate = toDate(conv.created_at);
       return convDate >= startTime && convDate < endTime;
     });
     const recentMessages = messages.filter((msg: any) => {
-      const msgDate = new Date(msg.created_at);
+      const msgDate = toDate(msg.created_at);
       return msgDate >= startTime && msgDate < endTime;
     });
 
     // 计算今日数据（首行始终显示今日数据）
     const todayUsers = users.filter((user: any) => {
-      const userDate = new Date(user.created_at);
+      const userDate = toDate(user.created_at);
       return userDate >= todayStart && userDate < todayEnd;
     });
 
     // 今日消息
     const todayMessages = messages.filter((msg: any) => {
-      const msgDate = new Date(msg.created_at);
+      const msgDate = toDate(msg.created_at);
       return msgDate >= todayStart && msgDate < todayEnd;
     });
 
@@ -168,7 +178,17 @@ export async function GET(req: NextRequest) {
     // 计算活跃用户（最近三天有聊天的用户数量）
     const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
     const recentThreeDaysMessages = messages.filter((msg: any) => {
-      const msgDate = new Date(msg.created_at);
+      // 处理两种时间格式：ISO字符串和毫秒时间戳
+      let msgDate: Date;
+      if (typeof msg.created_at === 'number') {
+        // 毫秒时间戳
+        msgDate = new Date(msg.created_at);
+      } else if (typeof msg.created_at === 'string') {
+        // ISO字符串
+        msgDate = new Date(msg.created_at);
+      } else {
+        return false;
+      }
       return msgDate >= threeDaysAgo;
     });
 
@@ -178,6 +198,9 @@ export async function GET(req: NextRequest) {
     console.log('  总消息数:', messages.length);
     console.log('  最近三天消息数:', recentThreeDaysMessages.length);
     console.log('  总对话数:', conversations.length);
+    if (messages.length > 0) {
+      console.log('  第一条消息时间:', messages[0].created_at, '类型:', typeof messages[0].created_at);
+    }
 
     const activeUserPhones = new Set<string>();
     recentThreeDaysMessages.forEach((msg: any) => {
@@ -185,10 +208,6 @@ export async function GET(req: NextRequest) {
       const conv = conversations.find((c: any) => c.id === convId);
       if (conv && conv.user_phone) {
         activeUserPhones.add(conv.user_phone);
-      } else if (!conv) {
-        console.log('  ⚠️ 找不到对话:', convId);
-      } else if (!conv.user_phone) {
-        console.log('  ⚠️ 对话没有user_phone:', convId);
       }
     });
     console.log('  活跃用户数:', activeUserPhones.size);
@@ -224,14 +243,14 @@ export async function GET(req: NextRequest) {
             phone,
             today_messages: 0,
             today_tokens: 0,
-            latest_conversation_time: new Date(msg.created_at)
+            latest_conversation_time: toDate(msg.created_at)
           });
         }
         const userData = userActivityMap.get(phone)!;
         userData.today_messages += 1;
         userData.today_tokens += msg.token_usage || 0;
         // 更新最新对话时间
-        const msgTime = new Date(msg.created_at);
+        const msgTime = toDate(msg.created_at);
         if (msgTime > userData.latest_conversation_time) {
           userData.latest_conversation_time = msgTime;
         }
@@ -262,17 +281,17 @@ export async function GET(req: NextRequest) {
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
       
       const dayUsers = users.filter((user: any) => {
-        const userDate = new Date(user.created_at);
+        const userDate = toDate(user.created_at);
         return userDate >= dayStart && userDate < dayEnd;
       }).length;
-      
+
       const dayConversations = conversations.filter((conv: any) => {
-        const convDate = new Date(conv.created_at);
+        const convDate = toDate(conv.created_at);
         return convDate >= dayStart && convDate < dayEnd;
       }).length;
-      
+
       const dayMessages = messages.filter((msg: any) => {
-        const msgDate = new Date(msg.created_at);
+        const msgDate = toDate(msg.created_at);
         return msgDate >= dayStart && msgDate < dayEnd;
       }).length;
       
