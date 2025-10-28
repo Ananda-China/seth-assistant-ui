@@ -30,6 +30,13 @@ interface AnalyticsData {
       today_active: number;
       engagement_rate: string;
     };
+    user_stats: {
+      total_users: number;
+      active_users: number;
+      recent_active_users: number;
+      today_active_users: number;
+      new_users: number;
+    };
     today_data: {
       new_users: number;
       new_conversations: number;

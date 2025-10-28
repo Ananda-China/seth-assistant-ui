@@ -356,6 +356,14 @@ export async function GET(req: NextRequest) {
         conversation_activity: conversationActivity,
         message_stats: messageStats,
         user_engagement: userEngagement,
+        // 添加用户统计数据（方便前端访问）
+        user_stats: {
+          total_users: totalUsers,
+          active_users: activeUsers,
+          recent_active_users: recentActiveUsers,
+          today_active_users: todayActiveUsers,
+          new_users: newUsers
+        },
         // 添加今日数据（首行始终显示今日数据）
         today_data: {
           new_users: todayUsers.length,
