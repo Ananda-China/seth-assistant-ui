@@ -31,6 +31,12 @@ export default function ActivationManagement() {
   const [withdrawalPageSize, setWithdrawalPageSize] = useState(10);
   const [withdrawalCurrentPage, setWithdrawalCurrentPage] = useState(1);
 
+  // 激活码操作弹窗
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [activatePhoneNumber, setActivatePhoneNumber] = useState('');
+  const [selectedCodeForActivate, setSelectedCodeForActivate] = useState<any>(null);
+  const [activatingCodeId, setActivatingCodeId] = useState('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -237,6 +243,126 @@ export default function ActivationManagement() {
     XLSX.writeFile(workbook, `提现申请_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  // 打开激活弹窗
+  const openActivateModal = (code: any) => {
+    setSelectedCodeForActivate(code);
+    setActivatePhoneNumber('');
+    setShowActivateModal(true);
+  };
+
+  // 关闭激活弹窗
+  const closeActivateModal = () => {
+    setShowActivateModal(false);
+    setActivatePhoneNumber('');
+    setSelectedCodeForActivate(null);
+  };
+
+  // 确认激活
+  const confirmActivate = async () => {
+    if (!activatePhoneNumber.trim()) {
+      setMsg('请输入用户手机号');
+      return;
+    }
+
+    setLoading(true);
+    setMsg('');
+
+    try {
+      const res = await fetch('/api/admin/activation-codes-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'activate',
+          codeId: selectedCodeForActivate.id,
+          userPhone: activatePhoneNumber
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMsg('激活成功');
+        closeActivateModal();
+        await loadActivationCodes();
+      } else {
+        setMsg(data.message || '激活失败');
+      }
+    } catch (error) {
+      console.error('激活失败:', error);
+      setMsg('激活失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 取消激活
+  const handleDeactivate = async (code: any) => {
+    if (!confirm('确定要取消激活此激活码吗？')) {
+      return;
+    }
+
+    setLoading(true);
+    setMsg('');
+
+    try {
+      const res = await fetch('/api/admin/activation-codes-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'deactivate',
+          codeId: code.id
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMsg('取消激活成功');
+        await loadActivationCodes();
+      } else {
+        setMsg(data.message || '取消激活失败');
+      }
+    } catch (error) {
+      console.error('取消激活失败:', error);
+      setMsg('取消激活失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 检查是否可以取消激活（激活时间是否超过10分钟）
+  const canDeactivate = (code: any) => {
+    if (!code.is_used || !code.activated_at) {
+      return false;
+    }
+
+    const activatedAt = new Date(code.activated_at);
+    const now = new Date();
+    const diffMinutes = (now.getTime() - activatedAt.getTime()) / (1000 * 60);
+
+    return diffMinutes <= 10;
+  };
+
+  // 计算过期时间显示
+  const getExpiryTimeDisplay = (code: any) => {
+    if (!code.is_used) {
+      // 未激活：显示激活码的过期时间
+      return new Date(code.expires_at).toLocaleString();
+    } else {
+      // 已激活：显示用户的有效期时间
+      // 需要从激活时间 + 套餐有效期计算
+      if (code.activated_at && code.plan) {
+        const activatedAt = new Date(code.activated_at);
+        const durationDays = code.plan.duration_days || 365;
+        const expiryDate = new Date(
+          activatedAt.getTime() + durationDays * 24 * 60 * 60 * 1000
+        );
+        return expiryDate.toLocaleString();
+      }
+      return '-';
+    }
+  };
+
   return (
     <div className="flex-1 p-6 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
@@ -409,6 +535,7 @@ export default function ActivationManagement() {
                   <th className="text-left py-3 px-4 text-[#8A94B3]">使用用户</th>
                   <th className="text-left py-3 px-4 text-[#8A94B3]">激活时间</th>
                   <th className="text-left py-3 px-4 text-[#8A94B3]">过期时间</th>
+                  <th className="text-left py-3 px-4 text-[#8A94B3]">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -436,7 +563,33 @@ export default function ActivationManagement() {
                         {code.activated_at ? new Date(code.activated_at).toLocaleString() : '-'}
                       </td>
                       <td className="py-3 px-4 text-[#8A94B3]">
-                        {new Date(code.expires_at).toLocaleString()}
+                        {getExpiryTimeDisplay(code)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          {!code.is_used ? (
+                            <button
+                              onClick={() => openActivateModal(code)}
+                              disabled={loading}
+                              className="px-3 py-1 bg-[#3B82F6] text-white rounded text-xs hover:bg-[#2563EB] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              激活
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleDeactivate(code)}
+                              disabled={loading || !canDeactivate(code)}
+                              title={!canDeactivate(code) ? '激活超过10分钟，无法取消激活' : ''}
+                              className={`px-3 py-1 rounded text-xs ${
+                                canDeactivate(code)
+                                  ? 'bg-[#EF4444] text-white hover:bg-[#DC2626]'
+                                  : 'bg-[#6B7280] text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              取消激活
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ));
@@ -672,6 +825,58 @@ export default function ActivationManagement() {
               <button
                 onClick={() => setSelectedRequest(null)}
                 className="px-4 py-2 bg-[#2E335B] text-[#EAEBF0] rounded-lg font-medium hover:bg-[#4A5568]"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 激活弹窗 */}
+      {showActivateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#1A1D33] rounded-lg p-6 w-96 border border-[#2E335B]">
+            <h2 className="text-xl font-bold text-[#C8B6E2] mb-4">激活激活码</h2>
+
+            <div className="mb-4">
+              <p className="text-[#8A94B3] text-sm mb-2">激活码: <span className="text-[#EAEBF0] font-mono">{selectedCodeForActivate?.code}</span></p>
+              <p className="text-[#8A94B3] text-sm mb-2">套餐: <span className="text-[#EAEBF0]">{selectedCodeForActivate?.plan?.name}</span></p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-[#EAEBF0] mb-2">用户手机号</label>
+              <input
+                type="tel"
+                value={activatePhoneNumber}
+                onChange={e => setActivatePhoneNumber(e.target.value)}
+                placeholder="请输入用户手机号"
+                className="w-full px-4 py-2 bg-[#2E335B] border border-[#4A5568] rounded-lg text-[#EAEBF0] focus:outline-none focus:ring-2 focus:ring-[#C8B6E2]"
+              />
+            </div>
+
+            {msg && (
+              <div className={`mb-4 p-3 rounded text-sm ${
+                msg.includes('成功')
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-red-500/20 text-red-400'
+              }`}>
+                {msg}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={confirmActivate}
+                disabled={loading || !activatePhoneNumber.trim()}
+                className="flex-1 px-4 py-2 bg-[#3B82F6] text-white rounded-lg font-medium hover:bg-[#2563EB] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? '激活中...' : '确认激活'}
+              </button>
+              <button
+                onClick={closeActivateModal}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-[#2E335B] text-[#EAEBF0] rounded-lg font-medium hover:bg-[#4A5568] disabled:opacity-50"
               >
                 取消
               </button>
