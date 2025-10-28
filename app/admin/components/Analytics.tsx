@@ -40,6 +40,13 @@ interface AnalyticsData {
       total_conversations: number;
       total_messages: number;
     };
+    period_data: {
+      period_active_users: number;
+      period_tokens: number;
+      period_avg_tokens_per_message: string;
+      period_conversations: number;
+      period_messages: number;
+    };
   };
   trends: {
     daily_data: Array<{
@@ -290,39 +297,39 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户参与度分析</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">今日活跃</span>
+              <span className="text-sm text-[#EAEBF0]">时间段活跃用户</span>
               <div className="flex items-center gap-2">
                 <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
                     className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min((data.overview.user_engagement.today_active / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((data.overview.period_data.period_active_users / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_active_users}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">活跃用户</span>
+              <span className="text-sm text-[#EAEBF0]">时间段对话数</span>
               <div className="flex items-center gap-2">
                 <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
                     className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min((data.overview.user_engagement.active_users / data.overview.user_growth.total) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((data.overview.period_data.period_conversations / Math.max(data.overview.conversation_activity.total, 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.active_users}</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_conversations}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">参与率</span>
+              <span className="text-sm text-[#EAEBF0]">时间段消息数</span>
               <div className="flex items-center gap-2">
                 <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
                     className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min(parseFloat(data.overview.user_engagement.engagement_rate), 100)}%` }}
+                    style={{ width: `${Math.min((data.overview.period_data.period_messages / Math.max(data.overview.message_stats.total, 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.engagement_rate}%</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_messages}</span>
               </div>
             </div>
           </div>
@@ -333,16 +340,16 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">Token使用分析</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">今日token消耗</span>
-              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
+              <span className="text-sm text-[#EAEBF0]">时间段token消耗</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">总token消耗</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">平均每消息Token</span>
-              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.avg_tokens_per_message}</span>
+              <span className="text-sm text-[#EAEBF0]">时间段平均每消息Token</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_avg_tokens_per_message}</span>
             </div>
           </div>
         </div>

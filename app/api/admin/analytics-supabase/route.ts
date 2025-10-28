@@ -282,6 +282,9 @@ export async function GET(req: NextRequest) {
       avg_tokens_per_message: avgTokensPerMessage.toFixed(1)
     };
 
+    // 计算时间段内的平均每消息Token
+    const recentAvgTokensPerMessage = recentMessages.length > 0 ? recentTokens / recentMessages.length : 0;
+
     // 计算用户参与度
     const userEngagement = {
       active_users: activeUsers,
@@ -308,6 +311,14 @@ export async function GET(req: NextRequest) {
           total_users: totalUsers,
           total_conversations: totalConversations,
           total_messages: totalMessages
+        },
+        // 添加时间段相关的数据（用于下方三个分析框框）
+        period_data: {
+          period_active_users: recentActiveUsers,
+          period_tokens: recentTokens,
+          period_avg_tokens_per_message: recentAvgTokensPerMessage.toFixed(1),
+          period_conversations: newConversations,
+          period_messages: newMessages
         }
       },
       trends: {

@@ -128,9 +128,26 @@ export async function GET(req: NextRequest) {
 
       // 计算所有用户的统计数据（不仅仅是当前页面）
       const allUsersResult = await usersModule.getAllUsers(1, 1000); // 获取所有用户
+      const now = new Date();
+
+      // 计算最近三天有聊天的用户（活跃用户）
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const recentThreeDaysMessages = messages?.filter((msg: any) => {
+        const msgDate = new Date(msg.created_at);
+        return msgDate >= threeDaysAgo;
+      }) || [];
+
+      const activeUserPhones = new Set<string>();
+      recentThreeDaysMessages.forEach((msg: any) => {
+        const convId = msg.conversation_id;
+        const conv = conversations?.find((c: any) => c.id === convId);
+        if (conv && conv.user_phone) {
+          activeUserPhones.add(conv.user_phone);
+        }
+      });
+
       const allEnrichedUsers = allUsersResult.users.map((user: any) => {
         // 检查是否为付费用户
-        const now = new Date();
         let isPaidUser = false;
 
         // 1. 检查users表中的订阅
@@ -155,7 +172,7 @@ export async function GET(req: NextRequest) {
       });
 
       const totalPaidUsers = allEnrichedUsers.filter(u => u.is_paid_user).length;
-      const totalActiveUsers = allEnrichedUsers.filter(u => u.status === 'active').length;
+      const totalActiveUsers = activeUserPhones.size; // 改为最近三天有聊天的用户数
       const totalSuspendedUsers = allEnrichedUsers.filter(u => u.status === 'suspended').length;
 
       return Response.json({
