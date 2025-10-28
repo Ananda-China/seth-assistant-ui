@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
       const { data: messages } = await supabaseAdmin
         .from('messages')
-        .select('conversation_id, token_usage');
+        .select('conversation_id, token_usage, created_at');
 
       // 获取用户余额数据
       const { data: balances } = await supabaseAdmin

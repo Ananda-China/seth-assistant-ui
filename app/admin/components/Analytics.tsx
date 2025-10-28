@@ -80,7 +80,7 @@ interface AnalyticsData {
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('30d');
+  const [period, setPeriod] = useState('today'); // 默认显示今天的数据
   const [useSupabase, setUseSupabase] = useState(true); // 默认使用Supabase
   const [error, setError] = useState<string | null>(null);
 
