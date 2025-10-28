@@ -97,6 +97,9 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || '';
     const user = searchParams.get('user') || '';
 
+    // 保存所有对话的总数（用于统计卡片）
+    const totalConversationsCount = conversationStats.length;
+
     // 应用过滤
     let filteredConversations = conversationStats;
     
@@ -132,7 +135,8 @@ export async function GET(req: NextRequest) {
         limit,
         total,
         pages
-      }
+      },
+      totalConversationsCount // 返回所有对话的总数（用于统计卡片）
     });
   } catch (error) {
     console.error('Error fetching content:', error);

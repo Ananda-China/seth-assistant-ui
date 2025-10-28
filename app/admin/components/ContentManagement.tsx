@@ -43,10 +43,11 @@ export default function ContentManagement() {
   const [showMessageDetail, setShowMessageDetail] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [totalConversationsCount, setTotalConversationsCount] = useState(0);
 
   // 计算统计数据
   const stats = {
-    total: conversations.length, // 使用实际获取的对话数量，而不是分页总数
+    total: totalConversationsCount, // 使用所有对话的总数
     normal: conversations.filter(c => c.status === 'active').length,
     flagged: conversations.filter(c => c.status === 'flagged').length,
     blocked: conversations.filter(c => c.status === 'blocked').length,
@@ -70,6 +71,10 @@ export default function ContentManagement() {
         const data = await response.json();
         setConversations(data.conversations);
         setPagination(data.pagination);
+        // 保存所有对话的总数
+        if (data.totalConversationsCount !== undefined) {
+          setTotalConversationsCount(data.totalConversationsCount);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch conversations:', error);

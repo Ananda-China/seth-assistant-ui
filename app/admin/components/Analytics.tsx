@@ -209,14 +209,14 @@ export default function Analytics() {
 
       {/* 关键指标卡片 - 今日新增数据 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
+        <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_users}</div>
-              <div className="text-sm text-[#8A94B3]">今日新增用户</div>
+              <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_users}</div>
+              <div className="text-sm text-[#C8B6E2]">今日新增用户</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-red-400">📈</div>
+              <div className="text-lg font-semibold text-blue-400">📈</div>
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
@@ -225,14 +225,14 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
+        <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_conversations}</div>
-              <div className="text-sm text-[#8A94B3]">今日对话数</div>
+              <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_conversations}</div>
+              <div className="text-sm text-[#C8B6E2]">今日对话数</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-red-400">💬</div>
+              <div className="text-lg font-semibold text-blue-400">💬</div>
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
@@ -241,14 +241,14 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
+        <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_messages}</div>
-              <div className="text-sm text-[#8A94B3]">今日消息数</div>
+              <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_messages}</div>
+              <div className="text-sm text-[#C8B6E2]">今日消息数</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-red-400">✉️</div>
+              <div className="text-lg font-semibold text-blue-400">✉️</div>
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
@@ -343,7 +343,7 @@ export default function Analytics() {
               <span className="text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">总消耗</span>
+              <span className="text-[#EAEBF0]">总token消耗</span>
               <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
