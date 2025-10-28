@@ -213,7 +213,7 @@ export default function Analytics() {
       </div>
 
       {/* 关键指标卡片 - 今日新增数据 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -224,9 +224,6 @@ export default function Analytics() {
               <div className="text-lg font-semibold text-blue-400">📈</div>
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
-          </div>
-          <div className="mt-3 text-xs text-[#8A94B3]">
-            总用户数：{data.overview.user_growth.total}
           </div>
         </div>
 
@@ -241,9 +238,6 @@ export default function Analytics() {
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#8A94B3]">
-            总对话数：{data.overview.conversation_activity.total.toLocaleString()}
-          </div>
         </div>
 
         <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
@@ -257,92 +251,96 @@ export default function Analytics() {
               <div className="text-xs text-[#8A94B3]">新增</div>
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#8A94B3]">
-            总消息数：{data.overview.message_stats.total.toLocaleString()}
-          </div>
         </div>
+      </div>
 
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
+      {/* Token使用量 - 右上角 */}
+      <div className="flex justify-end">
+        <div className="bg-[#1A1D33] p-6 rounded-xl w-full md:w-1/3">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-[#C8B6E2]">{data.overview.user_engagement.active_users}</div>
-              <div className="text-sm text-[#8A94B3]">活跃用户</div>
+              <div className="text-sm text-[#8A94B3]">Token使用量</div>
+              <div className="text-3xl font-bold text-[#C8B6E2] mt-2">{data.overview.message_stats.total_tokens.toLocaleString()}</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-yellow-400">{data.overview.user_engagement.engagement_rate}%</div>
-              <div className="text-xs text-[#8A94B3]">参与率</div>
+              <div className="text-lg font-semibold text-yellow-400">⚡</div>
             </div>
-          </div>
-          <div className="mt-3 text-xs text-[#8A94B3]">
-            最近活跃：{data.overview.user_engagement.recent_active}
           </div>
         </div>
       </div>
 
-      {/* 顶部指标概览 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {data.top_metrics.map((metric, index) => (
-          <div key={index} className="bg-[#1A1D33] p-4 rounded-xl">
-            <div className="text-sm text-[#8A94B3] mb-1">{metric.label}</div>
-            <div className="text-2xl font-bold text-[#C8B6E2] mb-1">{metric.value}</div>
-            <div className={`text-sm font-medium ${
-              metric.change_type === 'positive' ? 'text-green-400' : 
-              metric.change_type === 'negative' ? 'text-red-400' : 
-              'text-[#8A94B3]'
-            }`}>
-              {metric.change}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 用户参与度分析 */}
+      {/* 三个分析框框 - 今日活跃排行、用户参与度分析、Token使用分析 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-[#1A1D33] p-5 rounded-xl">
-          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">用户参与度分析</h3>
-          <div className="space-y-2">
+        {/* 今日活跃排行 - 第一个 */}
+        <div className="bg-[#1A1D33] p-6 rounded-xl">
+          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">今日活跃排行</h3>
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {data.activity_ranking.length > 0 ? (
+              data.activity_ranking.map((user, index) => (
+                <div key={index} className="flex items-center justify-between text-sm border-b border-[#2E335B] pb-3">
+                  <div className="flex-1">
+                    <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">消息: {user.today_messages}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[#C8B6E2] font-semibold">{user.today_tokens}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">Token</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-[#8A94B3] text-sm py-6">暂无数据</div>
+            )}
+          </div>
+        </div>
+
+        {/* 用户参与度分析 - 第二个 */}
+        <div className="bg-[#1A1D33] p-6 rounded-xl">
+          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户参与度分析</h3>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">今日活跃</span>
               <div className="flex items-center gap-2">
-                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
+                <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
-                    className="bg-[#C8B6E2] h-1.5 rounded-full"
+                    className="bg-[#C8B6E2] h-2 rounded-full"
                     style={{ width: `${Math.min((data.overview.user_engagement.today_active / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">活跃用户</span>
               <div className="flex items-center gap-2">
-                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
+                <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
-                    className="bg-[#C8B6E2] h-1.5 rounded-full"
+                    className="bg-[#C8B6E2] h-2 rounded-full"
                     style={{ width: `${Math.min((data.overview.user_engagement.active_users / data.overview.user_growth.total) * 100, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.active_users}</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.active_users}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">参与率</span>
               <div className="flex items-center gap-2">
-                <div className="w-16 bg-[#2E335B] rounded-full h-1.5">
+                <div className="w-20 bg-[#2E335B] rounded-full h-2">
                   <div
-                    className="bg-[#C8B6E2] h-1.5 rounded-full"
+                    className="bg-[#C8B6E2] h-2 rounded-full"
                     style={{ width: `${Math.min(parseFloat(data.overview.user_engagement.engagement_rate), 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-xs text-[#8A94B3]">{data.overview.user_engagement.engagement_rate}%</span>
+                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.engagement_rate}%</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-[#1A1D33] p-5 rounded-xl">
-          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">Token使用分析</h3>
-          <div className="space-y-2">
+        {/* Token使用分析 - 第三个 */}
+        <div className="bg-[#1A1D33] p-6 rounded-xl">
+          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">Token使用分析</h3>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">今日token消耗</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
@@ -355,28 +353,6 @@ export default function Analytics() {
               <span className="text-sm text-[#EAEBF0]">平均每消息Token</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.avg_tokens_per_message}</span>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-[#1A1D33] p-5 rounded-xl">
-          <h3 className="text-base font-semibold text-[#C8B6E2] mb-3">活跃度排行</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {data.activity_ranking.length > 0 ? (
-              data.activity_ranking.map((user, index) => (
-                <div key={index} className="flex items-center justify-between text-xs border-b border-[#2E335B] pb-2">
-                  <div className="flex-1">
-                    <div className="text-[#EAEBF0] font-mono">{user.phone}</div>
-                    <div className="text-[#8A94B3] text-xs">消息: {user.today_messages}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#C8B6E2] font-semibold">{user.today_tokens}</div>
-                    <div className="text-[#8A94B3] text-xs">Token</div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-[#8A94B3] text-xs py-4">暂无数据</div>
-            )}
           </div>
         </div>
       </div>

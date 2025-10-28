@@ -110,14 +110,24 @@ export async function GET(req: NextRequest) {
       const userDate = new Date(user.created_at);
       return userDate >= todayStart && userDate < todayEnd;
     });
-    const todayConversations = conversations.filter((conv: any) => {
-      const convDate = new Date(conv.created_at);
-      return convDate >= todayStart && convDate < todayEnd;
-    });
+
+    // 今日消息
     const todayMessages = messages.filter((msg: any) => {
       const msgDate = new Date(msg.created_at);
       return msgDate >= todayStart && msgDate < todayEnd;
     });
+
+    // 今日对话数：统计有今日消息的对话数（去重）
+    const todayConversationIds = new Set<string>();
+    todayMessages.forEach((msg: any) => {
+      if (msg.conversation_id) {
+        todayConversationIds.add(msg.conversation_id);
+      }
+    });
+    const todayConversations = Array.from(todayConversationIds).map(id =>
+      conversations.find((c: any) => c.id === id)
+    ).filter(Boolean);
+
     const todayTokens = todayMessages.reduce((sum: number, msg: any) =>
       sum + (msg.token_usage || 0), 0
     );
