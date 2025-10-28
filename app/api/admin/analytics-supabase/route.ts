@@ -164,14 +164,29 @@ export async function GET(req: NextRequest) {
       const msgDate = new Date(msg.created_at);
       return msgDate >= threeDaysAgo;
     });
+
+    console.log('🔍 活跃用户计算调试:');
+    console.log('  当前时间:', now.toISOString());
+    console.log('  三天前:', threeDaysAgo.toISOString());
+    console.log('  总消息数:', messages.length);
+    console.log('  最近三天消息数:', recentThreeDaysMessages.length);
+    console.log('  总对话数:', conversations.length);
+
     const activeUserPhones = new Set<string>();
     recentThreeDaysMessages.forEach((msg: any) => {
       const convId = msg.conversation_id;
       const conv = conversations.find((c: any) => c.id === convId);
       if (conv && conv.user_phone) {
         activeUserPhones.add(conv.user_phone);
+      } else if (!conv) {
+        console.log('  ⚠️ 找不到对话:', convId);
+      } else if (!conv.user_phone) {
+        console.log('  ⚠️ 对话没有user_phone:', convId);
       }
     });
+    console.log('  活跃用户数:', activeUserPhones.size);
+    console.log('  活跃用户列表:', Array.from(activeUserPhones));
+
     const activeUsers = activeUserPhones.size;
 
     // 计算时间段内的活跃用户（用于下方分析框框）
