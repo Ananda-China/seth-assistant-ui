@@ -524,7 +524,30 @@ export default function HomePage() {
     if (!res.ok || !res.body) {
       setLoading(false);
 
-      if (res.status === 402) {
+      if (res.status === 401) {
+        // 认证失败，跳转到登录页
+        try {
+          const errorData = await res.json();
+          console.error('❌ 认证失败:', errorData);
+
+          setMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            role: 'system',
+            content: `⚠️ ${errorData.error || '登录已过期，请重新登录'}`
+          }]);
+
+          // 3秒后跳转到登录页
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 3000);
+        } catch {
+          const errText = await res.text().catch(() => '认证失败');
+          setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'system', content: errText }]);
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 3000);
+        }
+      } else if (res.status === 402) {
         // 权限不足，尝试解析错误信息
         try {
           const errorData = await res.json();

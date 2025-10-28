@@ -90,7 +90,16 @@ function createPerformanceMonitor() {
 
 export async function POST(req: NextRequest) {
   const auth = requireUser(req);
-  if (!auth) return new Response('unauthorized', { status: 401 });
+  if (!auth) {
+    console.error('❌ 用户认证失败，返回401');
+    return new Response(JSON.stringify({
+      error: '登录已过期，请重新登录',
+      code: 'AUTH_REQUIRED'
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   if (!DIFY_API_URL || !DIFY_API_KEY) {
     return new Response('Missing Dify config', { status: 500 });
   }
