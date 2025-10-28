@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对话诊断工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+        .message {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .message.user {
+            border-left-color: #4CAF50;
+        }
+        .message.assistant {
+            border-left-color: #764ba2;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        .message-role {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .message.user .message-role {
+            color: #4CAF50;
+        }
+        .message.assistant .message-role {
+            color: #764ba2;
+        }
+        .message-content {
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        .alert-error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 对话诊断工具</h1>
+        
+        <div class="search-box">
+            <input type="text" id="phoneInput" placeholder="输入用户手机号，例如：13914147000" value="13914147000">
+            <button onclick="diagnose()">诊断</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            正在诊断...
+        </div>
+
+        <div id="results" style="display: none;">
+            <div id="alerts"></div>
+            <div id="userInfo" class="section"></div>
+            <div id="conversationInfo" class="section"></div>
+            <div id="messagesInfo" class="section"></div>
+            <div id="permissionsInfo" class="section"></div>
+            <div id="rawData" class="section"></div>
+        </div>
+    </div>
+
+    <script>
+        async function diagnose() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            if (!phone) {
+                alert('请输入手机号');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const alerts = document.getElementById('alerts');
+
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            alerts.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/admin/diagnose-conversation?phone=${phone}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || '诊断失败');
+                }
+
+                displayResults(data);
+                
+            } catch (err) {
+                alerts.innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
+                results.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const alerts = document.getElementById('alerts');
+            results.style.display = 'block';
+
+            // 显示警告
+            let alertsHTML = '';
+            if (data.analysis?.hasUnrepliedMessages) {
+                alertsHTML += `
+                    <div class="alert alert-warning">
+                        ⚠️ <strong>发现未回复的消息！</strong><br>
+                        用户发送了 ${data.analysis.userMessageCount} 条消息，但只收到了 ${data.analysis.assistantMessageCount} 条回复。<br>
+                        有 ${data.analysis.unrepliedCount} 条消息未回复。
+                    </div>
+                `;
+            } else if (data.analysis) {
+                alertsHTML += `
+                    <div class="alert alert-success">
+                        ✅ 对话正常，所有消息都已回复。
+                    </div>
+                `;
+            }
+            alerts.innerHTML = alertsHTML;
+
+            // 用户信息
+            if (data.user) {
+                document.getElementById('userInfo').innerHTML = `
+                    <h2>👤 用户信息</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">手机号</div>
+                            <div class="info-value">${data.user.data?.phone || 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">昵称</div>
+                            <div class="info-value">${data.user.data?.nickname || 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">状态</div>
+                            <div class="info-value">${data.user.data?.status || 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">注册时间</div>
+                            <div class="info-value">${data.user.data?.created_at ? new Date(data.user.data.created_at).toLocaleString('zh-CN') : 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 对话信息
+            if (data.conversations) {
+                document.getElementById('conversationInfo').innerHTML = `
+                    <h2>💬 对话列表 (${data.conversations.count})</h2>
+                    ${data.conversations.data?.map(conv => `
+                        <div class="info-item">
+                            <div class="info-label">对话ID: ${conv.id}</div>
+                            <div class="info-value">${conv.title || '未命名对话'}</div>
+                            <div class="info-label" style="margin-top: 5px;">
+                                创建: ${new Date(conv.created_at).toLocaleString('zh-CN')} | 
+                                更新: ${new Date(conv.updated_at).toLocaleString('zh-CN')}
+                            </div>
+                        </div>
+                    `).join('') || '<p>无对话</p>'}
+                `;
+            }
+
+            // 消息详情
+            if (data.messages) {
+                document.getElementById('messagesInfo').innerHTML = `
+                    <h2>📝 消息详情 (${data.messages.count})</h2>
+                    ${data.messages.data?.map(msg => `
+                        <div class="message ${msg.role}">
+                            <div class="message-header">
+                                <span class="message-role">${msg.role === 'user' ? '👤 用户' : '🤖 AI助手'}</span>
+                                <span>${new Date(msg.createdAt).toLocaleString('zh-CN')} | Token: ${msg.tokenUsage || 0}</span>
+                            </div>
+                            <div class="message-content">${msg.contentPreview}${msg.contentLength > 100 ? '...' : ''}</div>
+                        </div>
+                    `).join('') || '<p>无消息</p>'}
+                `;
+            }
+
+            // 权限信息
+            if (data.permissions) {
+                document.getElementById('permissionsInfo').innerHTML = `
+                    <h2>🔑 权限信息</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">用户ID</div>
+                            <div class="info-value">${data.permissions.userId}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">活跃订阅</div>
+                            <div class="info-value">${data.permissions.hasActiveSubscription ? '✅ 是' : '❌ 否'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">订阅数量</div>
+                            <div class="info-value">${data.permissions.subscriptions?.length || 0}</div>
+                        </div>
+                    </div>
+                    ${data.permissions.subscriptions?.map(sub => `
+                        <div class="info-item" style="margin-top: 10px;">
+                            <div class="info-label">套餐: ${sub.planName}</div>
+                            <div class="info-value">
+                                状态: ${sub.status}<br>
+                                有效期: ${new Date(sub.startDate).toLocaleDateString('zh-CN')} - ${new Date(sub.endDate).toLocaleDateString('zh-CN')}<br>
+                                ${sub.chatLimit ? `剩余次数: ${sub.remainingChats}/${sub.chatLimit}` : '无限制'}
+                            </div>
+                        </div>
+                    `).join('') || ''}
+                `;
+            }
+
+            // 原始数据
+            document.getElementById('rawData').innerHTML = `
+                <h2>📄 原始数据</h2>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+        }
+
+        // 页面加载时自动诊断
+        window.addEventListener('load', () => {
+            const phone = document.getElementById('phoneInput').value;
+            if (phone) {
+                diagnose();
+            }
+        });
+    </script>
+</body>
+</html>
+
