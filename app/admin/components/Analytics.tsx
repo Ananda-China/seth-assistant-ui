@@ -36,6 +36,9 @@ interface AnalyticsData {
       new_messages: number;
       today_tokens: number;
       today_active_users: number;
+      total_users: number;
+      total_conversations: number;
+      total_messages: number;
     };
   };
   trends: {
@@ -219,6 +222,7 @@ export default function Analytics() {
             <div>
               <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_users}</div>
               <div className="text-sm text-[#C8B6E2]">今日新增用户</div>
+              <div className="text-xs text-[#8A94B3] mt-2">总用户数：{data.overview.today_data.total_users}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold text-blue-400">📈</div>
@@ -232,6 +236,7 @@ export default function Analytics() {
             <div>
               <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_conversations}</div>
               <div className="text-sm text-[#C8B6E2]">今日对话数</div>
+              <div className="text-xs text-[#8A94B3] mt-2">总对话数：{data.overview.today_data.total_conversations}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold text-blue-400">💬</div>
@@ -245,6 +250,7 @@ export default function Analytics() {
             <div>
               <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_messages}</div>
               <div className="text-sm text-[#C8B6E2]">今日消息数</div>
+              <div className="text-xs text-[#8A94B3] mt-2">总消息数：{data.overview.today_data.total_messages}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold text-blue-400">✉️</div>

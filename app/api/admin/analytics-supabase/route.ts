@@ -158,8 +158,23 @@ export async function GET(req: NextRequest) {
       sum + (msg.token_usage || 0), 0
     );
 
-    // 计算活跃用户（有对话的用户）
-    const activeUsers = new Set(conversations.map((conv: any) => conv.user_phone)).size;
+    // 计算活跃用户（最近三天有聊天的用户数量）
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const recentThreeDaysMessages = messages.filter((msg: any) => {
+      const msgDate = new Date(msg.created_at);
+      return msgDate >= threeDaysAgo && msgDate < endTime;
+    });
+    const activeUserPhones = new Set<string>();
+    recentThreeDaysMessages.forEach((msg: any) => {
+      const convId = msg.conversation_id;
+      const conv = conversations.find((c: any) => c.id === convId);
+      if (conv && conv.user_phone) {
+        activeUserPhones.add(conv.user_phone);
+      }
+    });
+    const activeUsers = activeUserPhones.size;
+
+    // 计算时间段内的活跃用户（用于下方分析框框）
     const recentActiveUsers = new Set(recentConversations.map((conv: any) => conv.user_phone)).size;
 
     // 计算活跃度排行（Top 5）
@@ -288,7 +303,11 @@ export async function GET(req: NextRequest) {
           new_conversations: todayConversations.length,
           new_messages: todayMessages.length,
           today_tokens: todayTokens,
-          today_active_users: todayActiveUsers
+          today_active_users: todayActiveUsers,
+          // 添加总数据（显示在框框下方）
+          total_users: totalUsers,
+          total_conversations: totalConversations,
+          total_messages: totalMessages
         }
       },
       trends: {
