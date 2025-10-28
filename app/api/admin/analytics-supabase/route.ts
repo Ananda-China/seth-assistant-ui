@@ -75,10 +75,17 @@ export async function GET(req: NextRequest) {
       .from('messages')
       .select('*')
       .eq('is_deleted', false);
-    
+
     if (msgError) {
       console.error('Error fetching messages:', msgError);
       return new Response('Failed to fetch messages', { status: 500 });
+    }
+
+    console.log('📊 API数据获取调试:');
+    console.log('  消息总数:', messages?.length || 0);
+    if (messages && messages.length > 0) {
+      console.log('  第一条消息:', messages[0]);
+      console.log('  最后一条消息:', messages[messages.length - 1]);
     }
 
     // 获取订单数据
