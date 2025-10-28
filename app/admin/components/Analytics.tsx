@@ -212,8 +212,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* 关键指标卡片 - 今日新增数据 + Token使用量 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 关键指标卡片 - 今日新增数据 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/30 p-6 rounded-xl border border-blue-500/40 hover:border-blue-400/60 transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -249,19 +249,6 @@ export default function Analytics() {
             <div className="text-right">
               <div className="text-lg font-semibold text-blue-400">✉️</div>
               <div className="text-xs text-[#8A94B3]">新增</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-yellow-900/40 to-orange-900/30 p-6 rounded-xl border border-yellow-500/40 hover:border-yellow-400/60 transition-all">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-3xl font-bold text-yellow-300">{data.overview.message_stats.total_tokens.toLocaleString()}</div>
-              <div className="text-sm text-[#C8B6E2]">Token使用量</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-semibold text-yellow-400">⚡</div>
-              <div className="text-xs text-[#8A94B3]">总计</div>
             </div>
           </div>
         </div>
@@ -342,6 +329,10 @@ export default function Analytics() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">今日token消耗</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#EAEBF0]">总token消耗</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">平均每消息Token</span>
