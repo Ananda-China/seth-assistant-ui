@@ -27,7 +27,15 @@ interface AnalyticsData {
     user_engagement: {
       active_users: number;
       recent_active: number;
+      today_active: number;
       engagement_rate: string;
+    };
+    today_data: {
+      new_users: number;
+      new_conversations: number;
+      new_messages: number;
+      today_tokens: number;
+      today_active_users: number;
     };
   };
   trends: {
@@ -204,7 +212,7 @@ export default function Analytics() {
         <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.user_growth.new}</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_users}</div>
               <div className="text-sm text-[#8A94B3]">今日新增用户</div>
             </div>
             <div className="text-right">
@@ -220,7 +228,7 @@ export default function Analytics() {
         <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.conversation_activity.new}</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_conversations}</div>
               <div className="text-sm text-[#8A94B3]">今日对话数</div>
             </div>
             <div className="text-right">
@@ -236,7 +244,7 @@ export default function Analytics() {
         <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 p-6 rounded-xl border border-red-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-3xl font-bold text-red-400">{data.overview.message_stats.new}</div>
+              <div className="text-3xl font-bold text-red-400">{data.overview.today_data.new_messages}</div>
               <div className="text-sm text-[#8A94B3]">今日消息数</div>
             </div>
             <div className="text-right">
@@ -289,11 +297,23 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户参与度分析</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
+              <span className="text-[#EAEBF0]">今日活跃</span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 bg-[#2E335B] rounded-full h-2">
+                  <div
+                    className="bg-[#C8B6E2] h-2 rounded-full"
+                    style={{ width: `${Math.min((data.overview.user_engagement.today_active / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.today_active}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-[#EAEBF0]">活跃用户</span>
               <div className="flex items-center gap-2">
                 <div className="w-24 bg-[#2E335B] rounded-full h-2">
-                  <div 
-                    className="bg-[#C8B6E2] h-2 rounded-full" 
+                  <div
+                    className="bg-[#C8B6E2] h-2 rounded-full"
                     style={{ width: `${Math.min((data.overview.user_engagement.active_users / data.overview.user_growth.total) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -301,23 +321,11 @@ export default function Analytics() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">最近活跃</span>
-              <div className="flex items-center gap-2">
-                <div className="w-24 bg-[#2E335B] rounded-full h-2">
-                  <div 
-                    className="bg-[#C8B6E2] h-2 rounded-full" 
-                    style={{ width: `${Math.min((data.overview.user_engagement.recent_active / data.overview.user_growth.total) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.user_engagement.recent_active}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
               <span className="text-[#EAEBF0]">参与率</span>
               <div className="flex items-center gap-2">
                 <div className="w-24 bg-[#2E335B] rounded-full h-2">
-                  <div 
-                    className="bg-[#C8B6E2] h-2 rounded-full" 
+                  <div
+                    className="bg-[#C8B6E2] h-2 rounded-full"
                     style={{ width: `${Math.min(parseFloat(data.overview.user_engagement.engagement_rate), 100)}%` }}
                   ></div>
                 </div>
@@ -331,12 +339,12 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">Token使用分析</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">总Token使用</span>
-              <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
+              <span className="text-[#EAEBF0]">今日token消耗</span>
+              <span className="text-[#C8B6E2] font-semibold">{data.overview.today_data.today_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#EAEBF0]">最近Token使用</span>
-              <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.recent_tokens.toLocaleString()}</span>
+              <span className="text-[#EAEBF0]">总消耗</span>
+              <span className="text-[#C8B6E2] font-semibold">{data.overview.message_stats.total_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#EAEBF0]">平均每消息Token</span>

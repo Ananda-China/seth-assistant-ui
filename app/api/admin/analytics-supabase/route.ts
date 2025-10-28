@@ -24,6 +24,10 @@ export async function GET(req: NextRequest) {
     let startTime: Date;
     let endTime: Date = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 默认到明天
 
+    // 计算今天的时间范围（用于首行数据）
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
     if (period === 'today') {
       // 今天的开始时间（从今天凌晨00:00:00开始）
       startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -98,6 +102,33 @@ export async function GET(req: NextRequest) {
       const msgDate = new Date(msg.created_at);
       return msgDate >= startTime && msgDate < endTime;
     });
+
+    // 计算今日数据（首行始终显示今日数据）
+    const todayUsers = users.filter((user: any) => {
+      const userDate = new Date(user.created_at);
+      return userDate >= todayStart && userDate < todayEnd;
+    });
+    const todayConversations = conversations.filter((conv: any) => {
+      const convDate = new Date(conv.created_at);
+      return convDate >= todayStart && convDate < todayEnd;
+    });
+    const todayMessages = messages.filter((msg: any) => {
+      const msgDate = new Date(msg.created_at);
+      return msgDate >= todayStart && msgDate < todayEnd;
+    });
+    const todayTokens = todayMessages.reduce((sum: number, msg: any) =>
+      sum + (msg.token_usage || 0), 0
+    );
+
+    // 计算今日活跃用户（有对话或消息的用户）
+    const todayActiveUserPhones = new Set<string>();
+    todayConversations.forEach((conv: any) => {
+      if (conv.user_phone) todayActiveUserPhones.add(conv.user_phone);
+    });
+    todayMessages.forEach((msg: any) => {
+      if (msg.user_phone) todayActiveUserPhones.add(msg.user_phone);
+    });
+    const todayActiveUsers = todayActiveUserPhones.size;
 
     // 计算基础统计数据
     const totalUsers = users.length;
@@ -182,6 +213,7 @@ export async function GET(req: NextRequest) {
     const userEngagement = {
       active_users: activeUsers,
       recent_active: recentActiveUsers,
+      today_active: todayActiveUsers,
       engagement_rate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) : '0.0'
     };
 
@@ -191,7 +223,15 @@ export async function GET(req: NextRequest) {
         user_growth: userGrowth,
         conversation_activity: conversationActivity,
         message_stats: messageStats,
-        user_engagement: userEngagement
+        user_engagement: userEngagement,
+        // 添加今日数据（首行始终显示今日数据）
+        today_data: {
+          new_users: todayUsers.length,
+          new_conversations: todayConversations.length,
+          new_messages: todayMessages.length,
+          today_tokens: todayTokens,
+          today_active_users: todayActiveUsers
+        }
       },
       trends: {
         daily_data: dailyData
