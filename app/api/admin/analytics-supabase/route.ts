@@ -576,13 +576,8 @@ export async function GET(req: NextRequest) {
           current_period_end: s.current_period_end
         })) || [],
         active_subscription_users: Array.from(activeSubscriptionUsers),
-        free_users_with_chat_count: users
-          .filter((u: any) => u.subscription_type === 'free')
-          .map((u: any) => ({
-            phone: u.phone,
-            chat_count: u.chat_count,
-            messages: userMessageStats.get(u.phone)?.messages || 0
-          }))
+        free_users_count: users.filter((u: any) => u.subscription_type === 'free').length,
+        total_users_count: users.length
       },
       top_metrics: [
         {
