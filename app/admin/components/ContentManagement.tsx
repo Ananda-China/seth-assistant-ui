@@ -45,16 +45,13 @@ export default function ContentManagement() {
   const [showMessageDetail, setShowMessageDetail] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState('');
-  const [totalConversationsCount, setTotalConversationsCount] = useState(0);
-
-  // 计算统计数据
-  const stats = {
-    total: totalConversationsCount, // 使用所有对话的总数
-    normal: conversations.filter(c => c.status === 'active').length,
-    flagged: conversations.filter(c => c.status === 'flagged').length,
-    blocked: conversations.filter(c => c.status === 'blocked').length,
-    totalMessages: conversations.reduce((sum, c) => sum + (c.total_messages || 0), 0)
-  };
+  const [stats, setStats] = useState({
+    total: 0,
+    normal: 0,
+    flagged: 0,
+    blocked: 0,
+    totalMessages: 0
+  });
 
   // 获取聊天记录数据
   const fetchConversations = async () => {
@@ -74,9 +71,9 @@ export default function ContentManagement() {
         const data = await response.json();
         setConversations(data.conversations);
         setPagination(data.pagination);
-        // 保存所有对话的总数
-        if (data.totalConversationsCount !== undefined) {
-          setTotalConversationsCount(data.totalConversationsCount);
+        // 更新统计数据
+        if (data.stats) {
+          setStats(data.stats);
         }
       }
     } catch (error) {

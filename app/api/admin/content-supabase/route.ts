@@ -104,26 +104,32 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // 保存所有对话的总数（用于统计卡片）
-    const totalConversationsCount = conversationStats.length;
+    // 计算统计数据（基于所有对话，不受分页影响）
+    const stats = {
+      total: conversationStats.length,
+      normal: conversationStats.filter(c => c.status === 'active').length,
+      flagged: conversationStats.filter(c => c.status === 'flagged').length,
+      blocked: conversationStats.filter(c => c.status === 'blocked').length,
+      totalMessages: conversationStats.reduce((sum, c) => sum + (c.total_messages || 0), 0)
+    };
 
     // 应用过滤
     let filteredConversations = conversationStats;
-    
+
     if (search) {
-      filteredConversations = filteredConversations.filter(conv => 
+      filteredConversations = filteredConversations.filter(conv =>
         conv.title.toLowerCase().includes(search.toLowerCase()) ||
         conv.user.toLowerCase().includes(search.toLowerCase()) ||
         conv.preview.toLowerCase().includes(search.toLowerCase())
       );
     }
-    
+
     if (status) {
       filteredConversations = filteredConversations.filter(conv => conv.status === status);
     }
-    
+
     if (user) {
-      filteredConversations = filteredConversations.filter(conv => 
+      filteredConversations = filteredConversations.filter(conv =>
         conv.user.toLowerCase().includes(user.toLowerCase())
       );
     }
@@ -143,7 +149,7 @@ export async function GET(req: NextRequest) {
         total,
         pages
       },
-      totalConversationsCount // 返回所有对话的总数（用于统计卡片）
+      stats // 返回完整的统计数据
     });
   } catch (error) {
     console.error('Error fetching content:', error);
