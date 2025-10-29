@@ -19,6 +19,11 @@ export async function GET(req: NextRequest) {
     // 获取查询参数
     const { searchParams } = new URL(req.url);
     const showDeleted = searchParams.get('show_deleted') === 'true';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const user = searchParams.get('user') || '';
 
     // 获取对话数据（根据参数决定是否包含已删除的）
     let conversationsQuery = supabase
@@ -94,17 +99,10 @@ export async function GET(req: NextRequest) {
           created_at: new Date(msg.created_at).getTime(),
           token_usage: msg.token_usage || 0
         })),
-        dify_conversation_id: conv.dify_conversation_id
+        dify_conversation_id: conv.dify_conversation_id,
+        is_deleted: conv.is_deleted || false
       };
     });
-
-    // 分页处理
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
-    const status = searchParams.get('status') || '';
-    const user = searchParams.get('user') || '';
 
     // 保存所有对话的总数（用于统计卡片）
     const totalConversationsCount = conversationStats.length;
