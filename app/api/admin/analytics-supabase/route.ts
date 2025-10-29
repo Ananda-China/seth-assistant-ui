@@ -361,34 +361,32 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 2. 再添加免费次数用完的用户（subscription_type为'free'且对话数 >= 5）（优先级2）
+    // 2. 再添加免费次数用完的用户（subscription_type为'free'且chat_count >= 5）（优先级2）
     // 但要排除那些有有效订阅的用户
     console.log('🔍 检查免费用户:');
-    console.log(`  总免费用户数: ${users.filter((u: any) => u.subscription_type === 'free').length}`);
-    users.forEach((user: any) => {
-      if (user.subscription_type === 'free') {
-        const hasActiveSubscription = activeSubscriptionUsers.has(user.phone);
-        // 计算该用户的对话数（而不是消息数）
-        const userConversations = conversations.filter((conv: any) => conv.user_phone === user.phone);
-        const conversationCount = userConversations.length;
-        const shouldAdd = conversationCount >= 5 && !hasActiveSubscription;
-        console.log(`  用户 ${user.phone}: subscription_type=${user.subscription_type}, 对话数=${conversationCount}, chat_count=${user.chat_count}, 有有效订阅=${hasActiveSubscription}, 应该添加=${shouldAdd}`);
-        if (shouldAdd) {
-          if (!reminderMap.has(user.phone)) {
-            const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
-            console.log(`    ✅ 添加到提醒列表 (消息数: ${stats.messages})`);
-            reminderMap.set(user.phone, {
-              phone: user.phone,
-              plan: '免费套餐',
-              expiry_date: null,
-              messages: stats.messages,
-              tokens: stats.tokens,
-              priority: 2 // 免费次数用完优先级为2
-            });
-          }
-        } else {
-          console.log(`    ❌ 不添加到提醒列表 (对话数=${conversationCount}, 需要>=5, hasActiveSubscription=${hasActiveSubscription})`);
+    const freeUsers = users.filter((u: any) => u.subscription_type === 'free');
+    console.log(`  总免费用户数: ${freeUsers.length}`);
+    console.log(`  所有免费用户: ${freeUsers.map((u: any) => `${u.phone}(chat_count=${u.chat_count})`).join(', ')}`);
+
+    freeUsers.forEach((user: any) => {
+      const hasActiveSubscription = activeSubscriptionUsers.has(user.phone);
+      const shouldAdd = user.chat_count >= 5 && !hasActiveSubscription;
+      console.log(`  用户 ${user.phone}: subscription_type=${user.subscription_type}, chat_count=${user.chat_count}, 有有效订阅=${hasActiveSubscription}, 应该添加=${shouldAdd}`);
+      if (shouldAdd) {
+        if (!reminderMap.has(user.phone)) {
+          const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+          console.log(`    ✅ 添加到提醒列表 (消息数: ${stats.messages})`);
+          reminderMap.set(user.phone, {
+            phone: user.phone,
+            plan: '免费套餐',
+            expiry_date: null,
+            messages: stats.messages,
+            tokens: stats.tokens,
+            priority: 2 // 免费次数用完优先级为2
+          });
         }
+      } else {
+        console.log(`    ❌ 不添加到提醒列表 (chat_count=${user.chat_count}, 需要>=5, hasActiveSubscription=${hasActiveSubscription})`);
       }
     });
 
