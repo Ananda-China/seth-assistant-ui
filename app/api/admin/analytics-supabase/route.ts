@@ -385,6 +385,19 @@ export async function GET(req: NextRequest) {
         return 0;
       }));
 
+    // 调试日志
+    console.log('📊 订阅提醒调试信息:');
+    console.log('当前时间:', now_date.toISOString());
+    console.log('一个月后:', oneMonthLater.toISOString());
+    console.log('有效订阅用户:', Array.from(activeSubscriptionUsers));
+    console.log('订阅提醒列表:', subscriptionReminders.map(r => ({
+      phone: r.phone,
+      plan: r.plan,
+      priority: r.priority,
+      expiry_date: r.expiry_date,
+      messages: r.messages
+    })));
+
     // 计算活跃度排行（Top 5）
     // 按今日对话数由高到低排序，相同则按最新对话时间排序
     const userActivityMap = new Map<string, {
