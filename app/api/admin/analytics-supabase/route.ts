@@ -568,6 +568,22 @@ export async function GET(req: NextRequest) {
         today_tokens: item.today_tokens
       })),
       subscription_reminders: subscriptionReminders,
+      debug_info: {
+        all_subscriptions: subscriptions?.map((s: any) => ({
+          user_phone: s.user_phone,
+          plan: s.plan,
+          status: s.status,
+          current_period_end: s.current_period_end
+        })) || [],
+        active_subscription_users: Array.from(activeSubscriptionUsers),
+        free_users_with_chat_count: users
+          .filter((u: any) => u.subscription_type === 'free')
+          .map((u: any) => ({
+            phone: u.phone,
+            chat_count: u.chat_count,
+            messages: userMessageStats.get(u.phone)?.messages || 0
+          }))
+      },
       top_metrics: [
         {
           label: '总用户数',
