@@ -325,22 +325,29 @@ export async function GET(req: NextRequest) {
         // 只有有效期内的订阅才算有效
         if (sub.status === 'active' && endDate > now_date) {
           activeSubscriptionUsers.add(sub.user_phone);
-          console.log(`    ✅ 添加到有效订阅集合`);
+          console.log(`    ✅ 添加到有效订阅集合 (endDate=${endDate.toISOString()} > now_date=${now_date.toISOString()})`);
+        } else {
+          console.log(`    ❌ 不添加到有效订阅集合 (status=${sub.status}, endDate=${endDate.toISOString()}, now_date=${now_date.toISOString()})`);
         }
       });
     }
+    console.log('✅ 有效订阅用户集合:', Array.from(activeSubscriptionUsers));
 
     // 构建订阅提醒列表
     const reminderMap = new Map<string, any>();
 
     // 1. 先添加一个月内到期的活跃订阅用户（优先级1）
+    console.log('🔍 检查一个月内到期的订阅:');
     if (subscriptions && subscriptions.length > 0) {
       subscriptions.forEach((sub: any) => {
         const endDate = new Date(sub.current_period_end);
-        if (sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater) {
+        const isExpiringSoon = sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater;
+        console.log(`  用户 ${sub.user_phone}: 计划=${sub.plan}, 状态=${sub.status}, 到期=${sub.current_period_end}, 即将到期=${isExpiringSoon}`);
+        if (isExpiringSoon) {
           const user = users.find((u: any) => u.phone === sub.user_phone);
           if (user) {
             const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+            console.log(`    ✅ 添加到提醒列表 (计划: ${sub.plan})`);
             reminderMap.set(user.phone, {
               phone: user.phone,
               plan: sub.plan,
