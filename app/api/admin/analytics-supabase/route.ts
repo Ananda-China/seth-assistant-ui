@@ -76,18 +76,21 @@ export async function GET(req: NextRequest) {
     }
     console.log('✅ 用户数据获取成功，共', users?.length || 0, '个用户');
 
-    // 获取对话数据（只获取未删除的）
+    // 获取对话数据（包括已删除的，用于完整统计）
     console.log('🔍 开始获取对话数据...');
-    const { data: conversations, error: convError } = await supabase
+    const { data: allConversations, error: convError } = await supabase
       .from('conversations')
-      .select('*')
-      .eq('is_deleted', false);
+      .select('*');
 
     if (convError) {
       console.error('❌ Error fetching conversations:', convError);
       return new Response(JSON.stringify({ error: 'Failed to fetch conversations', details: convError }), { status: 500 });
     }
-    console.log('✅ 对话数据获取成功，共', conversations?.length || 0, '个对话');
+
+    // 分离未删除和已删除的对话
+    const conversations = allConversations?.filter((c: any) => !c.is_deleted) || [];
+    const deletedConversations = allConversations?.filter((c: any) => c.is_deleted) || [];
+    console.log('✅ 对话数据获取成功，共', allConversations?.length || 0, '个对话（', conversations.length, '个未删除，', deletedConversations.length, '个已删除）');
 
     // 获取消息数据（只获取未删除的）
     console.log('🔍 开始获取消息数据...');
@@ -347,11 +350,15 @@ export async function GET(req: NextRequest) {
           const user = users.find((u: any) => u.phone === sub.user_phone);
           if (user) {
             const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
-            console.log(`    ✅ 添加到提醒列表 (计划: ${sub.plan})`);
+            // 计算该用户的对话数（包括已删除的）
+            const userAllConversations = allConversations?.filter((conv: any) => conv.user_phone === user.phone) || [];
+            const conversationCount = userAllConversations.length;
+            console.log(`    ✅ 添加到提醒列表 (计划: ${sub.plan}, 对话数: ${conversationCount})`);
             reminderMap.set(user.phone, {
               phone: user.phone,
               plan: sub.plan,
               expiry_date: sub.current_period_end,
+              conversations: conversationCount,
               messages: stats.messages,
               tokens: stats.tokens,
               priority: 1 // 一个月内到期优先级为1
@@ -363,23 +370,30 @@ export async function GET(req: NextRequest) {
 
     // 2. 再添加免费次数用完的用户（subscription_type为'free'且chat_count >= 5）（优先级2）
     // 但要排除那些有有效订阅的用户
+    // 注意：chat_count 包含已删除对话中的消息数，这是正确的行为
     console.log('🔍 检查免费用户:');
     const freeUsers = users.filter((u: any) => u.subscription_type === 'free');
     console.log(`  总免费用户数: ${freeUsers.length}`);
-    console.log(`  所有免费用户: ${freeUsers.map((u: any) => `${u.phone}(chat_count=${u.chat_count})`).join(', ')}`);
 
     freeUsers.forEach((user: any) => {
       const hasActiveSubscription = activeSubscriptionUsers.has(user.phone);
       const shouldAdd = user.chat_count >= 5 && !hasActiveSubscription;
-      console.log(`  用户 ${user.phone}: subscription_type=${user.subscription_type}, chat_count=${user.chat_count}, 有有效订阅=${hasActiveSubscription}, 应该添加=${shouldAdd}`);
+
+      // 计算该用户的对话数（包括已删除的）
+      const userAllConversations = allConversations?.filter((conv: any) => conv.user_phone === user.phone) || [];
+      const conversationCount = userAllConversations.length;
+
+      console.log(`  用户 ${user.phone}: subscription_type=${user.subscription_type}, chat_count=${user.chat_count}, 对话数=${conversationCount}, 有有效订阅=${hasActiveSubscription}, 应该添加=${shouldAdd}`);
+
       if (shouldAdd) {
         if (!reminderMap.has(user.phone)) {
           const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
-          console.log(`    ✅ 添加到提醒列表 (消息数: ${stats.messages})`);
+          console.log(`    ✅ 添加到提醒列表 (对话数: ${conversationCount}, 消息数: ${stats.messages})`);
           reminderMap.set(user.phone, {
             phone: user.phone,
             plan: '免费套餐',
             expiry_date: null,
+            conversations: conversationCount,
             messages: stats.messages,
             tokens: stats.tokens,
             priority: 2 // 免费次数用完优先级为2
@@ -396,10 +410,14 @@ export async function GET(req: NextRequest) {
       if (user.subscription_type === 'times' && user.chat_count >= 50 && !activeSubscriptionUsers.has(user.phone)) {
         if (!reminderMap.has(user.phone)) {
           const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+          // 计算该用户的对话数（包括已删除的）
+          const userAllConversations = allConversations?.filter((conv: any) => conv.user_phone === user.phone) || [];
+          const conversationCount = userAllConversations.length;
           reminderMap.set(user.phone, {
             phone: user.phone,
             plan: '次卡',
             expiry_date: null,
+            conversations: conversationCount,
             messages: stats.messages,
             tokens: stats.tokens,
             priority: 2 // 次卡用完优先级为2

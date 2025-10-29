@@ -326,6 +326,9 @@ export default function Analytics() {
                   </div>
                   <div className="text-right">
                     <div className="text-[#C8B6E2] font-semibold text-xs">
+                      对话: {user.conversations || 0}
+                    </div>
+                    <div className="text-[#C8B6E2] font-semibold text-xs mt-1">
                       消息: {user.messages}
                     </div>
                     <div className="text-[#C8B6E2] font-semibold text-xs mt-1">

@@ -39,9 +39,9 @@ async function diagnoseUser(phone) {
     console.log(`   subscription_end: ${user.subscription_end}`);
     console.log(`   created_at: ${user.created_at}`);
 
-    // 2. 获取用户的所有对话
+    // 2. 获取用户的所有对话（包括已删除的）
     console.log('\n2️⃣ 获取用户的所有对话...');
-    const { data: conversations, error: convError } = await supabase
+    const { data: allConversations, error: convError } = await supabase
       .from('conversations')
       .select('*')
       .eq('user_phone', phone)
@@ -52,10 +52,21 @@ async function diagnoseUser(phone) {
       return;
     }
 
-    console.log(`✅ 找到 ${conversations.length} 个对话`);
+    const conversations = allConversations.filter(c => !c.is_deleted);
+    const deletedConversations = allConversations.filter(c => c.is_deleted);
+
+    console.log(`✅ 找到 ${allConversations.length} 个对话（${conversations.length} 个未删除，${deletedConversations.length} 个已删除）`);
+
     conversations.forEach((conv, idx) => {
       console.log(`   ${idx + 1}. ${conv.title || '(无标题)'} - 创建于 ${conv.created_at}`);
     });
+
+    if (deletedConversations.length > 0) {
+      console.log(`\n⚠️  已删除的对话 (${deletedConversations.length} 个):`);
+      deletedConversations.forEach((conv, idx) => {
+        console.log(`   ${idx + 1}. ${conv.title || '(无标题)'} - 创建于 ${conv.created_at}`);
+      });
+    }
 
     // 3. 获取所有消息并统计
     console.log('\n3️⃣ 获取所有消息...');
