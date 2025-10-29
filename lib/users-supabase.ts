@@ -250,16 +250,43 @@ export async function getUserPermission(phone: string): Promise<UserPermission> 
 // 增加聊天次数
 export async function incrementChatCount(phone: string): Promise<boolean> {
   const permission = await getUserPermission(phone);
+  console.log('📊 incrementChatCount 调用:', {
+    phone,
+    usedChats: permission.usedChats,
+    chatLimit: permission.chatLimit,
+    canChat: permission.canChat
+  });
+
   if (!permission.canChat) {
+    console.log('❌ 无法增加聊天次数：用户已达到限制');
     return false;
   }
 
-  const { error } = await supabaseAdmin
-    .from('users')
-    .update({ chat_count: permission.usedChats + 1 })
-    .eq('phone', phone);
+  const newCount = permission.usedChats + 1;
+  console.log('🔄 准备更新 chat_count:', {
+    phone,
+    oldCount: permission.usedChats,
+    newCount: newCount
+  });
 
-  return !error;
+  const { error, data } = await supabaseAdmin
+    .from('users')
+    .update({ chat_count: newCount })
+    .eq('phone', phone)
+    .select('chat_count')
+    .single();
+
+  if (error) {
+    console.error('❌ 更新 chat_count 失败:', error);
+    return false;
+  }
+
+  console.log('✅ chat_count 已更新:', {
+    phone,
+    newCount: data?.chat_count
+  });
+
+  return true;
 }
 
 // 升级用户订阅
