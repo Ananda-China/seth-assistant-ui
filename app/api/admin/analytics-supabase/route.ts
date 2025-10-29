@@ -303,11 +303,14 @@ export async function GET(req: NextRequest) {
     // 构建有效订阅用户集合（用于排除）
     const activeSubscriptionUsers = new Set<string>();
     if (subscriptions && subscriptions.length > 0) {
+      console.log('📋 所有订阅记录:');
       subscriptions.forEach((sub: any) => {
+        console.log(`  用户: ${sub.user_phone}, 计划: ${sub.plan}, 状态: ${sub.status}, 到期: ${sub.current_period_end}`);
         const endDate = new Date(sub.current_period_end);
         // 只有有效期内的订阅才算有效
         if (sub.status === 'active' && endDate > now_date) {
           activeSubscriptionUsers.add(sub.user_phone);
+          console.log(`    ✅ 添加到有效订阅集合`);
         }
       });
     }
@@ -338,18 +341,23 @@ export async function GET(req: NextRequest) {
 
     // 2. 再添加免费次数用完的用户（subscription_type为'free'且chat_count >= 5）（优先级2）
     // 但要排除那些有有效订阅的用户
+    console.log('🔍 检查免费用户:');
     users.forEach((user: any) => {
-      if (user.subscription_type === 'free' && user.chat_count >= 5 && !activeSubscriptionUsers.has(user.phone)) {
-        if (!reminderMap.has(user.phone)) {
-          const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
-          reminderMap.set(user.phone, {
-            phone: user.phone,
-            plan: '免费套餐',
-            expiry_date: null,
-            messages: stats.messages,
-            tokens: stats.tokens,
-            priority: 2 // 免费次数用完优先级为2
-          });
+      if (user.subscription_type === 'free') {
+        console.log(`  用户 ${user.phone}: chat_count=${user.chat_count}, 有有效订阅=${activeSubscriptionUsers.has(user.phone)}`);
+        if (user.chat_count >= 5 && !activeSubscriptionUsers.has(user.phone)) {
+          if (!reminderMap.has(user.phone)) {
+            const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+            console.log(`    ✅ 添加到提醒列表 (消息数: ${stats.messages})`);
+            reminderMap.set(user.phone, {
+              phone: user.phone,
+              plan: '免费套餐',
+              expiry_date: null,
+              messages: stats.messages,
+              tokens: stats.tokens,
+              priority: 2 // 免费次数用完优先级为2
+            });
+          }
         }
       }
     });
