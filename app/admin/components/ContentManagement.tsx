@@ -22,6 +22,7 @@ interface Conversation {
     token_usage: number;
   }>;
   dify_conversation_id: string | null;
+  is_deleted?: boolean;
 }
 
 interface Pagination {
