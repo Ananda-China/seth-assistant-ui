@@ -38,6 +38,7 @@ export default function ContentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false); // 新增：是否显示已删除的对话
   const [selectedConversations, setSelectedConversations] = useState<string[]>([]);
   const [updatingConversation, setUpdatingConversation] = useState<string | null>(null);
   const [showMessageDetail, setShowMessageDetail] = useState<string | null>(null);
@@ -63,7 +64,8 @@ export default function ContentManagement() {
         limit: pagination.limit.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter && { status: statusFilter }),
-        ...(userFilter && { user: userFilter })
+        ...(userFilter && { user: userFilter }),
+        ...(showDeleted && { show_deleted: 'true' }) // 新增：传递是否显示已删除对话的参数
       });
 
       const response = await fetch(`/api/admin/content-supabase?${params}`);
@@ -247,12 +249,12 @@ export default function ContentManagement() {
     fetchConversations();
   }, []);
 
-  // 当分页参数变化时重新获取数据
+  // 当分页参数或showDeleted变化时重新获取数据
   useEffect(() => {
     if (pagination?.page && pagination?.limit) {
       fetchConversations();
     }
-  }, [pagination?.page, pagination?.limit]);
+  }, [pagination?.page, pagination?.limit, showDeleted]);
 
   if (loading && conversations.length === 0) {
     return (
@@ -325,6 +327,19 @@ export default function ContentManagement() {
           >
             搜索
           </button>
+        </div>
+
+        {/* 显示已删除对话的复选框 */}
+        <div className="mt-4 flex items-center">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(e) => setShowDeleted(e.target.checked)}
+              className="rounded border-[#8A94B3] text-[#C8B6E2] focus:ring-[#C8B6E2] mr-2"
+            />
+            <span className="text-[#EAEBF0] text-sm">显示已删除的对话</span>
+          </label>
         </div>
       </div>
 
@@ -431,6 +446,9 @@ export default function ContentManagement() {
                         <div className="font-medium text-[#EAEBF0] cursor-pointer hover:text-[#C8B6E2] transition-colors flex items-center gap-2"
                              onClick={() => setShowMessageDetail(showMessageDetail === conversation.id ? null : conversation.id)}>
                           {conversation.title}
+                          {conversation.is_deleted && (
+                            <span className="text-xs px-2 py-0.5 bg-red-500/20 text-red-400 rounded">已删除</span>
+                          )}
                           <span className="text-xs text-[#8A94B3]">
                             {showMessageDetail === conversation.id ? '点击收起' : '点击展开'}
                           </span>

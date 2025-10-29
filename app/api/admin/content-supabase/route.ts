@@ -16,11 +16,20 @@ export async function GET(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 获取对话数据（只获取未删除的）
-    const { data: conversations, error: convError } = await supabase
+    // 获取查询参数
+    const { searchParams } = new URL(req.url);
+    const showDeleted = searchParams.get('show_deleted') === 'true';
+
+    // 获取对话数据（根据参数决定是否包含已删除的）
+    let conversationsQuery = supabase
       .from('conversations')
-      .select('*')
-      .eq('is_deleted', false) // 只获取未删除的对话
+      .select('*');
+
+    if (!showDeleted) {
+      conversationsQuery = conversationsQuery.eq('is_deleted', false); // 只获取未删除的对话
+    }
+
+    const { data: conversations, error: convError } = await conversationsQuery
       .order('updated_at', { ascending: false });
     
     if (convError) {
