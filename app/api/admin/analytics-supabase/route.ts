@@ -215,7 +215,16 @@ export async function GET(req: NextRequest) {
     const totalUsers = users.length;
     const newUsers = recentUsers.length;
     const totalConversations = conversations.length;
-    const newConversations = recentConversations.length;
+
+    // 计算时间段内有消息的对话数（而不是创建时间）
+    const recentConversationIds = new Set<string>();
+    recentMessages.forEach((msg: any) => {
+      if (msg.conversation_id) {
+        recentConversationIds.add(msg.conversation_id);
+      }
+    });
+    const newConversations = recentConversationIds.size;
+
     const totalMessages = messages.length;
     const newMessages = recentMessages.length;
     
@@ -350,8 +359,10 @@ export async function GET(req: NextRequest) {
     console.log('🔍 检查免费用户:');
     users.forEach((user: any) => {
       if (user.subscription_type === 'free') {
-        console.log(`  用户 ${user.phone}: chat_count=${user.chat_count}, 有有效订阅=${activeSubscriptionUsers.has(user.phone)}`);
-        if (user.chat_count >= 5 && !activeSubscriptionUsers.has(user.phone)) {
+        const hasActiveSubscription = activeSubscriptionUsers.has(user.phone);
+        const shouldAdd = user.chat_count >= 5 && !hasActiveSubscription;
+        console.log(`  用户 ${user.phone}: chat_count=${user.chat_count}, 有有效订阅=${hasActiveSubscription}, 应该添加=${shouldAdd}`);
+        if (shouldAdd) {
           if (!reminderMap.has(user.phone)) {
             const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
             console.log(`    ✅ 添加到提醒列表 (消息数: ${stats.messages})`);
@@ -364,6 +375,8 @@ export async function GET(req: NextRequest) {
               priority: 2 // 免费次数用完优先级为2
             });
           }
+        } else {
+          console.log(`    ❌ 不添加到提醒列表 (chat_count=${user.chat_count}, 需要>=5)`);
         }
       }
     });
