@@ -300,6 +300,18 @@ export async function GET(req: NextRequest) {
       stats.tokens += tokenCount;
     });
 
+    // 构建有效订阅用户集合（用于排除）
+    const activeSubscriptionUsers = new Set<string>();
+    if (subscriptions && subscriptions.length > 0) {
+      subscriptions.forEach((sub: any) => {
+        const endDate = new Date(sub.current_period_end);
+        // 只有有效期内的订阅才算有效
+        if (sub.status === 'active' && endDate > now_date) {
+          activeSubscriptionUsers.add(sub.user_phone);
+        }
+      });
+    }
+
     // 构建订阅提醒列表
     const reminderMap = new Map<string, any>();
 
@@ -325,8 +337,9 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. 再添加免费次数用完的用户（subscription_type为'free'且chat_count >= 5）（优先级2）
+    // 但要排除那些有有效订阅的用户
     users.forEach((user: any) => {
-      if (user.subscription_type === 'free' && user.chat_count >= 5) {
+      if (user.subscription_type === 'free' && user.chat_count >= 5 && !activeSubscriptionUsers.has(user.phone)) {
         if (!reminderMap.has(user.phone)) {
           const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
           reminderMap.set(user.phone, {
@@ -342,8 +355,9 @@ export async function GET(req: NextRequest) {
     });
 
     // 3. 再添加次卡用完的用户（subscription_type为'times'且chat_count >= 50）（优先级2）
+    // 但要排除那些有有效订阅的用户
     users.forEach((user: any) => {
-      if (user.subscription_type === 'times' && user.chat_count >= 50) {
+      if (user.subscription_type === 'times' && user.chat_count >= 50 && !activeSubscriptionUsers.has(user.phone)) {
         if (!reminderMap.has(user.phone)) {
           const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
           reminderMap.set(user.phone, {
