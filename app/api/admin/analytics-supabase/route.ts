@@ -284,73 +284,92 @@ export async function GET(req: NextRequest) {
     const now_date = new Date();
     const oneMonthLater = new Date(now_date.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+    // 构建用户消息和token统计（通过对话表关联）
+    const userMessageStats = new Map<string, { messages: number; tokens: number }>();
+    conversations.forEach((conv: any) => {
+      const userPhone = conv.user_phone;
+      const convMessages = messages.filter((msg: any) => msg.conversation_id === conv.id);
+      const msgCount = convMessages.length;
+      const tokenCount = convMessages.reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
+
+      if (!userMessageStats.has(userPhone)) {
+        userMessageStats.set(userPhone, { messages: 0, tokens: 0 });
+      }
+      const stats = userMessageStats.get(userPhone)!;
+      stats.messages += msgCount;
+      stats.tokens += tokenCount;
+    });
+
+    // 构建订阅提醒列表
+    const reminderMap = new Map<string, any>();
+
+    // 1. 先添加一个月内到期的活跃订阅用户（优先级1）
     if (subscriptions && subscriptions.length > 0) {
-      // 1. 找出一个月内到期的活跃订阅用户
-      const expiringSubscriptions = subscriptions.filter((sub: any) => {
+      subscriptions.forEach((sub: any) => {
         const endDate = new Date(sub.current_period_end);
-        return sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater;
-      });
-
-      // 2. 找出免费次数用完的用户（subscription_type为'free'且chat_count >= 5）
-      const freeTimesUsedUp = users.filter((user: any) => {
-        return user.subscription_type === 'free' && user.chat_count >= 5;
-      });
-
-      // 构建订阅提醒列表
-      const reminderMap = new Map<string, any>();
-
-      // 先添加一个月内到期的用户
-      expiringSubscriptions.forEach((sub: any) => {
-        const user = users.find((u: any) => u.phone === sub.user_phone);
-        if (user) {
-          const userMessages = messages.filter((msg: any) => msg.user_phone === user.phone).length;
-          const userTokens = messages
-            .filter((msg: any) => msg.user_phone === user.phone)
-            .reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
-
-          reminderMap.set(user.phone, {
-            phone: user.phone,
-            plan: sub.plan,
-            expiry_date: sub.current_period_end,
-            messages: userMessages,
-            tokens: userTokens,
-            priority: 1 // 一个月内到期优先级为1
-          });
+        if (sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater) {
+          const user = users.find((u: any) => u.phone === sub.user_phone);
+          if (user) {
+            const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+            reminderMap.set(user.phone, {
+              phone: user.phone,
+              plan: sub.plan,
+              expiry_date: sub.current_period_end,
+              messages: stats.messages,
+              tokens: stats.tokens,
+              priority: 1 // 一个月内到期优先级为1
+            });
+          }
         }
       });
+    }
 
-      // 再添加免费次数用完的用户（如果不在上面的列表中）
-      freeTimesUsedUp.forEach((user: any) => {
+    // 2. 再添加免费次数用完的用户（subscription_type为'free'且chat_count >= 5）（优先级2）
+    users.forEach((user: any) => {
+      if (user.subscription_type === 'free' && user.chat_count >= 5) {
         if (!reminderMap.has(user.phone)) {
-          const userMessages = messages.filter((msg: any) => msg.user_phone === user.phone).length;
-          const userTokens = messages
-            .filter((msg: any) => msg.user_phone === user.phone)
-            .reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
+          const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
+          reminderMap.set(user.phone, {
+            phone: user.phone,
+            plan: '免费套餐',
+            expiry_date: null,
+            messages: stats.messages,
+            tokens: stats.tokens,
+            priority: 2 // 免费次数用完优先级为2
+          });
+        }
+      }
+    });
 
+    // 3. 再添加次卡用完的用户（subscription_type为'times'且chat_count >= 50）（优先级2）
+    users.forEach((user: any) => {
+      if (user.subscription_type === 'times' && user.chat_count >= 50) {
+        if (!reminderMap.has(user.phone)) {
+          const stats = userMessageStats.get(user.phone) || { messages: 0, tokens: 0 };
           reminderMap.set(user.phone, {
             phone: user.phone,
             plan: '次卡',
             expiry_date: null,
-            messages: userMessages,
-            tokens: userTokens,
-            priority: 2 // 免费次数用完优先级为2
+            messages: stats.messages,
+            tokens: stats.tokens,
+            priority: 2 // 次卡用完优先级为2
           });
         }
-      });
+      }
+    });
 
-      // 转换为数组并按优先级排序
-      subscriptionReminders.push(...Array.from(reminderMap.values())
-        .sort((a, b) => {
-          if (a.priority !== b.priority) {
-            return a.priority - b.priority;
-          }
-          // 同优先级按到期日期排序（越近越靠前）
-          if (a.expiry_date && b.expiry_date) {
-            return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
-          }
-          return 0;
-        }));
-    }
+    // 转换为数组并按优先级排序
+    subscriptionReminders.push(...Array.from(reminderMap.values())
+      .sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        // 同优先级按到期日期排序（越近越靠前）
+        if (a.expiry_date && b.expiry_date) {
+          return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
+        }
+        return 0;
+      }));
 
     // 计算活跃度排行（Top 5）
     // 按今日对话数由高到低排序，相同则按最新对话时间排序
