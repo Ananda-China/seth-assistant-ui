@@ -73,6 +73,7 @@ interface AnalyticsData {
     phone: string;
     plan: string;
     expiry_date: string | null;
+    conversations: number;
     messages: number;
     tokens: number;
     priority: number;
