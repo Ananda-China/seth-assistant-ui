@@ -69,6 +69,14 @@ interface AnalyticsData {
     today_messages: number;
     today_tokens: number;
   }>;
+  subscription_reminders: Array<{
+    phone: string;
+    plan: string;
+    expiry_date: string | null;
+    messages: number;
+    tokens: number;
+    priority: number;
+  }>;
   top_metrics: Array<{
     label: string;
     value: string | number;
@@ -300,60 +308,53 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* 用户参与度分析 - 第二个 */}
-        <div className="bg-[#1A1D33] p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户参与度分析</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段活跃用户</span>
-              <div className="flex items-center gap-2">
-                <div className="w-20 bg-[#2E335B] rounded-full h-2">
-                  <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min((data.overview.period_data.period_active_users / Math.max(data.overview.user_growth.total, 1)) * 100, 100)}%` }}
-                  ></div>
+        {/* 用户订阅提醒 - 第二个 */}
+        <div className="bg-[#1A1D33] p-6 rounded-xl h-80">
+          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户订阅提醒</h3>
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {data.subscription_reminders && data.subscription_reminders.length > 0 ? (
+              data.subscription_reminders.map((user, index) => (
+                <div key={index} className="flex items-center justify-between text-sm border-b border-[#2E335B] pb-3">
+                  <div className="flex-1">
+                    <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">{user.plan}</div>
+                    {user.expiry_date && (
+                      <div className="text-[#8A94B3] text-xs mt-1">
+                        有效期: {new Date(user.expiry_date).toLocaleDateString('zh-CN')}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[#C8B6E2] font-semibold text-xs">
+                      消息: {user.messages}
+                    </div>
+                    <div className="text-[#C8B6E2] font-semibold text-xs mt-1">
+                      Token: {user.tokens}
+                    </div>
+                  </div>
                 </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_active_users}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段对话数</span>
-              <div className="flex items-center gap-2">
-                <div className="w-20 bg-[#2E335B] rounded-full h-2">
-                  <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min((data.overview.period_data.period_conversations / Math.max(data.overview.conversation_activity.total, 1)) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_conversations}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段消息数</span>
-              <div className="flex items-center gap-2">
-                <div className="w-20 bg-[#2E335B] rounded-full h-2">
-                  <div
-                    className="bg-[#C8B6E2] h-2 rounded-full"
-                    style={{ width: `${Math.min((data.overview.period_data.period_messages / Math.max(data.overview.message_stats.total, 1)) * 100, 100)}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-[#8A94B3]">{data.overview.period_data.period_messages}</span>
-              </div>
-            </div>
+              ))
+            ) : (
+              <div className="text-center text-[#8A94B3] text-sm py-6">暂无提醒用户</div>
+            )}
           </div>
         </div>
 
-        {/* Token使用分析 - 第三个 */}
+        {/* 用户使用分析 - 第三个 */}
         <div className="bg-[#1A1D33] p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">Token使用分析</h3>
+          <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户使用分析</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段token消耗</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段总token</span>
-              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_total_tokens.toLocaleString()}</span>
+              <span className="text-sm text-[#EAEBF0]">时间段对话数</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_conversations}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#EAEBF0]">时间段消息数</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_messages}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段平均每消息Token</span>

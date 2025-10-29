@@ -107,10 +107,20 @@ export async function GET(req: NextRequest) {
     const { data: orders, error: orderError } = await supabase
       .from('orders')
       .select('*');
-    
+
     if (orderError) {
       console.error('Error fetching orders:', orderError);
       // 订单错误不影响其他统计
+    }
+
+    // 获取订阅数据
+    const { data: subscriptions, error: subError } = await supabase
+      .from('subscriptions')
+      .select('*');
+
+    if (subError) {
+      console.error('Error fetching subscriptions:', subError);
+      // 订阅错误不影响其他统计
     }
 
     // 辅助函数：将时间转换为Date对象（处理毫秒时间戳和ISO字符串）
@@ -268,6 +278,79 @@ export async function GET(req: NextRequest) {
     const periodTotalTokens = recentMessages.reduce((sum: number, msg: any) =>
       sum + (msg.token_usage || 0), 0
     );
+
+    // 计算订阅提醒数据（快到期用户和免费次数用完用户）
+    const subscriptionReminders = [];
+    const now_date = new Date();
+    const oneMonthLater = new Date(now_date.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    if (subscriptions && subscriptions.length > 0) {
+      // 1. 找出一个月内到期的活跃订阅用户
+      const expiringSubscriptions = subscriptions.filter((sub: any) => {
+        const endDate = new Date(sub.current_period_end);
+        return sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater;
+      });
+
+      // 2. 找出免费次数用完的用户（subscription_type为'times'且chat_count >= 50）
+      const freeTimesUsedUp = users.filter((user: any) => {
+        return user.subscription_type === 'times' && user.chat_count >= 50;
+      });
+
+      // 构建订阅提醒列表
+      const reminderMap = new Map<string, any>();
+
+      // 先添加一个月内到期的用户
+      expiringSubscriptions.forEach((sub: any) => {
+        const user = users.find((u: any) => u.phone === sub.user_phone);
+        if (user) {
+          const userMessages = messages.filter((msg: any) => msg.user_phone === user.phone).length;
+          const userTokens = messages
+            .filter((msg: any) => msg.user_phone === user.phone)
+            .reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
+
+          reminderMap.set(user.phone, {
+            phone: user.phone,
+            plan: sub.plan,
+            expiry_date: sub.current_period_end,
+            messages: userMessages,
+            tokens: userTokens,
+            priority: 1 // 一个月内到期优先级为1
+          });
+        }
+      });
+
+      // 再添加免费次数用完的用户（如果不在上面的列表中）
+      freeTimesUsedUp.forEach((user: any) => {
+        if (!reminderMap.has(user.phone)) {
+          const userMessages = messages.filter((msg: any) => msg.user_phone === user.phone).length;
+          const userTokens = messages
+            .filter((msg: any) => msg.user_phone === user.phone)
+            .reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
+
+          reminderMap.set(user.phone, {
+            phone: user.phone,
+            plan: '次卡',
+            expiry_date: null,
+            messages: userMessages,
+            tokens: userTokens,
+            priority: 2 // 免费次数用完优先级为2
+          });
+        }
+      });
+
+      // 转换为数组并按优先级排序
+      subscriptionReminders.push(...Array.from(reminderMap.values())
+        .sort((a, b) => {
+          if (a.priority !== b.priority) {
+            return a.priority - b.priority;
+          }
+          // 同优先级按到期日期排序（越近越靠前）
+          if (a.expiry_date && b.expiry_date) {
+            return new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime();
+          }
+          return 0;
+        }));
+    }
 
     // 计算活跃度排行（Top 5）
     // 按今日对话数由高到低排序，相同则按最新对话时间排序
@@ -430,6 +513,7 @@ export async function GET(req: NextRequest) {
         today_messages: item.today_messages,
         today_tokens: item.today_tokens
       })),
+      subscription_reminders: subscriptionReminders,
       top_metrics: [
         {
           label: '总用户数',
