@@ -65,36 +65,42 @@ export async function GET(req: NextRequest) {
     }
 
     // 获取用户数据
+    console.log('🔍 开始获取用户数据...');
     const { data: users, error: userError } = await supabase
       .from('users')
       .select('*');
-    
+
     if (userError) {
-      console.error('Error fetching users:', userError);
-      return new Response('Failed to fetch users', { status: 500 });
+      console.error('❌ Error fetching users:', userError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch users', details: userError }), { status: 500 });
     }
+    console.log('✅ 用户数据获取成功，共', users?.length || 0, '个用户');
 
     // 获取对话数据（只获取未删除的）
+    console.log('🔍 开始获取对话数据...');
     const { data: conversations, error: convError } = await supabase
       .from('conversations')
       .select('*')
       .eq('is_deleted', false);
 
     if (convError) {
-      console.error('Error fetching conversations:', convError);
-      return new Response('Failed to fetch conversations', { status: 500 });
+      console.error('❌ Error fetching conversations:', convError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch conversations', details: convError }), { status: 500 });
     }
+    console.log('✅ 对话数据获取成功，共', conversations?.length || 0, '个对话');
 
     // 获取消息数据（只获取未删除的）
+    console.log('🔍 开始获取消息数据...');
     const { data: messages, error: msgError } = await supabase
       .from('messages')
       .select('*')
       .eq('is_deleted', false);
 
     if (msgError) {
-      console.error('Error fetching messages:', msgError);
-      return new Response('Failed to fetch messages', { status: 500 });
+      console.error('❌ Error fetching messages:', msgError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch messages', details: msgError }), { status: 500 });
     }
+    console.log('✅ 消息数据获取成功，共', messages?.length || 0, '条消息');
 
     console.log('📊 API数据获取调试:');
     console.log('  消息总数:', messages?.length || 0);
