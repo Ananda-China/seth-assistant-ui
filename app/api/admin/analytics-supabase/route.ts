@@ -24,20 +24,35 @@ export async function GET(req: NextRequest) {
     let startTime: Date;
     let endTime: Date = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 默认到明天
 
-    // 计算今天的时间范围（用于首行数据）
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // 计算今天的时间范围（用于首行数据）- 使用中国时区 UTC+8
+    // 获取当前UTC时间
+    const nowUTC = new Date();
+    // 转换为中国时间（UTC+8）
+    const chinaOffset = 8 * 60 * 60 * 1000; // 8小时的毫秒数
+    const nowChina = new Date(nowUTC.getTime() + chinaOffset);
+
+    // 计算中国时区的今日开始时间（00:00:00）
+    const todayStartChina = new Date(nowChina.getFullYear(), nowChina.getMonth(), nowChina.getDate());
+    // 转换回UTC时间
+    const todayStart = new Date(todayStartChina.getTime() - chinaOffset);
     const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
+    console.log('🕐 时区调试:');
+    console.log('  当前UTC时间:', nowUTC.toISOString());
+    console.log('  当前中国时间:', nowChina.toISOString());
+    console.log('  今日开始(UTC):', todayStart.toISOString());
+    console.log('  今日结束(UTC):', todayEnd.toISOString());
+    console.log('  今日开始(中国):', new Date(todayStart.getTime() + chinaOffset).toISOString());
+
     if (period === 'today') {
-      // 今天的开始时间（从今天凌晨00:00:00开始）
-      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      // 今天的结束时间（到明天凌晨00:00:00）
-      endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+      // 使用已经计算好的中国时区的今日时间范围
+      startTime = todayStart;
+      endTime = todayEnd;
     } else if (period === 'yesterday') {
-      // 昨天的开始时间
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      startTime = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-      // 昨天的结束时间
+      // 昨天的开始时间（中国时区）
+      const yesterdayChina = new Date(nowChina.getTime() - 24 * 60 * 60 * 1000);
+      const yesterdayStartChina = new Date(yesterdayChina.getFullYear(), yesterdayChina.getMonth(), yesterdayChina.getDate());
+      startTime = new Date(yesterdayStartChina.getTime() - chinaOffset);
       endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
     } else {
       const periodMs = {
@@ -131,7 +146,28 @@ export async function GET(req: NextRequest) {
     // 今日消息
     const todayMessages = messages.filter((msg: any) => {
       const msgDate = toDate(msg.created_at);
-      return msgDate >= todayStart && msgDate < todayEnd;
+      const isToday = msgDate >= todayStart && msgDate < todayEnd;
+
+      // 调试：打印前5条消息的时间信息
+      if (messages.indexOf(msg) < 5) {
+        console.log(`📝 消息 ${messages.indexOf(msg) + 1}:`, {
+          created_at: msg.created_at,
+          msgDate: msgDate.toISOString(),
+          msgDateChina: new Date(msgDate.getTime() + chinaOffset).toISOString(),
+          todayStart: todayStart.toISOString(),
+          todayEnd: todayEnd.toISOString(),
+          isToday
+        });
+      }
+
+      return isToday;
+    });
+
+    console.log('📊 今日消息统计:', {
+      总消息数: messages.length,
+      今日消息数: todayMessages.length,
+      今日开始: todayStart.toISOString(),
+      今日结束: todayEnd.toISOString()
     });
 
     // 今日对话数：统计有今日消息的对话数（去重）
