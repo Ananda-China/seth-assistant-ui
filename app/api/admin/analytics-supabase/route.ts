@@ -291,9 +291,9 @@ export async function GET(req: NextRequest) {
         return sub.status === 'active' && endDate >= now_date && endDate <= oneMonthLater;
       });
 
-      // 2. 找出免费次数用完的用户（subscription_type为'times'且chat_count >= 50）
+      // 2. 找出免费次数用完的用户（subscription_type为'free'且chat_count >= 5）
       const freeTimesUsedUp = users.filter((user: any) => {
-        return user.subscription_type === 'times' && user.chat_count >= 50;
+        return user.subscription_type === 'free' && user.chat_count >= 5;
       });
 
       // 构建订阅提醒列表

@@ -345,16 +345,16 @@ export default function Analytics() {
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户使用分析</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段token消耗</span>
-              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段对话数</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_conversations}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段消息数</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_messages}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#EAEBF0]">时间段token消耗</span>
+              <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#EAEBF0]">时间段平均每消息Token</span>
