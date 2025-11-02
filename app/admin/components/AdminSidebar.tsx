@@ -15,6 +15,7 @@ export default function AdminSidebar({ activeTab, onTabChange }: AdminSidebarPro
     { id: 'payments', label: '支付管理', icon: '💰' },
     { id: 'activation', label: '激活码管理', icon: '🎫' },
     { id: 'qrcodes', label: '二维码管理', icon: '📱' },
+    { id: 'custom-ai', label: '定制化AI管理', icon: '🤖' },
     { id: 'admin', label: '管理功能', icon: '⚙️' }
   ];
 

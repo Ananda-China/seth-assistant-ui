@@ -9,6 +9,7 @@ import ContentManagement from './ContentManagement';
 import PaymentManagement from './PaymentManagement';
 import ActivationManagement from './ActivationManagement';
 import QRCodeManagement from './QRCodeManagement';
+import CustomAIManagement from './CustomAIManagement';
 import AdminManagement from './AdminManagement';
 
 interface AdminUser {
@@ -48,6 +49,8 @@ export default function AdminDashboard({ currentUser }: AdminDashboardProps) {
         return <ActivationManagement />;
       case 'qrcodes':
         return <QRCodeManagement />;
+      case 'custom-ai':
+        return <CustomAIManagement />;
       case 'admin':
         return <AdminManagement />;
       default:
