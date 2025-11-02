@@ -113,6 +113,14 @@ export async function GET(req: NextRequest) {
       totalMessages: conversationStats.reduce((sum, c) => sum + (c.total_messages || 0), 0)
     };
 
+    console.log('📊 统计数据:', {
+      conversationsCount: conversations?.length || 0,
+      conversationStatsCount: conversationStats.length,
+      stats,
+      showDeleted,
+      statusFilter: status
+    });
+
     // 应用过滤
     let filteredConversations = conversationStats;
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import UserGuide from '../components/UserGuide';
 import CozeCustomerService from '../components/CozeCustomerService';
+import { sendChatMessage, hasCustomAIConfig } from '../lib/chat-client';
 
 type ChatMessage = {
   id: string;
@@ -488,25 +489,17 @@ export default function HomePage() {
       }));
     }
 
-    console.log('📤 发送到 /api/chat:', {
+    console.log('📤 发送聊天消息:', {
       query: userMsg.content,
       conversation_id: currentConvId,
-      client_conversation_id: currentConvId
     });
 
     let res;
     try {
-      res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: userMsg.content,
-          conversation_id: currentConvId, // 修复：使用当前有效的对话ID
-          client_conversation_id: currentConvId, // 使用当前有效的对话ID
-        }),
-      });
+      // 使用新的聊天客户端，自动选择合适的API端点
+      res = await sendChatMessage(userMsg.content, currentConvId);
 
-      console.log('📥 /api/chat 响应状态:', res.status);
+      console.log('📥 聊天API响应状态:', res.status);
     } catch (error) {
       console.error('❌ fetch请求失败:', {
         error: error instanceof Error ? error.message : String(error),

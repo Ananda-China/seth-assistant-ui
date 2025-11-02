@@ -402,6 +402,44 @@ export type Database = {
           updated_at?: string;
         };
       };
+      custom_ai_configs: {
+        Row: {
+          id: string;
+          customer_id: string;
+          dify_app_id: string;
+          dify_api_key: string;
+          dify_api_url: string;
+          knowledge_base_id: string | null;
+          system_prompt: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          customer_id: string;
+          dify_app_id: string;
+          dify_api_key: string;
+          dify_api_url: string;
+          knowledge_base_id?: string | null;
+          system_prompt?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          customer_id?: string;
+          dify_app_id?: string;
+          dify_api_key?: string;
+          dify_api_url?: string;
+          knowledge_base_id?: string | null;
+          system_prompt?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };
