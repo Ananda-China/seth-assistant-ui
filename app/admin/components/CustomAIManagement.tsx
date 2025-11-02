@@ -33,24 +33,48 @@ export default function CustomAIManagement() {
   });
 
   useEffect(() => {
-    // 从localStorage获取admin token
-    const token = localStorage.getItem('admin_token') || '';
+    // 从cookie获取admin token
+    const getCookieValue = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+      return '';
+    };
+
+    const token = getCookieValue('admin_token') || '';
     setAdminToken(token);
-    fetchConfigs();
+    if (token) {
+      fetchConfigs();
+    }
   }, []);
 
   const fetchConfigs = async () => {
     try {
-      const token = localStorage.getItem('admin_token') || '';
+      // 从cookie获取admin token
+      const getCookieValue = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+        return '';
+      };
+
+      const token = getCookieValue('admin_token') || '';
+      if (!token) {
+        setMsg('未找到管理员令牌，请重新登录');
+        return;
+      }
+
       const response = await fetch('/api/admin/custom-ai-configs', {
         headers: {
           'x-admin-token': token
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setConfigs(data.configs || []);
+        setConfigs(data.data || data.configs || []);
+      } else if (response.status === 403) {
+        setMsg('未授权，请重新登录');
       } else {
         setMsg('加载配置失败');
       }
@@ -91,7 +115,21 @@ export default function CustomAIManagement() {
         return;
       }
 
-      const token = localStorage.getItem('admin_token') || '';
+      // 从cookie获取admin token
+      const getCookieValue = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+        return '';
+      };
+
+      const token = getCookieValue('admin_token') || '';
+      if (!token) {
+        setMsg('未找到管理员令牌，请重新登录');
+        setLoading(false);
+        return;
+      }
+
       const method = editingId ? 'PUT' : 'POST';
       const body = editingId
         ? { id: editingId, ...formData }
@@ -147,7 +185,20 @@ export default function CustomAIManagement() {
     if (!confirm('确定要删除这个配置吗？')) return;
 
     try {
-      const token = localStorage.getItem('admin_token') || '';
+      // 从cookie获取admin token
+      const getCookieValue = (name: string) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+        return '';
+      };
+
+      const token = getCookieValue('admin_token') || '';
+      if (!token) {
+        setMsg('未找到管理员令牌，请重新登录');
+        return;
+      }
+
       const response = await fetch('/api/admin/custom-ai-configs', {
         method: 'DELETE',
         headers: {

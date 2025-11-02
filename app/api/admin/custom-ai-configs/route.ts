@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
+import { verifyAdminToken } from '../../../../lib/adminAuth';
 
 /**
  * 管理员API：管理定制化AI配置
- * 
+ *
  * GET: 获取所有定制化配置列表
  * POST: 创建新的定制化配置
  * PUT: 更新定制化配置
@@ -15,11 +16,17 @@ async function verifyAdmin(req: NextRequest): Promise<boolean> {
   try {
     // 从请求头获取管理员令牌
     const adminToken = req.headers.get('x-admin-token');
-    const adminSecret = process.env.ADMIN_SECRET || 'admin-secret-key';
-    
-    // 简单的令牌验证（生产环境应使用更复杂的认证）
-    return adminToken === adminSecret;
+
+    if (!adminToken) {
+      console.log('❌ 未提供admin token');
+      return false;
+    }
+
+    // 使用JWT验证
+    const adminUser = verifyAdminToken(adminToken);
+    return !!adminUser;
   } catch (error) {
+    console.error('❌ 管理员验证失败:', error);
     return false;
   }
 }
@@ -247,8 +254,9 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
-    const url = new URL(req.url);
-    const id = url.searchParams.get('id');
+    // 从请求体获取ID
+    const body = await req.json();
+    const id = body.id;
 
     if (!id) {
       return new Response(JSON.stringify({ error: '缺少配置ID' }), {
