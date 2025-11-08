@@ -217,6 +217,9 @@ export async function POST(req: NextRequest) {
     const decoder = new TextDecoder();
     let firstEventSent = false;
 
+    // 提前获取storeModule，避免在流中获取
+    const storeModule = await getStoreModule();
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -236,11 +239,15 @@ export async function POST(req: NextRequest) {
             for (const line of lines) {
               const dataPrefix = 'data: ';
               if (!line.startsWith(dataPrefix)) {
-                controller.enqueue(encoder.encode(line + '\n'));
+                // 跳过非data行，不转发
                 continue;
               }
 
-              const jsonStr = line.slice(dataPrefix.length);
+              const jsonStr = line.slice(dataPrefix.length).trim();
+              if (!jsonStr || jsonStr === '[DONE]') {
+                continue;
+              }
+
               try {
                 const evt = JSON.parse(jsonStr);
 
@@ -255,7 +262,6 @@ export async function POST(req: NextRequest) {
                   // 保存Dify对话ID到数据库
                   if (clientConversationId && !difyConversationId) {
                     try {
-                      const storeModule = await getStoreModule();
                       await storeModule.setDifyConversationId(
                         auth.phone,
                         clientConversationId,
@@ -274,8 +280,8 @@ export async function POST(req: NextRequest) {
                   controller.enqueue(encoder.encode(content));
                 }
               } catch (e) {
-                // JSON解析失败，直接转发原始行
-                controller.enqueue(encoder.encode(line + '\n'));
+                // JSON解析失败，记录错误但继续处理
+                console.error('❌ JSON解析失败:', e, 'line:', line);
               }
             }
           }
