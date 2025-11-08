@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
-      customer_id,
+      customer_phone, // 前端传入手机号
       dify_app_id,
       dify_api_key,
       dify_api_url,
@@ -102,11 +102,48 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // 验证必填字段
-    if (!customer_id || !dify_app_id || !dify_api_key || !dify_api_url) {
+    if (!customer_phone || !dify_app_id || !dify_api_key || !dify_api_url) {
       return new Response(JSON.stringify({
         error: '缺少必填字段'
       }), {
         status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 根据手机号查找用户UUID
+    const { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('phone', customer_phone)
+      .single();
+
+    if (userError || !user) {
+      console.error('❌ 查找用户失败:', userError);
+      return new Response(JSON.stringify({
+        error: '未找到该手机号对应的用户',
+        details: `手机号: ${customer_phone}`
+      }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const customer_id = user.id;
+
+    // 检查是否已存在配置
+    const { data: existingConfig } = await supabaseAdmin
+      .from('custom_ai_configs')
+      .select('id')
+      .eq('customer_id', customer_id)
+      .single();
+
+    if (existingConfig) {
+      return new Response(JSON.stringify({
+        error: '该用户已存在定制化配置',
+        details: '每个用户只能有一个定制化配置'
+      }), {
+        status: 409,
         headers: { 'Content-Type': 'application/json' }
       });
     }
@@ -170,13 +207,35 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, ...updateData } = body;
+    const { id, customer_phone, ...updateData } = body;
 
     if (!id) {
       return new Response(JSON.stringify({ error: '缺少配置ID' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
+    }
+
+    // 如果提供了手机号，需要转换为UUID
+    if (customer_phone) {
+      const { data: user, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('phone', customer_phone)
+        .single();
+
+      if (userError || !user) {
+        console.error('❌ 查找用户失败:', userError);
+        return new Response(JSON.stringify({
+          error: '未找到该手机号对应的用户',
+          details: `手机号: ${customer_phone}`
+        }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      updateData.customer_id = user.id;
     }
 
     // 更新配置

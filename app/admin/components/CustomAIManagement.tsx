@@ -12,6 +12,10 @@ interface CustomAIConfig {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  customer?: {
+    phone: string;
+    nickname?: string;
+  };
 }
 
 export default function CustomAIManagement() {
@@ -23,7 +27,7 @@ export default function CustomAIManagement() {
 
   // 表单状态
   const [formData, setFormData] = useState({
-    customer_id: '',
+    customer_phone: '', // 改为手机号
     dify_app_id: '',
     dify_api_key: '',
     dify_api_url: '',
@@ -62,8 +66,8 @@ export default function CustomAIManagement() {
 
     try {
       // 验证必填字段
-      if (!formData.customer_id.trim()) {
-        setMsg('请输入客户ID');
+      if (!formData.customer_phone.trim()) {
+        setMsg('请输入客户手机号');
         setLoading(false);
         return;
       }
@@ -112,7 +116,7 @@ export default function CustomAIManagement() {
       setShowAddForm(false);
       setEditingId(null);
       setFormData({
-        customer_id: '',
+        customer_phone: '',
         dify_app_id: '',
         dify_api_key: '',
         dify_api_url: '',
@@ -130,7 +134,7 @@ export default function CustomAIManagement() {
   const handleEdit = (config: CustomAIConfig) => {
     setEditingId(config.id);
     setFormData({
-      customer_id: config.customer_id,
+      customer_phone: config.customer?.phone || '', // 使用手机号
       dify_app_id: config.dify_app_id,
       dify_api_key: '',
       dify_api_url: config.dify_api_url,
@@ -168,7 +172,7 @@ export default function CustomAIManagement() {
     setShowAddForm(false);
     setEditingId(null);
     setFormData({
-      customer_id: '',
+      customer_phone: '',
       dify_app_id: '',
       dify_api_key: '',
       dify_api_url: '',
@@ -221,16 +225,16 @@ export default function CustomAIManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#EAEBF0] mb-2">
-                  客户ID *
+                  客户手机号 *
                   <span className="text-xs text-[#8A94B3] ml-2">
-                    (需要UUID格式，可从用户管理页面获取)
+                    (输入客户注册时使用的手机号)
                   </span>
                 </label>
                 <input
                   type="text"
-                  value={formData.customer_id}
-                  onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                  placeholder="例如: 550e8400-e29b-41d4-a716-446655440000"
+                  value={formData.customer_phone}
+                  onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                  placeholder="例如: 13800138000"
                   className="w-full px-3 py-2 bg-[#2E335B] border border-[#3A416B] rounded-lg text-[#EAEBF0] placeholder-[#8A94B3] focus:outline-none focus:border-[#C8B6E2]"
                   disabled={!!editingId}
                 />
@@ -328,7 +332,8 @@ export default function CustomAIManagement() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#2E335B] bg-[#0F1119]">
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">客户ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">客户手机号</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">客户昵称</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">应用ID</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">API URL</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-[#C8B6E2]">状态</th>
@@ -340,7 +345,10 @@ export default function CustomAIManagement() {
               {configs.map((config) => (
                 <tr key={config.id} className="border-b border-[#2E335B] hover:bg-[#0F1119] transition-colors">
                   <td className="px-6 py-3 text-sm text-[#EAEBF0]">
-                    {config.customer_id ? `${config.customer_id.substring(0, 8)}...` : '未设置'}
+                    {config.customer?.phone || '未设置'}
+                  </td>
+                  <td className="px-6 py-3 text-sm text-[#8A94B3]">
+                    {config.customer?.nickname || '-'}
                   </td>
                   <td className="px-6 py-3 text-sm text-[#EAEBF0]">{config.dify_app_id || '未设置'}</td>
                   <td className="px-6 py-3 text-sm text-[#EAEBF0]">
