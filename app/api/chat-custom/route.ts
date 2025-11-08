@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { requireUser } from '../../../lib/auth';
 import { supabaseAdmin } from '../../../lib/supabase';
+import { getStoreModule } from '../../../lib/config';
 
 // 性能优化配置
 const MAX_RETRIES = 2;
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const query: string = String(body?.query || '').trim();
     const conversationId: string | undefined = body?.conversation_id;
+    const clientConversationId: string | undefined = body?.client_conversation_id || conversationId;
 
     if (!query) {
       return new Response(JSON.stringify({ error: '查询不能为空' }), {
@@ -108,7 +110,8 @@ export async function POST(req: NextRequest) {
     console.log('📝 聊天请求:', {
       phone: auth.phone,
       queryLength: query.length,
-      hasConversationId: !!conversationId
+      hasConversationId: !!conversationId,
+      hasClientConversationId: !!clientConversationId
     });
 
     // 3. 获取用户的定制化配置
@@ -144,7 +147,24 @@ export async function POST(req: NextRequest) {
       apiUrl: customConfig.dify_api_url
     });
 
-    // 4. 构建Dify API请求
+    // 4. 获取Dify对话ID（如果存在）
+    let difyConversationId: string | undefined = undefined;
+    if (clientConversationId) {
+      try {
+        const storeModule = await getStoreModule();
+        const conv = await storeModule.getConversation(auth.phone, clientConversationId);
+        if (conv && conv.dify_conversation_id) {
+          difyConversationId = conv.dify_conversation_id;
+          console.log('✅ 找到Dify对话ID:', difyConversationId);
+        } else {
+          console.log('ℹ️ 未找到Dify对话ID，将创建新对话');
+        }
+      } catch (error) {
+        console.error('❌ 获取Dify对话ID失败:', error);
+      }
+    }
+
+    // 5. 构建Dify API请求
     const apiUrl = `${customConfig.dify_api_url.replace(/\/$/, '')}/chat-messages`;
 
     const difyPayload = {
@@ -152,14 +172,16 @@ export async function POST(req: NextRequest) {
       query,
       response_mode: 'streaming',
       user: auth.phone, // 使用用户phone作为标识
-      conversation_id: conversationId || undefined,
+      conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
       auto_generate_name: false,
     };
 
     console.log('🔍 Dify API请求:', {
       apiUrl,
       queryPreview: query.substring(0, 50) + '...',
-      hasConversationId: !!conversationId
+      clientConversationId,
+      difyConversationId,
+      hasDifyConversationId: !!difyConversationId
     });
 
     // 5. 转发请求到Dify
@@ -187,9 +209,71 @@ export async function POST(req: NextRequest) {
       return new Response(text || 'Dify请求失败', { status: difyRes.status });
     }
 
-    // 6. 返回流式响应
+    // 6. 处理流式响应并保存Dify对话ID
     console.log('✅ 开始流式传输Dify响应');
-    return new Response(difyRes.body, {
+
+    const reader = difyRes.body.getReader();
+    const decoder = new TextDecoder();
+    let newDifyConversationId: string | null = null;
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+
+            // 尝试从SSE事件中提取conversation_id
+            if (!newDifyConversationId && chunk.includes('conversation_id')) {
+              try {
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    const jsonStr = line.substring(6).trim();
+                    if (jsonStr && jsonStr !== '[DONE]') {
+                      const data = JSON.parse(jsonStr);
+                      if (data.conversation_id) {
+                        newDifyConversationId = data.conversation_id;
+                        console.log('✅ 提取到Dify对话ID:', newDifyConversationId);
+
+                        // 保存Dify对话ID到数据库
+                        if (clientConversationId && !difyConversationId) {
+                          try {
+                            const storeModule = await getStoreModule();
+                            await storeModule.setDifyConversationId(
+                              auth.phone,
+                              clientConversationId,
+                              newDifyConversationId
+                            );
+                            console.log('✅ Dify对话ID已保存到数据库');
+                          } catch (error) {
+                            console.error('❌ 保存Dify对话ID失败:', error);
+                          }
+                        }
+                        break;
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                // 忽略JSON解析错误
+              }
+            }
+
+            controller.enqueue(value);
+          }
+        } catch (error) {
+          console.error('❌ 流式传输错误:', error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream',
