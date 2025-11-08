@@ -209,60 +209,75 @@ export async function POST(req: NextRequest) {
       return new Response(text || 'Dify请求失败', { status: difyRes.status });
     }
 
-    // 6. 处理流式响应并保存Dify对话ID
+    // 6. 处理流式响应
     console.log('✅ 开始流式传输Dify响应');
 
     const reader = difyRes.body.getReader();
+    const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    let newDifyConversationId: string | null = null;
+    let firstEventSent = false;
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          let buffer = '';
+
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log('✅ 流式响应传输完成');
+              break;
+            }
 
-            const chunk = decoder.decode(value, { stream: true });
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\n/);
+            buffer = lines.pop() || '';
 
-            // 尝试从SSE事件中提取conversation_id
-            if (!newDifyConversationId && chunk.includes('conversation_id')) {
+            for (const line of lines) {
+              const dataPrefix = 'data: ';
+              if (!line.startsWith(dataPrefix)) {
+                controller.enqueue(encoder.encode(line + '\n'));
+                continue;
+              }
+
+              const jsonStr = line.slice(dataPrefix.length);
               try {
-                const lines = chunk.split('\n');
-                for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                    const jsonStr = line.substring(6).trim();
-                    if (jsonStr && jsonStr !== '[DONE]') {
-                      const data = JSON.parse(jsonStr);
-                      if (data.conversation_id) {
-                        newDifyConversationId = data.conversation_id;
-                        console.log('✅ 提取到Dify对话ID:', newDifyConversationId);
+                const evt = JSON.parse(jsonStr);
 
-                        // 保存Dify对话ID到数据库
-                        if (clientConversationId && !difyConversationId) {
-                          try {
-                            const storeModule = await getStoreModule();
-                            await storeModule.setDifyConversationId(
-                              auth.phone,
-                              clientConversationId,
-                              newDifyConversationId
-                            );
-                            console.log('✅ Dify对话ID已保存到数据库');
-                          } catch (error) {
-                            console.error('❌ 保存Dify对话ID失败:', error);
-                          }
-                        }
-                        break;
-                      }
+                // 提取并发送conversation_id
+                if (!firstEventSent && evt?.conversation_id) {
+                  firstEventSent = true;
+                  console.log('✅ 提取到Dify对话ID:', evt.conversation_id);
+
+                  // 发送CID标记给前端
+                  controller.enqueue(encoder.encode(`CID:${evt.conversation_id}\n`));
+
+                  // 保存Dify对话ID到数据库
+                  if (clientConversationId && !difyConversationId) {
+                    try {
+                      const storeModule = await getStoreModule();
+                      await storeModule.setDifyConversationId(
+                        auth.phone,
+                        clientConversationId,
+                        evt.conversation_id
+                      );
+                      console.log('✅ Dify对话ID已保存到数据库');
+                    } catch (error) {
+                      console.error('❌ 保存Dify对话ID失败:', error);
                     }
                   }
                 }
+
+                // 转发AI回复内容
+                const content = evt?.answer || evt?.data || '';
+                if (content) {
+                  controller.enqueue(encoder.encode(content));
+                }
               } catch (e) {
-                // 忽略JSON解析错误
+                // JSON解析失败，直接转发原始行
+                controller.enqueue(encoder.encode(line + '\n'));
               }
             }
-
-            controller.enqueue(value);
           }
         } catch (error) {
           console.error('❌ 流式传输错误:', error);
