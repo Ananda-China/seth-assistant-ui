@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '../../../../lib/supabase';
-import { verifyAdminToken } from '../../../../lib/adminAuth';
+import { requireAdminAuth } from '../../../../lib/adminAuth';
 
 /**
  * 管理员API：管理定制化AI配置
@@ -11,38 +11,15 @@ import { verifyAdminToken } from '../../../../lib/adminAuth';
  * DELETE: 删除定制化配置
  */
 
-// 验证管理员身份的辅助函数
-async function verifyAdmin(req: NextRequest): Promise<boolean> {
-  try {
-    // 从请求头获取管理员令牌
-    const adminToken = req.headers.get('x-admin-token');
-
-    if (!adminToken) {
-      console.log('❌ 未提供admin token');
-      return false;
-    }
-
-    // 使用JWT验证
-    const adminUser = verifyAdminToken(adminToken);
-    return !!adminUser;
-  } catch (error) {
-    console.error('❌ 管理员验证失败:', error);
-    return false;
-  }
-}
-
 /**
  * GET: 获取所有定制化AI配置
  */
 export async function GET(req: NextRequest) {
   try {
     // 验证管理员身份
-    const isAdmin = await verifyAdmin(req);
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: '未授权' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     // 获取分页参数
@@ -109,12 +86,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // 验证管理员身份
-    const isAdmin = await verifyAdmin(req);
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: '未授权' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     const body = await req.json();
@@ -186,12 +160,9 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     // 验证管理员身份
-    const isAdmin = await verifyAdmin(req);
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: '未授权' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     const body = await req.json();
@@ -246,12 +217,9 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     // 验证管理员身份
-    const isAdmin = await verifyAdmin(req);
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: '未授权' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const authResult = requireAdminAuth(req);
+    if ('error' in authResult) {
+      return authResult.error;
     }
 
     // 从请求体获取ID

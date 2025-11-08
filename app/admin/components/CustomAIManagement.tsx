@@ -20,8 +20,7 @@ export default function CustomAIManagement() {
   const [msg, setMsg] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [adminToken, setAdminToken] = useState('');
-  
+
   // 表单状态
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -33,48 +32,20 @@ export default function CustomAIManagement() {
   });
 
   useEffect(() => {
-    // 从cookie获取admin token
-    const getCookieValue = (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-      return '';
-    };
-
-    const token = getCookieValue('admin_token') || '';
-    setAdminToken(token);
-    if (token) {
-      fetchConfigs();
-    }
+    fetchConfigs();
   }, []);
 
   const fetchConfigs = async () => {
     try {
-      // 从cookie获取admin token
-      const getCookieValue = (name: string) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-        return '';
-      };
-
-      const token = getCookieValue('admin_token') || '';
-      if (!token) {
-        setMsg('未找到管理员令牌，请重新登录');
-        return;
-      }
-
       const response = await fetch('/api/admin/custom-ai-configs', {
-        headers: {
-          'x-admin-token': token
-        }
+        credentials: 'include' // 确保发送cookie
       });
 
       if (response.ok) {
         const data = await response.json();
         setConfigs(data.data || data.configs || []);
-      } else if (response.status === 403) {
-        setMsg('未授权，请重新登录');
+      } else if (response.status === 401 || response.status === 403) {
+        setMsg('未找到管理员配置，请先登录管理员账户');
       } else {
         setMsg('加载配置失败');
       }
@@ -115,21 +86,6 @@ export default function CustomAIManagement() {
         return;
       }
 
-      // 从cookie获取admin token
-      const getCookieValue = (name: string) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-        return '';
-      };
-
-      const token = getCookieValue('admin_token') || '';
-      if (!token) {
-        setMsg('未找到管理员令牌，请重新登录');
-        setLoading(false);
-        return;
-      }
-
       const method = editingId ? 'PUT' : 'POST';
       const body = editingId
         ? { id: editingId, ...formData }
@@ -138,9 +94,9 @@ export default function CustomAIManagement() {
       const response = await fetch('/api/admin/custom-ai-configs', {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token
+          'Content-Type': 'application/json'
         },
+        credentials: 'include', // 确保发送cookie
         body: JSON.stringify(body)
       });
 
@@ -185,26 +141,12 @@ export default function CustomAIManagement() {
     if (!confirm('确定要删除这个配置吗？')) return;
 
     try {
-      // 从cookie获取admin token
-      const getCookieValue = (name: string) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-        return '';
-      };
-
-      const token = getCookieValue('admin_token') || '';
-      if (!token) {
-        setMsg('未找到管理员令牌，请重新登录');
-        return;
-      }
-
       const response = await fetch('/api/admin/custom-ai-configs', {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token
+          'Content-Type': 'application/json'
         },
+        credentials: 'include', // 确保发送cookie
         body: JSON.stringify({ id })
       });
 
@@ -251,7 +193,17 @@ export default function CustomAIManagement() {
 
       {msg && (
         <div className={`p-4 rounded-lg ${msg.includes('成功') ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-          {msg}
+          <div className="flex items-center justify-between">
+            <span>{msg}</span>
+            {msg.includes('未找到管理员配置') && (
+              <a
+                href="/admin/login"
+                className="ml-4 px-3 py-1 bg-[#C8B6E2] text-[#1A1D33] rounded text-sm hover:bg-[#B8A6D2]"
+              >
+                前往登录
+              </a>
+            )}
+          </div>
         </div>
       )}
 
