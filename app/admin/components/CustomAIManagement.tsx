@@ -102,7 +102,10 @@ export default function CustomAIManagement() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || '操作失败');
+        const errorMsg = error.details
+          ? `${error.error}: ${error.details}`
+          : error.error || '操作失败';
+        throw new Error(errorMsg);
       }
 
       setMsg(editingId ? '配置更新成功' : '配置创建成功');
@@ -219,12 +222,15 @@ export default function CustomAIManagement() {
               <div>
                 <label className="block text-sm font-medium text-[#EAEBF0] mb-2">
                   客户ID *
+                  <span className="text-xs text-[#8A94B3] ml-2">
+                    (需要UUID格式，可从用户管理页面获取)
+                  </span>
                 </label>
                 <input
                   type="text"
                   value={formData.customer_id}
                   onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-                  placeholder="输入客户UUID"
+                  placeholder="例如: 550e8400-e29b-41d4-a716-446655440000"
                   className="w-full px-3 py-2 bg-[#2E335B] border border-[#3A416B] rounded-lg text-[#EAEBF0] placeholder-[#8A94B3] focus:outline-none focus:border-[#C8B6E2]"
                   disabled={!!editingId}
                 />

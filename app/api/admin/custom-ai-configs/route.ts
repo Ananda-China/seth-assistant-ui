@@ -128,7 +128,11 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('❌ 创建配置失败:', error);
-      return new Response(JSON.stringify({ error: '创建配置失败' }), {
+      return new Response(JSON.stringify({
+        error: '创建配置失败',
+        details: error.message,
+        code: error.code
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -185,7 +189,11 @@ export async function PUT(req: NextRequest) {
 
     if (error) {
       console.error('❌ 更新配置失败:', error);
-      return new Response(JSON.stringify({ error: '更新配置失败' }), {
+      return new Response(JSON.stringify({
+        error: '更新配置失败',
+        details: error.message,
+        code: error.code
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -241,7 +249,11 @@ export async function DELETE(req: NextRequest) {
 
     if (error) {
       console.error('❌ 删除配置失败:', error);
-      return new Response(JSON.stringify({ error: '删除配置失败' }), {
+      return new Response(JSON.stringify({
+        error: '删除配置失败',
+        details: error.message,
+        code: error.code
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
