@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { requireUser } from '../../../lib/auth';
 import { supabaseAdmin } from '../../../lib/supabase';
-import { getStoreModule } from '../../../lib/config';
+import { getStoreModule, getUsers } from '../../../lib/config';
 
 // 性能优化配置
 const MAX_RETRIES = 2;
@@ -114,7 +114,62 @@ export async function POST(req: NextRequest) {
       hasClientConversationId: !!clientConversationId
     });
 
-    // 3. 获取用户的定制化配置
+    // 3. 检查用户权限并增加聊天次数
+    const usersModule = await getUsers();
+    const permission = await usersModule.getUserPermission(auth.phone);
+
+    console.log('🔐 权限检查结果:', {
+      phone: auth.phone,
+      canChat: permission.canChat,
+      isTrialActive: permission.isTrialActive,
+      isPaidUser: permission.isPaidUser,
+      chatLimit: permission.chatLimit,
+      usedChats: permission.usedChats,
+      remainingChats: permission.chatLimit - permission.usedChats
+    });
+
+    if (!permission.canChat) {
+      let message = '';
+      if (!permission.isTrialActive && !permission.isPaidUser) {
+        message = `您的5次免费使用已用完，请升级到付费版本继续使用。`;
+      } else if (permission.usedChats >= permission.chatLimit) {
+        message = `免费次数已用完（${permission.usedChats}/${permission.chatLimit}），请升级继续使用。`;
+      } else {
+        message = '暂时无法使用聊天功能，请联系客服。';
+      }
+
+      return new Response(JSON.stringify({
+        error: message,
+        permission: {
+          isTrialActive: permission.isTrialActive,
+          isPaidUser: permission.isPaidUser,
+          remainingDays: permission.remainingDays,
+          chatLimit: permission.chatLimit,
+          usedChats: permission.usedChats
+        }
+      }), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 增加聊天次数计数
+    const canIncrement = await usersModule.incrementChatCount(auth.phone);
+    if (!canIncrement) {
+      return new Response(JSON.stringify({
+        error: '聊天次数更新失败，请稍后重试。'
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('✅ 聊天次数已增加:', {
+      phone: auth.phone,
+      newCount: permission.usedChats + 1
+    });
+
+    // 4. 获取用户的定制化配置
     // 首先需要从phone获取user_id
     const { data: userData, error: userError } = await supabaseAdmin
       .from('users')
@@ -147,7 +202,7 @@ export async function POST(req: NextRequest) {
       apiUrl: customConfig.dify_api_url
     });
 
-    // 4. 获取Dify对话ID（如果存在）
+    // 5. 获取Dify对话ID（如果存在）
     let difyConversationId: string | undefined = undefined;
     if (clientConversationId) {
       try {
@@ -164,7 +219,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. 构建Dify API请求
+    // 6. 构建Dify API请求
     const apiUrl = `${customConfig.dify_api_url.replace(/\/$/, '')}/chat-messages`;
 
     const difyPayload = {
@@ -184,7 +239,7 @@ export async function POST(req: NextRequest) {
       hasDifyConversationId: !!difyConversationId
     });
 
-    // 5. 保存用户消息到数据库
+    // 7. 保存用户消息到数据库
     const storeModule = await getStoreModule();
     let userMessageId: string | null = null;
     if (clientConversationId) {
@@ -208,7 +263,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 6. 转发请求到Dify
+    // 8. 转发请求到Dify
     const difyRes = await fetchWithRetry(
       apiUrl,
       {
@@ -233,7 +288,7 @@ export async function POST(req: NextRequest) {
       return new Response(text || 'Dify请求失败', { status: difyRes.status });
     }
 
-    // 7. 处理流式响应
+    // 9. 处理流式响应
     console.log('✅ 开始流式传输Dify响应');
 
     const reader = difyRes.body.getReader();
