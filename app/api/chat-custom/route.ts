@@ -184,7 +184,31 @@ export async function POST(req: NextRequest) {
       hasDifyConversationId: !!difyConversationId
     });
 
-    // 5. 转发请求到Dify
+    // 5. 保存用户消息到数据库
+    const storeModule = await getStoreModule();
+    let userMessageId: string | null = null;
+    if (clientConversationId) {
+      try {
+        const userMessage = await storeModule.addMessage(auth.phone, clientConversationId, 'user', query);
+        userMessageId = userMessage.id;
+        // 若标题还是默认值，则用用户问题前 15 字更新标题
+        const suggested = query.slice(0, 15);
+        await storeModule.ensureConversationTitle(auth.phone, clientConversationId, suggested);
+        console.log(`✅ 用户消息已保存到对话 ${clientConversationId}: ${query.substring(0, 50)}...`);
+      } catch (error) {
+        console.error('❌ 保存用户消息失败:', error);
+        // 如果保存失败，返回错误
+        return new Response(JSON.stringify({
+          error: '消息保存失败，请重试',
+          details: error instanceof Error ? error.message : '未知错误'
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // 6. 转发请求到Dify
     const difyRes = await fetchWithRetry(
       apiUrl,
       {
@@ -209,16 +233,17 @@ export async function POST(req: NextRequest) {
       return new Response(text || 'Dify请求失败', { status: difyRes.status });
     }
 
-    // 6. 处理流式响应
+    // 7. 处理流式响应
     console.log('✅ 开始流式传输Dify响应');
 
     const reader = difyRes.body.getReader();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     let firstEventSent = false;
-
-    // 提前获取storeModule，避免在流中获取
-    const storeModule = await getStoreModule();
+    let assistantFull = ''; // 收集完整的助手回复
+    let totalTokens = 0;
+    let userTokens = 0;
+    let assistantTokens = 0;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -274,9 +299,19 @@ export async function POST(req: NextRequest) {
                   }
                 }
 
+                // 解析token使用量
+                if (evt?.metadata?.usage) {
+                  const usage = evt.metadata.usage;
+                  totalTokens = usage.total_tokens || 0;
+                  userTokens = usage.prompt_tokens || 0;
+                  assistantTokens = usage.completion_tokens || 0;
+                  console.log('📊 Token使用量:', { totalTokens, userTokens, assistantTokens });
+                }
+
                 // 转发AI回复内容
                 const content = evt?.answer || evt?.data || '';
                 if (content) {
+                  assistantFull += content; // 收集完整内容
                   controller.enqueue(encoder.encode(content));
                 }
               } catch (e) {
@@ -284,6 +319,54 @@ export async function POST(req: NextRequest) {
                 console.error('❌ JSON解析失败:', e, 'line:', line);
               }
             }
+          }
+
+          // 保存助手消息到数据库
+          try {
+            if (clientConversationId && assistantFull) {
+              console.log('📝 保存助手消息:', {
+                conversationId: clientConversationId,
+                contentLength: assistantFull.length,
+                contentPreview: assistantFull.substring(0, 100) + '...',
+                contentEnd: '...' + assistantFull.substring(assistantFull.length - 100),
+                hasNewlines: assistantFull.includes('\n'),
+                newlineCount: (assistantFull.match(/\n/g) || []).length
+              });
+
+              const savedMessage = await storeModule.addMessage(
+                auth.phone,
+                clientConversationId,
+                'assistant',
+                assistantFull,
+                assistantTokens
+              );
+              console.log('✅ 助手消息已保存到数据库:', {
+                messageId: savedMessage.id,
+                contentLength: savedMessage.content?.length || 0
+              });
+
+              // 更新用户消息的token使用量
+              if (userMessageId && userTokens > 0) {
+                await storeModule.updateMessageTokens(userMessageId, userTokens);
+                console.log(`✅ 已更新用户消息token使用量: ${userTokens}`);
+              }
+            } else {
+              if (!clientConversationId) {
+                console.warn('⚠️ 未提供clientConversationId，无法保存消息');
+              }
+              if (!assistantFull) {
+                console.warn('⚠️ 助手回复为空，无法保存消息');
+              }
+            }
+          } catch (error) {
+            console.error('❌ 保存消息或更新token失败:', {
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+              conversationId: clientConversationId,
+              contentLength: assistantFull?.length || 0,
+              assistantTokens
+            });
+            // 即使保存失败也要关闭流，避免客户端挂起
           }
         } catch (error) {
           console.error('❌ 流式传输错误:', error);
