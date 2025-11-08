@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     // 获取配置列表
     const { data, error, count } = await supabaseAdmin
       .from('custom_ai_configs')
-      .select('id, customer_id, dify_app_id, is_active, created_at, updated_at', { count: 'exact' })
+      .select('id, customer_id, dify_app_id, dify_api_url, knowledge_base_id, system_prompt, is_active, created_at, updated_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
