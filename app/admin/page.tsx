@@ -1,13 +1,9 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { verifyAdminToken } from '../../../lib/adminAuth';
-import AdminDashboardWrapper from '../components/AdminDashboardWrapper';
+import { verifyAdminToken } from '../../lib/adminAuth';
+import AdminDashboardWrapper from './components/AdminDashboardWrapper';
 
-export default async function AdminCatchAllPage({
-  params,
-}: {
-  params: Promise<{ slug?: string[] }>;
-}) {
+export default async function AdminPage() {
   const cookieStore = await cookies();
   const adminToken = cookieStore.get('admin_token')?.value;
 
@@ -22,6 +18,7 @@ export default async function AdminCatchAllPage({
     redirect('/admin/login');
   }
 
-  // 如果是根admin路径或任何子路径，显示主面板
+  // 显示主面板
   return <AdminDashboardWrapper currentUser={adminUser} />;
 }
+
