@@ -339,9 +339,13 @@ export default function CustomAIManagement() {
             <tbody>
               {configs.map((config) => (
                 <tr key={config.id} className="border-b border-[#2E335B] hover:bg-[#0F1119] transition-colors">
-                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">{config.customer_id.substring(0, 8)}...</td>
-                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">{config.dify_app_id}</td>
-                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">{config.dify_api_url.substring(0, 30)}...</td>
+                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">
+                    {config.customer_id ? `${config.customer_id.substring(0, 8)}...` : '未设置'}
+                  </td>
+                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">{config.dify_app_id || '未设置'}</td>
+                  <td className="px-6 py-3 text-sm text-[#EAEBF0]">
+                    {config.dify_api_url ? `${config.dify_api_url.substring(0, 30)}...` : '未设置'}
+                  </td>
                   <td className="px-6 py-3 text-sm">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${config.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                       {config.is_active ? '启用' : '禁用'}
