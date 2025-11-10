@@ -212,6 +212,15 @@ export async function POST(req: NextRequest) {
 
   const apiUrl = `${DIFY_API_URL.replace(/\/$/, '')}/chat-messages`; // e.g. https://api.dify.ai/v1
 
+  const difyPayload = {
+    inputs: {},
+    query,
+    response_mode: 'streaming',
+    user: 'anonymous',
+    conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
+    // 添加更多配置以确保完整回复
+    auto_generate_name: false, // 不自动生成对话名称
+  };
 
   console.log('🔍 Dify API 请求参数:', {
     apiUrl,
@@ -219,7 +228,9 @@ export async function POST(req: NextRequest) {
     conversationId,
     clientConversationId,
     difyConversationId,
-    hasDifyConversationId: !!difyConversationId
+    hasDifyConversationId: !!difyConversationId,
+    hasApiKey: !!DIFY_API_KEY,
+    apiKeyPrefix: DIFY_API_KEY?.substring(0, 10) + '...'
   });
 
   const difyRes = await fetchWithRetry(
@@ -230,20 +241,19 @@ export async function POST(req: NextRequest) {
         'Authorization': `Bearer ${DIFY_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        inputs: {},
-        query,
-        response_mode: 'streaming',
-        user: 'anonymous',
-        conversation_id: difyConversationId || undefined, // 使用Dify对话ID，如果为空则让Dify创建新对话
-        // 添加更多配置以确保完整回复
-        auto_generate_name: false, // 不自动生成对话名称
-      }),
+      body: JSON.stringify(difyPayload),
       // 增加超时时间，避免长回复被截断
       signal: AbortSignal.timeout(TOTAL_TIMEOUT),
     },
     MAX_RETRIES
   );
+
+  console.log('📥 Dify响应状态:', {
+    ok: difyRes.ok,
+    status: difyRes.status,
+    statusText: difyRes.statusText,
+    hasBody: !!difyRes.body
+  });
 
   if (!difyRes.ok || !difyRes.body) {
     const text = await difyRes.text().catch(() => '');

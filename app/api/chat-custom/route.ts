@@ -264,6 +264,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 8. 转发请求到Dify
+    console.log('🚀 准备发送Dify请求:', {
+      apiUrl,
+      hasApiKey: !!customConfig.dify_api_key,
+      apiKeyPrefix: customConfig.dify_api_key?.substring(0, 10) + '...',
+      payloadPreview: JSON.stringify(difyPayload).substring(0, 200)
+    });
+
     const difyRes = await fetchWithRetry(
       apiUrl,
       {
@@ -278,12 +285,21 @@ export async function POST(req: NextRequest) {
       MAX_RETRIES
     );
 
+    console.log('📥 Dify响应状态:', {
+      ok: difyRes.ok,
+      status: difyRes.status,
+      statusText: difyRes.statusText,
+      hasBody: !!difyRes.body,
+      headers: Object.fromEntries(difyRes.headers.entries())
+    });
+
     if (!difyRes.ok || !difyRes.body) {
       const text = await difyRes.text().catch(() => '');
       console.error('❌ Dify请求失败:', {
         status: difyRes.status,
         statusText: difyRes.statusText,
-        responsePreview: text.substring(0, 200)
+        responsePreview: text.substring(0, 200),
+        fullResponse: text
       });
       return new Response(text || 'Dify请求失败', { status: difyRes.status });
     }
@@ -299,6 +315,8 @@ export async function POST(req: NextRequest) {
     let totalTokens = 0;
     let userTokens = 0;
     let assistantTokens = 0;
+    let chunkCount = 0;
+    let eventCount = 0;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -308,13 +326,27 @@ export async function POST(req: NextRequest) {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              console.log('✅ 流式响应传输完成');
+              console.log('✅ 流式响应传输完成:', {
+                totalChunks: chunkCount,
+                totalEvents: eventCount,
+                assistantLength: assistantFull.length,
+                assistantPreview: assistantFull.substring(0, 100)
+              });
               break;
             }
 
+            chunkCount++;
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split(/\n/);
             buffer = lines.pop() || '';
+
+            if (chunkCount <= 3) {
+              console.log(`📦 Chunk ${chunkCount}:`, {
+                linesCount: lines.length,
+                bufferLength: buffer.length,
+                firstLine: lines[0]?.substring(0, 100)
+              });
+            }
 
             for (const line of lines) {
               const dataPrefix = 'data: ';
@@ -329,7 +361,18 @@ export async function POST(req: NextRequest) {
               }
 
               try {
+                eventCount++;
                 const evt = JSON.parse(jsonStr);
+
+                if (eventCount <= 3) {
+                  console.log(`📨 Event ${eventCount}:`, {
+                    event: evt.event,
+                    hasConversationId: !!evt.conversation_id,
+                    hasAnswer: !!evt.answer,
+                    hasMetadata: !!evt.metadata,
+                    eventKeys: Object.keys(evt)
+                  });
+                }
 
                 // 提取并发送conversation_id
                 if (!firstEventSent && evt?.conversation_id) {
