@@ -85,15 +85,16 @@ export default function GiftPage() {
                   <div className="qr-code-container">
                     <div className="qr-code-wrapper">
                       <Image
-                        src="/images/qr-code-account.png"
+                        src="/images/qr-code-home.png"
                         alt="赛斯助手官网二维码"
-                        width={200}
-                        height={200}
-                        className="qr-code-image"
+                        width={240}
+                        height={240}
+                        className="qr-code-img"
+                        unoptimized
                       />
                     </div>
-                    <a href="https://www.brand-new.ltd/account" target="_blank" rel="noopener noreferrer" className="website-link">
-                      https://www.brand-new.ltd/account
+                    <a href="https://www.brand-new.ltd/" target="_blank" rel="noopener noreferrer" className="website-link">
+                      https://www.brand-new.ltd/
                     </a>
                   </div>
                 </div>

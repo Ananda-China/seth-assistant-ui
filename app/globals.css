@@ -2218,15 +2218,26 @@ body {
 
 .qr-code-wrapper {
   background: white;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 20px;
+  border-radius: 20px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .qr-code-wrapper:hover {
   transform: scale(1.05);
   box-shadow: 0 12px 40px rgba(200, 182, 226, 0.4);
+}
+
+.qr-code-img {
+  display: block;
+  width: 240px !important;
+  height: 240px !important;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .website-link {
@@ -2501,9 +2512,13 @@ body {
     padding: 24px;
   }
 
-  .qr-code-wrapper img {
-    width: 160px;
-    height: 160px;
+  .qr-code-wrapper {
+    padding: 16px;
+  }
+
+  .qr-code-img {
+    width: 200px !important;
+    height: 200px !important;
   }
 }
 
