@@ -2240,6 +2240,36 @@ body {
   object-fit: contain;
 }
 
+.qr-placeholder-box {
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 8px;
+}
+
+.qr-note {
+  font-size: 13px;
+  color: #8A94B3;
+  text-align: center;
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: rgba(138, 148, 179, 0.1);
+  border-radius: 8px;
+  border: 1px dashed rgba(138, 148, 179, 0.3);
+}
+
+.qr-note code {
+  color: #C8B6E2;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: rgba(200, 182, 226, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .website-link {
   color: #C8B6E2;
   font-size: 16px;

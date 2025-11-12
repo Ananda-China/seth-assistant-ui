@@ -84,18 +84,25 @@ export default function GiftPage() {
                   <p className="step-description">请使用手机扫描下方二维码，或直接访问官网</p>
                   <div className="qr-code-container">
                     <div className="qr-code-wrapper">
-                      <Image
-                        src="/images/qr-code-home.png"
-                        alt="赛斯助手官网二维码"
-                        width={240}
-                        height={240}
-                        className="qr-code-img"
-                        unoptimized
-                      />
+                      {/* 临时占位：请替换为真实的二维码图片 */}
+                      <div className="qr-placeholder-box">
+                        <svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="240" height="240" fill="white"/>
+                          <text x="120" y="120" textAnchor="middle" fill="#666" fontSize="14" fontFamily="Arial">
+                            请扫描二维码
+                          </text>
+                          <text x="120" y="140" textAnchor="middle" fill="#999" fontSize="12" fontFamily="Arial">
+                            访问赛斯助手
+                          </text>
+                        </svg>
+                      </div>
                     </div>
                     <a href="https://www.brand-new.ltd/" target="_blank" rel="noopener noreferrer" className="website-link">
                       https://www.brand-new.ltd/
                     </a>
+                    <p className="qr-note">
+                      💡 提示：请将真实的二维码图片保存为 <code>public/images/qr-code-home.png</code>
+                    </p>
                   </div>
                 </div>
               </div>
