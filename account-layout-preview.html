@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息页面布局整理效果</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1A1D33 0%, #2E335B 100%);
+            color: #EAEBF0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #C8B6E2;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .section {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .section h3 {
+            margin-top: 0;
+            color: #C8B6E2;
+            text-align: center;
+        }
+        
+        .old-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .old-card {
+            background: rgba(46, 51, 91, 0.4);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+            font-size: 14px;
+        }
+        
+        .new-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .new-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #C8B6E2;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(200, 182, 226, 0.2);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: linear-gradient(135deg, #C8B6E2, #8A94B3);
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+        
+        .section-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .new-card {
+            background: rgba(46, 51, 91, 0.4);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+            font-size: 14px;
+        }
+        
+        .new-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .features {
+            background: rgba(46, 51, 91, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .features h3 {
+            color: #C8B6E2;
+            margin-top: 0;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(200, 182, 226, 0.1);
+        }
+        
+        .features li:before {
+            content: "✨ ";
+            color: #C8B6E2;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+            .section-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🎨 个人信息页面布局整理效果</h1>
+        
+        <div class="comparison">
+            <div class="section">
+                <h3>整理前 - 混乱布局</h3>
+                <div class="old-layout">
+                    <div class="old-card">个人信息</div>
+                    <div class="old-card">登录密码</div>
+                    <div class="old-card">订阅状态</div>
+                    <div class="old-card">支付订单</div>
+                    <div class="old-card">激活码激活</div>
+                    <div class="old-card">我的余额</div>
+                    <div class="old-card">佣金记录</div>
+                    <div class="old-card">提现记录</div>
+                    <div class="old-card">邀请推广</div>
+                    <div class="old-card">邀请关系</div>
+                </div>
+                <p style="font-size: 12px; color: #8A94B3; margin-top: 16px;">
+                    ❌ 功能混乱，没有分组<br>
+                    ❌ 卡片过多，信息密集<br>
+                    ❌ 缺乏层次结构
+                </p>
+            </div>
+            
+            <div class="section">
+                <h3>整理后 - 分组布局</h3>
+                <div class="new-layout">
+                    <div class="new-section">
+                        <div class="section-title">基础信息</div>
+                        <div class="section-cards">
+                            <div class="new-card">个人信息</div>
+                            <div class="new-card">登录密码</div>
+                        </div>
+                    </div>
+                    
+                    <div class="new-section">
+                        <div class="section-title">会员服务</div>
+                        <div class="section-cards">
+                            <div class="new-card">订阅状态</div>
+                            <div class="new-card">激活码激活</div>
+                        </div>
+                    </div>
+                    
+                    <div class="new-section">
+                        <div class="section-title">财务管理</div>
+                        <div class="section-cards">
+                            <div class="new-card">我的余额</div>
+                            <div class="new-card">佣金记录</div>
+                            <div class="new-card">提现记录</div>
+                        </div>
+                    </div>
+                    
+                    <div class="new-section">
+                        <div class="section-title">推广中心</div>
+                        <div class="section-cards">
+                            <div class="new-card">邀请推广</div>
+                            <div class="new-card">邀请关系</div>
+                        </div>
+                    </div>
+                    
+                    <div class="new-section">
+                        <div class="section-title">订单记录</div>
+                        <div class="section-cards">
+                            <div class="new-card full-width">支付订单</div>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size: 12px; color: #8A94B3; margin-top: 16px;">
+                    ✅ 逻辑分组，清晰明了<br>
+                    ✅ 网格布局，空间利用好<br>
+                    ✅ 层次分明，易于浏览
+                </p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>🚀 布局优化亮点</h3>
+            <ul>
+                <li>按功能逻辑分为5个区域：基础信息、会员服务、财务管理、推广中心、订单记录</li>
+                <li>每个区域有明显的标题和视觉分隔，增强可读性</li>
+                <li>使用网格布局，相关功能并排显示，节省垂直空间</li>
+                <li>支付订单表格使用全宽布局，适应表格内容特点</li>
+                <li>移动端自动调整为单列布局，保持良好的响应式体验</li>
+                <li>保持原有的视觉风格和磨砂玻璃效果</li>
+                <li>减少了页面的视觉混乱，提升用户体验</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px; color: #8A94B3;">
+            <p>请在实际应用中查看整理后的效果</p>
+            <p>访问: <a href="http://localhost:3002/account" style="color: #C8B6E2;">http://localhost:3002/account</a></p>
+        </div>
+    </div>
+</body>
+</html>
