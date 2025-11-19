@@ -68,6 +68,8 @@ interface AnalyticsData {
     phone: string;
     today_messages: number;
     today_tokens: number;
+    plan_type: string;
+    total_chat_count: number;
   }>;
   subscription_reminders: Array<{
     phone: string;
@@ -77,6 +79,7 @@ interface AnalyticsData {
     messages: number;
     tokens: number;
     priority: number;
+    total_chat_count: number;
   }>;
   top_metrics: Array<{
     label: string;
@@ -296,6 +299,8 @@ export default function Analytics() {
                   <div className="flex-1">
                     <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
                     <div className="text-[#8A94B3] text-xs mt-1">消息: {user.today_messages}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">套餐: {user.plan_type}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">累计聊天: {user.total_chat_count}次</div>
                   </div>
                   <div className="text-right">
                     <div className="text-[#C8B6E2] font-semibold">{user.today_tokens}</div>
@@ -318,12 +323,13 @@ export default function Analytics() {
                 <div key={index} className="flex items-center justify-between text-sm border-b border-[#2E335B] pb-3">
                   <div className="flex-1">
                     <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">{user.plan}</div>
+                    <div className="text-[#8A94B3] text-xs mt-1">套餐: {user.plan}</div>
                     {user.expiry_date && (
                       <div className="text-[#8A94B3] text-xs mt-1">
                         有效期: {new Date(user.expiry_date).toLocaleDateString('zh-CN')}
                       </div>
                     )}
+                    <div className="text-[#8A94B3] text-xs mt-1">累计聊天: {user.total_chat_count || 0}次</div>
                   </div>
                   <div className="text-right">
                     <div className="text-[#C8B6E2] font-semibold text-xs">

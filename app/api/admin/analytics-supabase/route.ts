@@ -361,7 +361,8 @@ export async function GET(req: NextRequest) {
               conversations: conversationCount,
               messages: stats.messages,
               tokens: stats.tokens,
-              priority: 1 // 一个月内到期优先级为1
+              priority: 1, // 一个月内到期优先级为1
+              total_chat_count: user.chat_count || 0
             });
           }
         }
@@ -396,7 +397,8 @@ export async function GET(req: NextRequest) {
             conversations: conversationCount,
             messages: stats.messages,
             tokens: stats.tokens,
-            priority: 2 // 免费次数用完优先级为2
+            priority: 2, // 免费次数用完优先级为2
+            total_chat_count: user.chat_count || 0
           });
         }
       } else {
@@ -420,7 +422,8 @@ export async function GET(req: NextRequest) {
             conversations: conversationCount,
             messages: stats.messages,
             tokens: stats.tokens,
-            priority: 2 // 次卡用完优先级为2
+            priority: 2, // 次卡用完优先级为2
+            total_chat_count: user.chat_count || 0
           });
         }
       }
@@ -459,6 +462,8 @@ export async function GET(req: NextRequest) {
       today_messages: number;
       today_tokens: number;
       latest_conversation_time: Date;
+      plan_type: string;
+      total_chat_count: number;
     }>();
 
     // 统计今日每个用户的消息数和token消耗
@@ -468,11 +473,30 @@ export async function GET(req: NextRequest) {
       if (conv && conv.user_phone) {
         const phone = conv.user_phone;
         if (!userActivityMap.has(phone)) {
+          // 获取用户信息
+          const user = users.find((u: any) => u.phone === phone);
+          // 获取用户订阅信息
+          const userSub = subscriptions?.find((s: any) => s.user_phone === phone && s.status === 'active');
+
+          // 确定套餐类型
+          let planType = '免费套餐';
+          if (userSub) {
+            planType = userSub.plan || '未知套餐';
+          } else if (user?.subscription_type === 'times') {
+            planType = '次卡';
+          } else if (user?.subscription_type === 'monthly') {
+            planType = '月卡';
+          } else if (user?.subscription_type === 'yearly') {
+            planType = '年卡';
+          }
+
           userActivityMap.set(phone, {
             phone,
             today_messages: 0,
             today_tokens: 0,
-            latest_conversation_time: toDate(msg.created_at)
+            latest_conversation_time: toDate(msg.created_at),
+            plan_type: planType,
+            total_chat_count: user?.chat_count || 0
           });
         }
         const userData = userActivityMap.get(phone)!;
