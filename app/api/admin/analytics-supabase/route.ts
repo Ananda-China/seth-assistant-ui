@@ -639,7 +639,9 @@ export async function GET(req: NextRequest) {
       activity_ranking: activityRanking.map(item => ({
         phone: item.phone,
         today_messages: item.today_messages,
-        today_tokens: item.today_tokens
+        today_tokens: item.today_tokens,
+        plan_type: item.plan_type,
+        total_chat_count: item.total_chat_count
       })),
       subscription_reminders: subscriptionReminders,
       debug_info: {
