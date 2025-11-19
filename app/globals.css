@@ -699,6 +699,56 @@ body {
   transform: none;
 }
 
+/* ===== 输入提示指引 ===== */
+.input-guide {
+  max-width: 800px;
+  margin: 16px auto 0;
+  padding: 0 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #8A94B3;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.guide-icon {
+  font-size: 16px;
+  color: #FFD700; /* 金色 */
+  flex-shrink: 0;
+  margin-top: 2px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.guide-text {
+  flex: 1;
+  color: #A8B3D1;
+}
+
+.guide-example {
+  color: #C8B6E2;
+  font-style: italic;
+  margin: 0 4px;
+  transition: color 0.3s ease;
+}
+
+.guide-example:hover {
+  color: #E8D6F2;
+}
+
 .send-btn svg {
   transition: all 0.3s ease;
   width: 24px; /* 增大图标尺寸 */

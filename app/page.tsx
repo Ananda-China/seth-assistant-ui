@@ -1408,7 +1408,7 @@ export default function HomePage() {
                   }
                 }}
                 onPaste={handlePaste}
-                placeholder="问问赛斯"
+                placeholder="威力之点就在当下。请写下你此刻的觉察或困惑……"
                 style={{
                   minHeight: '120px',
                   maxHeight: '30vh',
@@ -1444,6 +1444,16 @@ export default function HomePage() {
                   </svg>
                 </button>
               </div>
+            </div>
+            {/* 输入提示指引 */}
+            <div className="input-guide">
+              <span className="guide-icon">✨</span>
+              <span className="guide-text">
+                尝试向内探索：
+                <span className="guide-example">"我为什么会创造出现在的实相？"</span> /
+                <span className="guide-example">"这种焦虑情绪想告诉我什么？"</span> /
+                <span className="guide-example">"如何利用梦境获得指引？"</span>
+              </span>
             </div>
           </div>
         </div>
