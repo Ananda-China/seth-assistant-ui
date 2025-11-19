@@ -452,7 +452,8 @@ export async function GET(req: NextRequest) {
       plan: r.plan,
       priority: r.priority,
       expiry_date: r.expiry_date,
-      messages: r.messages
+      messages: r.messages,
+      total_chat_count: r.total_chat_count
     })));
 
     // 计算活跃度排行（Top 5）
@@ -521,6 +522,9 @@ export async function GET(req: NextRequest) {
         return b.latest_conversation_time.getTime() - a.latest_conversation_time.getTime();
       })
       .slice(0, 5); // 只取Top 5
+
+    // 调试日志：检查活跃排行数据
+    console.log('📊 今日活跃排行数据:', JSON.stringify(activityRanking, null, 2));
 
     // 计算平均对话长度
     const avgMessagesPerConversation = totalConversations > 0 ? totalMessages / totalConversations : 0;

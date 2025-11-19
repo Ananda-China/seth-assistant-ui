@@ -292,22 +292,30 @@ export default function Analytics() {
         {/* 今日活跃排行 - 第一个 */}
         <div className="bg-[#1A1D33] p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">今日活跃排行</h3>
-          <div className="space-y-3 max-h-64 overflow-y-auto">
+          <div className="overflow-x-auto">
             {data.activity_ranking.length > 0 ? (
-              data.activity_ranking.map((user, index) => (
-                <div key={index} className="flex items-center justify-between text-sm border-b border-[#2E335B] pb-3">
-                  <div className="flex-1">
-                    <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">消息: {user.today_messages}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">套餐: {user.plan_type}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">累计聊天: {user.total_chat_count}次</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#C8B6E2] font-semibold">{user.today_tokens}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">Token</div>
-                  </div>
-                </div>
-              ))
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#2E335B]">
+                    <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">手机号</th>
+                    <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">套餐类型</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计聊天</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">今日消息</th>
+                    <th className="text-right text-[#8A94B3] font-medium pb-3 px-2">Token</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.activity_ranking.map((user, index) => (
+                    <tr key={index} className="border-b border-[#2E335B]/50 hover:bg-[#2E335B]/20">
+                      <td className="py-3 px-2 text-[#EAEBF0] font-mono">{user.phone}</td>
+                      <td className="py-3 px-2 text-[#C8B6E2]">{user.plan_type || '未知'}</td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">{user.total_chat_count || 0}次</td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">{user.today_messages}</td>
+                      <td className="py-3 px-2 text-right text-[#C8B6E2] font-semibold">{user.today_tokens}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <div className="text-center text-[#8A94B3] text-sm py-6">暂无数据</div>
             )}
@@ -315,35 +323,38 @@ export default function Analytics() {
         </div>
 
         {/* 用户订阅提醒 - 第二个 */}
-        <div className="bg-[#1A1D33] p-6 rounded-xl h-80">
+        <div className="bg-[#1A1D33] p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-[#C8B6E2] mb-4">用户订阅提醒</h3>
-          <div className="space-y-3 max-h-64 overflow-y-auto">
+          <div className="overflow-x-auto">
             {data.subscription_reminders && data.subscription_reminders.length > 0 ? (
-              data.subscription_reminders.map((user, index) => (
-                <div key={index} className="flex items-center justify-between text-sm border-b border-[#2E335B] pb-3">
-                  <div className="flex-1">
-                    <div className="text-[#EAEBF0] font-mono font-semibold">{user.phone}</div>
-                    <div className="text-[#8A94B3] text-xs mt-1">套餐: {user.plan}</div>
-                    {user.expiry_date && (
-                      <div className="text-[#8A94B3] text-xs mt-1">
-                        有效期: {new Date(user.expiry_date).toLocaleDateString('zh-CN')}
-                      </div>
-                    )}
-                    <div className="text-[#8A94B3] text-xs mt-1">累计聊天: {user.total_chat_count || 0}次</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#C8B6E2] font-semibold text-xs">
-                      对话: {user.conversations || 0}
-                    </div>
-                    <div className="text-[#C8B6E2] font-semibold text-xs mt-1">
-                      消息: {user.messages}
-                    </div>
-                    <div className="text-[#C8B6E2] font-semibold text-xs mt-1">
-                      Token: {user.tokens}
-                    </div>
-                  </div>
-                </div>
-              ))
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#2E335B]">
+                    <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">手机号</th>
+                    <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">套餐类型</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计聊天</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">有效期</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">对话</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">消息</th>
+                    <th className="text-right text-[#8A94B3] font-medium pb-3 px-2">Token</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.subscription_reminders.map((user, index) => (
+                    <tr key={index} className="border-b border-[#2E335B]/50 hover:bg-[#2E335B]/20">
+                      <td className="py-3 px-2 text-[#EAEBF0] font-mono">{user.phone}</td>
+                      <td className="py-3 px-2 text-[#C8B6E2]">{user.plan || '未知'}</td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">{user.total_chat_count || 0}次</td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">
+                        {user.expiry_date ? new Date(user.expiry_date).toLocaleDateString('zh-CN') : '-'}
+                      </td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">{user.conversations || 0}</td>
+                      <td className="py-3 px-2 text-center text-[#8A94B3]">{user.messages}</td>
+                      <td className="py-3 px-2 text-right text-[#C8B6E2] font-semibold">{user.tokens}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <div className="text-center text-[#8A94B3] text-sm py-6">暂无提醒用户</div>
             )}
