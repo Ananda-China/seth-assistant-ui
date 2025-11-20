@@ -153,7 +153,8 @@ export async function GET(req: NextRequest) {
     });
     const recentMessages = messages.filter((msg: any) => {
       const msgDate = toDate(msg.created_at);
-      return msgDate >= startTime && msgDate < endTime;
+      // 只统计用户消息
+      return msgDate >= startTime && msgDate < endTime && msg.role === 'user';
     });
 
     // 计算今日数据（首行始终显示今日数据）
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
       return userDate >= todayStart && userDate < todayEnd;
     });
 
-    // 今日消息
+    // 今日消息（只统计用户消息，不统计助手回复）
     const todayMessages = messages.filter((msg: any) => {
       const msgDate = toDate(msg.created_at);
       const isToday = msgDate >= todayStart && msgDate < todayEnd;
@@ -175,16 +176,18 @@ export async function GET(req: NextRequest) {
           msgDateChina: new Date(msgDate.getTime() + chinaOffset).toISOString(),
           todayStart: todayStart.toISOString(),
           todayEnd: todayEnd.toISOString(),
-          isToday
+          isToday,
+          role: msg.role
         });
       }
 
-      return isToday;
+      // 只统计用户消息
+      return isToday && msg.role === 'user';
     });
 
-    console.log('📊 今日消息统计:', {
+    console.log('📊 今日消息统计（仅用户消息）:', {
       总消息数: messages.length,
-      今日消息数: todayMessages.length,
+      今日用户消息数: todayMessages.length,
       今日开始: todayStart.toISOString(),
       今日结束: todayEnd.toISOString()
     });
@@ -228,8 +231,9 @@ export async function GET(req: NextRequest) {
     });
     const newConversations = recentConversationIds.size;
 
-    const totalMessages = messages.length;
-    const newMessages = recentMessages.length;
+    // 只统计用户消息（不统计助手回复）
+    const totalMessages = messages.filter((msg: any) => msg.role === 'user').length;
+    const newMessages = recentMessages.filter((msg: any) => msg.role === 'user').length;
     
     // 计算token使用量
     const totalTokens = messages.reduce((sum: number, msg: any) => 
@@ -302,11 +306,12 @@ export async function GET(req: NextRequest) {
     const now_date = new Date();
     const oneMonthLater = new Date(now_date.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    // 构建用户消息和token统计（通过对话表关联）
+    // 构建用户消息和token统计（通过对话表关联，只统计用户消息）
     const userMessageStats = new Map<string, { messages: number; tokens: number }>();
     conversations.forEach((conv: any) => {
       const userPhone = conv.user_phone;
-      const convMessages = messages.filter((msg: any) => msg.conversation_id === conv.id);
+      // 只统计用户消息（role='user'）
+      const convMessages = messages.filter((msg: any) => msg.conversation_id === conv.id && msg.role === 'user');
       const msgCount = convMessages.length;
       const tokenCount = convMessages.reduce((sum: number, msg: any) => sum + (msg.token_usage || 0), 0);
 
@@ -467,8 +472,13 @@ export async function GET(req: NextRequest) {
       total_chat_count: number;
     }>();
 
-    // 统计今日每个用户的消息数和token消耗
+    // 统计今日每个用户的消息数和token消耗（只统计用户消息，不统计助手回复）
     todayMessages.forEach((msg: any) => {
+      // 只统计用户发送的消息（role='user'），不统计助手回复
+      if (msg.role !== 'user') {
+        return;
+      }
+
       const convId = msg.conversation_id;
       const conv = conversations.find((c: any) => c.id === convId);
       if (conv && conv.user_phone) {
@@ -549,7 +559,8 @@ export async function GET(req: NextRequest) {
 
       const dayMessages = messages.filter((msg: any) => {
         const msgDate = toDate(msg.created_at);
-        return msgDate >= dayStart && msgDate < dayEnd;
+        // 只统计用户消息
+        return msgDate >= dayStart && msgDate < dayEnd && msg.role === 'user';
       }).length;
       
       dailyData.push({
