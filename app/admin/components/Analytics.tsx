@@ -276,8 +276,8 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-3xl font-bold text-blue-300">{data.overview.today_data.new_messages}</div>
-              <div className="text-sm text-[#C8B6E2]">今日消息数</div>
-              <div className="text-xs text-[#8A94B3] mt-2">总消息数：{data.overview.today_data.total_messages}</div>
+              <div className="text-sm text-[#C8B6E2]">今日聊天次数</div>
+              <div className="text-xs text-[#8A94B3] mt-2">总聊天次数：{data.overview.today_data.total_messages}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold text-blue-400">✉️</div>
@@ -299,8 +299,8 @@ export default function Analytics() {
                   <tr className="border-b border-[#2E335B]">
                     <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">手机号</th>
                     <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">套餐类型</th>
-                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计聊天</th>
-                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">今日消息</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计次数</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">今日次数</th>
                     <th className="text-right text-[#8A94B3] font-medium pb-3 px-2">Token</th>
                   </tr>
                 </thead>
@@ -332,10 +332,10 @@ export default function Analytics() {
                   <tr className="border-b border-[#2E335B]">
                     <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">手机号</th>
                     <th className="text-left text-[#8A94B3] font-medium pb-3 px-2">套餐类型</th>
-                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计聊天</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">累计次数</th>
                     <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">有效期</th>
                     <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">对话</th>
-                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">消息</th>
+                    <th className="text-center text-[#8A94B3] font-medium pb-3 px-2">次数</th>
                     <th className="text-right text-[#8A94B3] font-medium pb-3 px-2">Token</th>
                   </tr>
                 </thead>
@@ -370,7 +370,7 @@ export default function Analytics() {
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_conversations}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段消息数</span>
+              <span className="text-sm text-[#EAEBF0]">时间段聊天次数</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_messages}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -378,7 +378,7 @@ export default function Analytics() {
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_tokens.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#EAEBF0]">时间段平均每消息Token</span>
+              <span className="text-sm text-[#EAEBF0]">时间段平均每次Token</span>
               <span className="text-sm text-[#C8B6E2] font-semibold">{data.overview.period_data.period_avg_tokens_per_message}</span>
             </div>
           </div>
@@ -420,11 +420,11 @@ export default function Analytics() {
           </div>
           
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-[#8A94B3]">消息数量趋势</h4>
+            <h4 className="text-sm font-medium text-[#8A94B3]">聊天次数趋势</h4>
             <div className="h-32 bg-[#2E335B] rounded-lg flex items-end justify-around p-2">
               {data.trends.daily_data.map((day, index) => (
                 <div key={index} className="flex flex-col items-center">
-                  <div 
+                  <div
                     className="bg-[#C8B6E2] rounded-t w-6"
                     style={{ height: `${Math.max((day.messages / Math.max(...data.trends.daily_data.map(d => d.messages))) * 100, 4)}px` }}
                   ></div>
